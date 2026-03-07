@@ -5,6 +5,10 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
+    "core:window:allow-close",
+    "core:window:allow-set-position",
+    "core:window:allow-current-monitor",
+    "core:window:allow-destroy",
     "opener:default"
   ]
 }
