@@ -16,6 +16,7 @@ export const FetchTranscript = () => {
     })
 }
 
+//ignore this, leaving a note so I can find this easy
 export const SummeriseGemeni = (transcript: string) => {
 
     return useMutation({
@@ -32,3 +33,4 @@ export const SummeriseGemeni = (transcript: string) => {
     })
 
 }
+

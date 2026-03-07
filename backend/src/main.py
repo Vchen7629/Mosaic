@@ -4,6 +4,7 @@ from .core.lifespan import lifespan
 from .core.settings import settings
 from .routes.audio import router as audio_router
 from .routes.faces import router as face_router
+from .routes.conversation import router
 import logging
 import uvicorn
 
@@ -20,6 +21,7 @@ app.add_middleware(
 
 app.include_router(audio_router)
 app.include_router(face_router)
+app.include_router(router)
 
 @app.get("/")
 async def root():

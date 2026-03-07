@@ -16,6 +16,7 @@
         "width": 360,
         "minHeight": 80,
         "y": 0,
+        "x": 500,
         "decorations": false,
         "transparent": true,
         "alwaysOnTop": true,
