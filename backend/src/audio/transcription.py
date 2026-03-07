@@ -44,6 +44,10 @@ class LogReader:
         with open(self._path, "r", encoding="utf-8") as f:
             return f.read()
 
+    def delete(self) -> bool:
+        self._path.unlink(missing_ok=True)
+
+
 class Transcriber:
     def __init__(self) -> None:
         self._recent_hashes: deque[str] = deque(maxlen=settings.max_hash_history)
