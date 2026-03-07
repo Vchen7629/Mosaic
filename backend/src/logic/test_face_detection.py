@@ -1,7 +1,7 @@
 import cv2
 import time
-from src.face_detection.detector import FaceDetector
-from src.face_detection.service import DETECTION_INTERVAL
+from ..face_detection.detector import FaceDetector
+from ..face_detection.service import DETECTION_INTERVAL
 
 
 def test_continuous():
