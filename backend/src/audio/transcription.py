@@ -1,5 +1,6 @@
-from src.audio.model import get_model
-from src.core.settings import settings
+from ..core.settings import _LOGS_DIR
+from ..audio.model import get_model
+from ..core.settings import settings
 from typing import Any, Optional
 from collections import deque
 from datetime import datetime
@@ -9,6 +10,9 @@ import threading
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+_LOGS_DIR.mkdir(parents=True, exist_ok=True)
+log_path = _LOGS_DIR / f"recording.txt"
 
 class LogWriter:
     def __init__(self, path: str) -> None:
@@ -30,6 +34,15 @@ class LogWriter:
                 self._file.close()
             except Exception:
                 pass
+
+class LogReader:
+    def __init__(self) -> None:
+        _LOGS_DIR.mkdir(parents=True, exist_ok=True)
+        self._path = _LOGS_DIR / f"recording.txt"
+
+    def read(self) -> str:
+        with open(self._path, "r", encoding="utf-8") as f:
+            return f.read()
 
 class Transcriber:
     def __init__(self) -> None:
