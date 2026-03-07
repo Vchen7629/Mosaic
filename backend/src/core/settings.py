@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic_settings import SettingsConfigDict
 from typing import List
 from pathlib import Path
 import os
@@ -6,6 +7,7 @@ import os
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 ENV_FILE = PROJECT_ROOT / ".env"
 PRODUCTION_MODE = os.getenv("PRODUCTION", "True") == "True"
+_LOGS_DIR = Path(__file__).parents[2] / "logs"
 
 class Settings(BaseSettings):
     """
@@ -36,5 +38,16 @@ class Settings(BaseSettings):
     max_hash_history: int = 3
 
     whisper_mode: str = "small"
+
+    MONGODB_URI: str
+    DB_NAME: str = "app"
+
+    model_config = SettingsConfigDict(
+        # Only load .env in development mode
+        env_file=str(ENV_FILE),
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
 settings = Settings()

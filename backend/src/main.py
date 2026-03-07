@@ -1,7 +1,9 @@
 from fastapi import FastAPI
-from src.core.lifespan import lifespan
-from src.core.settings import settings
-from src.routes.audio import router as audio_router
+from fastapi.middleware.cors import CORSMiddleware
+from .core.lifespan import lifespan
+from .core.settings import settings
+from .routes.audio import router as audio_router
+from .routes.faces import router as face_router
 import logging
 import uvicorn
 
@@ -9,7 +11,15 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:1420", "tauri://localhost"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(audio_router)
+app.include_router(face_router)
 
 @app.get("/")
 async def root():

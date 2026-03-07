@@ -1,3 +1,4 @@
+from ..core.settings import _LOGS_DIR
 from collections import deque
 from datetime import datetime
 from pathlib import Path
@@ -13,8 +14,6 @@ import numpy as np
 import sounddevice as sd
 
 logger = logging.getLogger(__name__)
-
-_LOGS_DIR = Path(__file__).parents[2] / "logs"
 
 
 def _build_chunk(blocks: deque[np.ndarray], frames_needed: int) -> Optional[np.ndarray]:
@@ -50,7 +49,7 @@ class AudioRecorder:
             return ""
 
         _LOGS_DIR.mkdir(parents=True, exist_ok=True)
-        log_path = _LOGS_DIR / f"recording_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt"
+        log_path = _LOGS_DIR / f"recording.txt"
 
         self._writer = LogWriter(str(log_path))
         self._transcriber = Transcriber()
@@ -69,6 +68,8 @@ class AudioRecorder:
         self._active.clear()
         if self._thread:
             self._thread.join(timeout=5.0)
+            if self._thread.is_alive():
+                logger.warning("Capture thread did not exit cleanly within timeout")
             self._thread = None
 
         if self._writer:
