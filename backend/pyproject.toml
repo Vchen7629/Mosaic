@@ -20,6 +20,7 @@ dependencies = [
     "face-recognition-models",
     "setuptools>=82.0.0",
     "dlib>=20.0.0",
+    "google-genai>=1.66.0",
 ]
 
 [[tool.uv.index]]
