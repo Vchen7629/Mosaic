@@ -21,32 +21,3 @@ dependencies = [
     "setuptools>=82.0.0",
     "dlib>=20.0.0",
 ]
-
-[[tool.uv.index]]
-name = "pytorch-cu128"
-url = "https://download.pytorch.org/whl/cu128"
-explicit = true
-
-[tool.uv.sources]
-torch = [
-    { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
-]
-torchvision = [
-    { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
-]
-torchaudio = [
-    { index = "pytorch-cu128", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
-]
-face-recognition-models = { git = "https://github.com/ageitgey/face_recognition_models" }
-
-[dependency-groups]
-dev = [
-    "matplotlib>=3.10.8",
-]
-
-[tool.pyright]
-venvPath = "."
-venv = ".venv"
-pythonVersion = "3.12"
-include = ["src"]
-extraPaths = ["."]
