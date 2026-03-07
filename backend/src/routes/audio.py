@@ -18,4 +18,7 @@ async def stop_recording(recorder: Annotated[AudioRecorder, Depends(get_audio_re
     recorder.stop()
 
     transcript = LogReader().read()
-    return {"idk": transcript}
+
+    LogReader().delete()
+
+    return {"transcript": transcript}
