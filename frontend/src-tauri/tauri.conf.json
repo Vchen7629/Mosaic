@@ -14,7 +14,7 @@
       {
         "title": "frontend",
         "width": 360,
-        "height": 480,
+        "minHeight": 80,
         "y": 0,
         "decorations": false,
         "transparent": true,
