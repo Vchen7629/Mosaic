@@ -51,8 +51,8 @@ pub fn start_backend_api(state: State<BackendProcesses>, app_handle: tauri::AppH
 
     let mut backend_cmd = Command::new(&venv_python);
     backend_cmd
-        .args(&["-m", "uvicorn", "backend.src.main:app", "--host", "127.0.0.1", "--port", "8000"])
-        .current_dir(&workspace_root)
+        .args(&["-m", "uvicorn", "src.main:app", "--host", "127.0.0.1", "--port", "8000"])
+        .current_dir(&backend_path)
         .env("PATH", &new_path)
         .env("VIRTUAL_ENV", &venv_path)
         .stdout(Stdio::null())
@@ -77,6 +77,8 @@ pub fn start_backend_api(state: State<BackendProcesses>, app_handle: tauri::AppH
     children.push(backend_process);
 
     println!("[Rust] Backend started successfully! PID: {}", backend_pid);
+
+    port_utils::wait_for_port_ready(std::time::Duration::from_secs(15));
 
     Ok(format!("Backend started (PID: {})", backend_pid))
 }
