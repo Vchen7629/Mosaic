@@ -1,8 +1,9 @@
+from ..audio.transcription import LogReader
 from fastapi import Depends
 from fastapi import APIRouter
 from typing import Annotated
-from src.audio import get_audio_recorder
-from src.audio.capture import AudioRecorder
+from ..audio import get_audio_recorder
+from ..audio.capture import AudioRecorder
 
 router = APIRouter(prefix="/audio")
 
@@ -14,5 +15,7 @@ async def start_recording(recorder: Annotated[AudioRecorder, Depends(get_audio_r
 
 @router.get(path="/stop")
 async def stop_recording(recorder: Annotated[AudioRecorder, Depends(get_audio_recorder)]):
-    log_path = recorder.stop()
-    return {"log_path": log_path}
+    recorder.stop()
+
+    transcript = LogReader().read()
+    return {"idk": transcript}
