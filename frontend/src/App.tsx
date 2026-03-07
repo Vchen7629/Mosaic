@@ -3,6 +3,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import "./App.css";
 import StartRecordingButton from "./components/startRecordingBtn";
 import { SetWindowPosition } from "./utils/setWindowPosition";
+import { handleBackendLifecycle } from "./utils/handleBackendLifecycle";
 
 interface Entry {
   id: number;
@@ -23,6 +24,7 @@ function App() {
   const [entries] = useState<Entry[]>(MOCK_ENTRIES);
 
   SetWindowPosition()
+  handleBackendLifecycle()
 
   return (
     <main className="w-full h-screen p-2">
