@@ -1,12 +1,25 @@
+import { StartAudioRecording, StopAudioRecording } from "../api/hooks/audio";
+
 interface Props {
   isRecording: boolean;
-  onToggle: () => void;
+  setIsRecording: (val: boolean) => void;
 }
 
-const StartRecordingButton = ({ isRecording, onToggle }: Props) => {
+const StartRecordingButton = ({ isRecording, setIsRecording }: Props) => {
+  const startMutation = StartAudioRecording(setIsRecording);
+  const stopMutation = StopAudioRecording(setIsRecording);
+
+  const handleToggle = () => {
+    if (isRecording) {
+      stopMutation.mutate();
+    } else {
+      startMutation.mutate();
+    }
+  };
+
   return (
     <button
-      onClick={onToggle}
+      onClick={handleToggle}
       className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold transition-all duration-200 cursor-pointer border ${
         isRecording
           ? "bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30"
