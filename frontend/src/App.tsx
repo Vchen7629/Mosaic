@@ -7,6 +7,7 @@ import { handleBackendLifecycle } from "./utils/handleBackendLifecycle";
 import { useFaceDetection } from "./api/hooks/detection";
 import NewFaceInput from "./components/newFaceInput";
 import { AutoResizeWindow } from "./utils/autoResizeWindow";
+import TestButton from "./api/lib/test"
 
 interface Entry {
   id: number;
@@ -56,6 +57,7 @@ function App() {
             />
             <span className="text-[13px] font-medium text-zinc-300 tracking-tight">
               Live Transcription
+              <TestButton />
             </span>
           </div>
           <div className="flex items-center gap-2">
