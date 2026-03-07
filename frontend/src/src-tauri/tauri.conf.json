@@ -1,0 +1,64 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "relay-room",
+  "version": "0.1.0",
+  "identifier": "com.relayroom.app",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "relay-room",
+        "label": "main",
+        "maxHeight": 800,
+        "maxWidth": 600,
+        "width": 550,
+        "height": 400,
+        "minHeight": 250,
+        "minWidth": 450,
+        "resizable": true,
+        "fullscreen": false,
+        "visible": false
+      },
+      {
+        "title": "Setup - Relay Room",
+        "label": "setup",
+        "url": "#/setup",
+        "width": 350,
+        "height": 400,
+        "resizable": false,
+        "fullscreen": false,
+        "visible": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "deb", "appimage", "dmg"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [
+      "../../backend/src",
+      "../../backend/__init__.py",
+      "../../backend/pyproject.toml",
+      "../../backend/uv.lock"
+    ],
+    "windows": {
+      "nsis": {
+        "compression": "lzma"
+      }
+    }
+  }
+}
