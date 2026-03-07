@@ -54,7 +54,7 @@ function App() {
           <div className="flex items-center gap-2">
             <StartRecordingButton
               isRecording={isRecording}
-              onToggle={() => setIsRecording((prev) => !prev)}
+              setIsRecording={setIsRecording}
             />
             <button
               onClick={() => getCurrentWindow().close().catch(console.error)}
