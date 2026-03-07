@@ -7,15 +7,14 @@ class ConversationRecord(BaseModel):
     timestamp: str
     summary: str
     topics: list[str]
-    last_convo_briefing: Optional[str] = None
 
 
 # this is for each different person the patient talked to
 class InteractedUser(BaseModel):
     name: str
     face_embedding: Optional[list[float]] = None  # numpy ndarray
-    relationship: str
     conversations: list[ConversationRecord]
+    last_convo_briefing: Optional[str] = None
 
 
 class PatientData(BaseModel):
