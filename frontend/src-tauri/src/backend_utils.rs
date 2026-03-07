@@ -55,8 +55,8 @@ pub fn start_backend_api(state: State<BackendProcesses>, app_handle: tauri::AppH
         .current_dir(&backend_path)
         .env("PATH", &new_path)
         .env("VIRTUAL_ENV", &venv_path)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null());
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit());
 
     #[cfg(target_os = "windows")]
     {
