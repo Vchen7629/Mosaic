@@ -1,7 +1,5 @@
 from ..core.settings import _LOGS_DIR
 from collections import deque
-from datetime import datetime
-from pathlib import Path
 from typing import Any, Optional
 from src.audio.audio_input_device import get_input_device
 from src.audio.transcription import LogWriter, Transcriber
