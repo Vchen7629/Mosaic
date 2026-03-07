@@ -4,6 +4,9 @@ import "./App.css";
 import StartRecordingButton from "./components/startRecordingBtn";
 import { SetWindowPosition } from "./utils/setWindowPosition";
 import { handleBackendLifecycle } from "./utils/handleBackendLifecycle";
+import { useFaceDetection } from "./api/hooks/detection";
+import NewFaceInput from "./components/newFaceInput";
+import { AutoResizeWindow } from "./utils/autoResizeWindow";
 
 interface Entry {
   id: number;
@@ -22,14 +25,18 @@ const MOCK_ENTRIES: Entry[] = [
 function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [entries] = useState<Entry[]>(MOCK_ENTRIES);
+  const [newFaceName, setNewFaceName] = useState("");
+  const patientId = localStorage.getItem("patient_id") ?? "test-patient";
+  const { detectedName, unknownFaceDetected, confirmNewFace } = useFaceDetection(patientId, isRecording);
 
   SetWindowPosition()
+  AutoResizeWindow()
   handleBackendLifecycle()
 
   return (
-    <main className="w-full h-screen p-2">
+    <main className="w-full p-2">
       {/* Glossy dark panel */}
-      <div className="relative flex flex-col h-full rounded-2xl overflow-hidden
+      <div className="relative flex flex-col rounded-2xl overflow-hidden
                       bg-zinc-900/90 backdrop-blur-2xl
                       border border-white/[0.06]
                       shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_8px_32px_rgba(0,0,0,0.6)]">
@@ -71,6 +78,10 @@ function App() {
         {/* Divider */}
         <div className="relative z-10 h-px bg-zinc-800 flex-shrink-0" />
 
+        {unknownFaceDetected && (
+          <NewFaceInput newFaceName={newFaceName} setNewFaceName={setNewFaceName} confirmNewFace={confirmNewFace}/>
+        )}
+
         {/* Entries list */}
         <div className="relative z-10 flex-1 overflow-y-auto">
           {entries.length === 0 ? (
@@ -81,7 +92,7 @@ function App() {
                 key={entry.id}
                 className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.04] transition-colors duration-100 border-b border-zinc-800/60 last:border-b-0"
               >
-                {/* Avatar */}
+                
                 <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-[11px] font-semibold text-white flex-shrink-0 mt-0.5 shadow-[0_2px_6px_rgba(109,40,217,0.4)]">
                   {entry.name[0]}
                 </div>
@@ -98,6 +109,7 @@ function App() {
             ))
           )}
         </div>
+        
       </div>
     </main>
   );
