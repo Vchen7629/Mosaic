@@ -7,19 +7,23 @@ import { handleBackendLifecycle } from "./utils/handleBackendLifecycle";
 import { useFaceDetection } from "./api/hooks/detection";
 import NewFaceInput from "./components/newFaceInput";
 import { AutoResizeWindow } from "./utils/autoResizeWindow";
+import SumWindow from "./utils/SummeryPage";
 
 interface Entry {
   id: number;
   name: string;
   text: string;
   timestamp: string;
+  sumtext: string;
 }
 
+
+
 const MOCK_ENTRIES: Entry[] = [
-  { id: 1, name: "Alice", text: "Can everyone hear me okay?", timestamp: "0:04" },
-  { id: 2, name: "Bob", text: "Yeah, audio sounds good on my end.", timestamp: "0:12" },
-  { id: 3, name: "Carol", text: "Let's go over the agenda for today.", timestamp: "0:21" },
-  { id: 4, name: "Alice", text: "Sure, I'll share my screen in a moment.", timestamp: "0:35" },
+  { id: 1, name: "Alice", text: "Can everyone hear me okay?", timestamp: "0:04", sumtext: "test1"},
+  { id: 2, name: "Bob", text: "Yeah, audio sounds good on my end.", timestamp: "0:12", sumtext: "test2" },
+  { id: 3, name: "Carol", text: "Let's go over the agenda for today.", timestamp: "0:21", sumtext: "test3" },
+  { id: 4, name: "James", text: "Sure, I'll share my screen in a moment.", timestamp: "0:35", sumtext: "test4" },
 ];
 
 function App() {
@@ -100,8 +104,9 @@ function App() {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-[13px] font-semibold text-zinc-100">{entry.name}</span>
-                    <span className="text-[11px] text-zinc-600">{entry.timestamp}</span>
+
+                    {/* NEW TEXTBOX HERE - LOOK HERE FOR TWEAKING THE TEXTBOX OF THE AI PROMPT! */}
+                    <SumWindow Name={entry.name} Sum={entry.sumtext} Used={true}/>
                   </div>
                   <p className="text-[12px] text-zinc-400 leading-snug truncate">{entry.text}</p>
                 </div>
@@ -111,8 +116,12 @@ function App() {
         </div>
         
       </div>
+
+      
     </main>
   );
 }
+
+
 
 export default App;
