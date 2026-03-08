@@ -1,9 +1,17 @@
 from collections import deque
+from concurrent.futures import ProcessPoolExecutor
 from typing import Callable
 from .detector import FaceDetector
+from .process_worker import detect as _detect, noop
 import cv2
+import logging
+import multiprocessing as mp
 import time
 import threading
+
+logger = logging.getLogger(__name__)
+
+_mp_ctx = mp.get_context("spawn")
 
 PATIENT_PERSON_ID = "__patient__"
 DETECTION_INTERVAL = 2.5
@@ -16,12 +24,27 @@ class FaceDetectionService(FaceDetector):
         super().__init__()
         self._running = False
         self._thread: threading.Thread | None = None
+        self._pool: ProcessPoolExecutor | None = None
         self.latest_faces: deque[tuple[str | None, tuple]] = deque(maxlen=32)
         self._on_face_detected: Callable[[str | None, list], None] | None = None
         self.patient_id: str | None = None
         self.known_faces: dict[str, list[float]] = {}  # name -> embedding
         self._patient_embedding: list[float] | None = None
         self.pending_unknown_encoding: list[float] | None = None  # awaiting user confirmation
+
+    def startup(self) -> None:
+        """Start the detection worker process. Call once from app lifespan."""
+        self._pool = ProcessPoolExecutor(max_workers=1, mp_context=_mp_ctx)
+        # Force the worker to spawn now so dlib/face_recognition are imported
+        # before the first detection request arrives.
+        self._pool.submit(noop).result()
+        logger.info("[face_detection] Detection worker started")
+
+    def shutdown(self) -> None:
+        """Shut down the detection worker process. Call from app lifespan cleanup."""
+        if self._pool:
+            self._pool.shutdown(wait=False)
+            self._pool = None
 
     def load_from_patient_doc(self, patient_doc: dict) -> None:
         self.patient_id = patient_doc.get("user_id")
@@ -56,9 +79,7 @@ class FaceDetectionService(FaceDetector):
 
     def stop(self) -> None:
         self._running = False
-        if self._thread:
-            self._thread.join(timeout=5)
-            self._thread = None
+        self._thread = None  # daemon thread exits naturally
         self.pending_unknown_encoding = None
 
     def _run(self) -> None:
@@ -67,7 +88,15 @@ class FaceDetectionService(FaceDetector):
             now = time.time()
             if now - last_detection_time >= DETECTION_INTERVAL:
                 last_detection_time = now
-                results = self.detect(frame)
+                if not self._pool:
+                    continue
+                try:
+                    results = self._pool.submit(
+                        _detect, frame, list(self._known_embeddings)
+                    ).result()
+                except Exception as e:
+                    print(f"[face_detection] detection error: {e}", flush=True)
+                    continue
                 print(f"[face_detection] running detection... found {len(results)} face(s)")
                 for person_id, face_location, encoding in results:
                     self.latest_faces.append((person_id, face_location))
