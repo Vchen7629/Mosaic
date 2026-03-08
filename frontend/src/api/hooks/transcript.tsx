@@ -29,18 +29,18 @@ export const SaveConversation = () => {
 
 export const FetchBriefing = () => {
     return useMutation({
+        mutationFn: async (payload: FetchBriefingPayload) => {
 
-             mutationFn: async (payload: FetchBriefingPayload) => {
-
-                const res = await fetch("http://localhost:8000/conversation/fetch_briefing", {
+            const res = await fetch("http://localhost:8000/conversation/fetch_briefing", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
-                })
+            })
 
-                return res
+            if (!res.ok) throw new Error("Failed to fetch briefing")
+            return res.json()
 
-            }
+        }
     })
 
 
