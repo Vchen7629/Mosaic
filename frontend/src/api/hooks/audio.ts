@@ -18,13 +18,14 @@ export const StartAudioRecording = (setIsRecording: (val: boolean) => void) => {
 export const StopAudioRecording = (setIsRecording: (val: boolean) => void) => {
     return useMutation({
         mutationFn: async () => {
-            const res = await fetch("http://localhost:8000/audio/stop")
+            const transcriptRes = await fetch("http://localhost:8000/audio/stop")
 
-            if (!res.ok) throw new Error("Failed to stop audio")
+            if (!transcriptRes.ok) throw new Error("Failed to get transcript")
 
-            return res.json()
+            setIsRecording(false)
+
+            return transcriptRes.json()
         },
-        onSuccess: () => setIsRecording(false),
-        onError: () => setIsRecording(true),
+        onError: () => setIsRecording(false),
     })
 }
