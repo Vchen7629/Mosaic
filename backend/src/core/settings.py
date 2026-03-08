@@ -41,6 +41,7 @@ class Settings(BaseSettings):
 
     MONGODB_URI: str
     DB_NAME: str = "app"
+    GEMINI_API_KEY: str
 
     model_config = SettingsConfigDict(
         # Only load .env in development mode
