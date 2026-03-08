@@ -40,22 +40,24 @@ async def add_conversation(
         raise
 
 async def save_briefing(
-    db: AsyncDatabase, 
-    patient_id: str, 
+    db: AsyncDatabase,
+    patient_id: str,
     name: str,
     briefing: str
 ) -> None:
     collection = db["patients"]
 
     try:
-        await collection.update_one(
-            {"user_id": patient_id},
-            {"$push": {"interacted_users": {
-                "name": name,
-                "last_convo_briefing": briefing
-            }}},
-            upsert=True
+        result = await collection.update_one(
+            {"user_id": patient_id, "interacted_users.name": name},
+            {"$set": {"interacted_users.$.last_convo_briefing": briefing}}
         )
+        if result.matched_count == 0:
+            await collection.update_one(
+                {"user_id": patient_id},
+                {"$push": {"interacted_users": {"name": name, "last_convo_briefing": briefing}}},
+                upsert=True
+            )
     except PyMongoError as e:
         raise
 
