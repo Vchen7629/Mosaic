@@ -59,7 +59,7 @@ class Transcriber:
         audio_hash = hashlib.md5(chunk.tobytes()).hexdigest()
         if not self._filter_duplicate_audio_hash(audio_hash):
             return None
-        
+
         self._recent_hashes.append(audio_hash)
 
         chunk = chunk.astype(np.float32)
@@ -96,7 +96,7 @@ class Transcriber:
             return False
 
         return True
-    
+
     def _filter_duplicate_audio_hash(self, audio_hash: Any) -> bool:
         if audio_hash in self._recent_hashes:
             logger.debug("Duplicate chunk, skipping")

@@ -1,5 +1,5 @@
 from functools import lru_cache
-from src.audio.capture import AudioRecorder
+from ..audio.capture import AudioRecorder
 
 @lru_cache(maxsize=1)
 def get_audio_recorder() -> AudioRecorder:
