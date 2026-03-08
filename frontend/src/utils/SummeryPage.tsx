@@ -1,8 +1,9 @@
 import "../App.css";
+import {FetchBriefing} from "../api/hooks/transcript"
 
 interface SumWindowProps {
   Name: string;
-  Sum: string;
+  Sum: any;
   Used: boolean;
 }
 

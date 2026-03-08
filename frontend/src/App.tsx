@@ -8,6 +8,7 @@ import { useFaceDetection } from "./api/hooks/detection";
 import NewFaceInput from "./components/newFaceInput";
 import { AutoResizeWindow } from "./utils/autoResizeWindow";
 import SumWindow from "./utils/SummeryPage";
+import { FetchBriefing } from "./api/hooks/transcript";
 
 interface Entry {
   id: number;
@@ -33,10 +34,12 @@ function App() {
   const [newFaceName, setNewFaceName] = useState("");
   const patientId = localStorage.getItem("patient_id") ?? "test-patient";
   const { detectedName, unknownFaceDetected, confirmNewFace } = useFaceDetection(patientId, isRecording);
-
+  const summery = FetchBriefing();
   SetWindowPosition()
   AutoResizeWindow()
   handleBackendLifecycle()
+
+  
 
   return (
     <main className="w-full p-2">
@@ -109,7 +112,7 @@ function App() {
                   <div className="flex items-baseline gap-2 mb-1">
 
                     {/* NEW TEXTBOX HERE - LOOK HERE FOR TWEAKING THE TEXTBOX OF THE AI PROMPT! */}
-                    <SumWindow Name={entry.name} Sum={entry.sumtext} Used={true}/>
+                    <SumWindow Name={entry.name} Sum={summery} Used={true}/>
                   </div>
                   <p className="text-[12px] text-zinc-400 leading-snug truncate">{entry.text}</p>
                 </div>

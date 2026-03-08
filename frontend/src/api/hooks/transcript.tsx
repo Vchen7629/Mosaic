@@ -7,6 +7,12 @@ interface SaveConversationPayload {
     conversation_summary: string
     topics: string[]
 }
+interface FetchBriefingPayload {
+
+    patient_id: string
+    name: string
+
+}
 
 export const SaveConversation = () => {
     return useMutation({
@@ -19,4 +25,23 @@ export const SaveConversation = () => {
             if (!res.ok) throw new Error("Failed to save conversation")
         },
     })
+}
+
+export const FetchBriefing = () => {
+    return useMutation({
+
+             mutationFn: async (payload: FetchBriefingPayload) => {
+
+                const res = await fetch("http://localhost:8000/conversation/fetch_briefing", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+                })
+
+                return res
+
+            }
+    })
+
+
 }
