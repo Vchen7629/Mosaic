@@ -5,6 +5,7 @@ from .core.settings import settings
 from .routes.audio import router as audio_router
 from .routes.faces import router as face_router
 from .routes.conversation import router as convo_router
+from .routes.llm import router as llm_router
 import logging
 import uvicorn
 
@@ -22,6 +23,7 @@ app.add_middleware(
 app.include_router(audio_router)
 app.include_router(face_router)
 app.include_router(convo_router)
+app.include_router(llm_router)
 
 @app.get("/")
 async def root():
