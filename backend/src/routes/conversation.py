@@ -11,17 +11,10 @@ from ..db.models import ConversationRecord
 from ..db.conversation import add_conversation
 from ..routes.models import AddConversationRequest
 from ..routes.models import FetchAllConversationRequest
-from ..Conversation.gemnisummerize import SummeriseWithGemina
 SESSION_COOKIE_NAME = "session_token"
 
 
 router = APIRouter(prefix="/conversation", tags=["auth"])
-
-
-@router.post("/summerise")
-async def signup(request: str):
-    return SummeriseWithGemina(request)
-
 
 @router.post("/save", status_code=status.HTTP_204_NO_CONTENT)
 async def save_conversation(

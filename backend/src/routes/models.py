@@ -11,3 +11,10 @@ class AddConversationRequest(BaseModel):
 class FetchAllConversationRequest(BaseModel):
     patient_id: str
     name: str
+
+class SummarizeConvoRequest(BaseModel):
+    conversation: str
+
+class GenerateBriefingRequest(BaseModel):
+    patient_id: str
+    name: str
