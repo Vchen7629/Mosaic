@@ -15,6 +15,7 @@ interface Entry {
   text: string;
   timestamp: string;
   sumtext: string;
+  
 }
 
 
