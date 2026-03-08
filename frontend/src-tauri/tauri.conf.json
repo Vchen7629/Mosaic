@@ -13,7 +13,7 @@
     "windows": [
       {
         "title": "frontend",
-        "width": 360,
+        "width": 400,
         "minHeight": 80,
         "y": 0,
         "decorations": false,

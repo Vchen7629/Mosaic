@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import "./App.css";
 import StartRecordingButton from "./components/startRecordingBtn";
@@ -7,34 +7,29 @@ import { handleBackendLifecycle } from "./utils/handleBackendLifecycle";
 import { useFaceDetection } from "./api/hooks/detection";
 import NewFaceInput from "./components/newFaceInput";
 import { AutoResizeWindow } from "./utils/autoResizeWindow";
-import SumWindow from "./utils/SummeryPage";
 import { FetchBriefing } from "./api/hooks/transcript";
-
-interface Entry {
-  id: number;
-  name: string;
-  text: string;
-  timestamp: string;
-  sumtext: string;
-  
-}
-
-
-
-const MOCK_ENTRIES: Entry[] = [
-  { id: 1, name: "Alice", text: "Can everyone hear me okay?", timestamp: "0:04", sumtext: "test1"},
-  { id: 2, name: "Bob", text: "Yeah, audio sounds good on my end.", timestamp: "0:12", sumtext: "test2" },
-  { id: 3, name: "Carol", text: "Let's go over the agenda for today.", timestamp: "0:21", sumtext: "test3" },
-  { id: 4, name: "James", text: "Sure, I'll share my screen in a moment.", timestamp: "0:35", sumtext: "test4" },
-];
+import ConvoBriefingDisplay from "./components/convo_briefing";
 
 function App() {
   const [isRecording, setIsRecording] = useState(false);
-  const [entries] = useState<Entry[]>(MOCK_ENTRIES);
   const [newFaceName, setNewFaceName] = useState("");
   const patientId = localStorage.getItem("patient_id") ?? "test-patient";
   const { detectedName, unknownFaceDetected, confirmNewFace } = useFaceDetection(patientId, isRecording);
-  const summery = FetchBriefing();
+  const briefingRes = FetchBriefing();
+  const briefingFetched = useRef(false);
+
+  useEffect(() => {
+    if (!isRecording) {
+      briefingFetched.current = false;
+      const timer = setTimeout(() => briefingRes.reset(), 700);
+      return () => clearTimeout(timer);
+    }
+    if (detectedName && !briefingFetched.current) {
+      briefingFetched.current = true;
+      briefingRes.mutate({ patient_id: patientId, name: detectedName });
+    }
+  }, [detectedName, isRecording]);
+
   SetWindowPosition()
   AutoResizeWindow()
   handleBackendLifecycle()
@@ -54,18 +49,9 @@ function App() {
 
         {/* Header */}
         <div className="relative z-10 flex items-center justify-between px-4 py-3 flex-shrink-0">
-          <div className="flex items-center gap-2.5">
-            <span
-              className={`w-2 h-2 rounded-full flex-shrink-0 transition-colors duration-300 ${
-                isRecording
-                  ? "bg-red-500 recording-dot shadow-[0_0_8px_rgba(239,68,68,0.7)]"
-                  : "bg-zinc-600"
-              }`}
-            />
-            <span className="text-[13px] font-medium text-zinc-300 tracking-tight">
-              Live Transcription
-            </span>
-          </div>
+          <span className="text-[15px] font-medium text-zinc-300 tracking-tight">
+            Live Transcription
+          </span>
           <div className="flex items-center gap-2">
             <StartRecordingButton
               isRecording={isRecording}
@@ -92,36 +78,13 @@ function App() {
           <NewFaceInput newFaceName={newFaceName} setNewFaceName={setNewFaceName} confirmNewFace={confirmNewFace}/>
         )}
 
-        {/* Entries list */}
-        <div className="relative z-10 flex-1 overflow-y-auto">
-          {entries.length === 0 ? (
-            <p className="text-center text-zinc-600 text-xs py-10">No transcriptions yet.</p>
-          ) : (
-            entries.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex items-start gap-3 px-4 py-3 hover:bg-white/[0.04] transition-colors duration-100 border-b border-zinc-800/60 last:border-b-0"
-              >
-                
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-[11px] font-semibold text-white flex-shrink-0 mt-0.5 shadow-[0_2px_6px_rgba(109,40,217,0.4)]">
-                  {entry.name[0]}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2 mb-1">
-
-                    {/* NEW TEXTBOX HERE - LOOK HERE FOR TWEAKING THE TEXTBOX OF THE AI PROMPT! */}
-                    <SumWindow Name={entry.name} Sum={summery} Used={true}/>
-                  </div>
-                  <p className="text-[12px] text-zinc-400 leading-snug truncate">{entry.text}</p>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-        
       </div>
+
+      {briefingRes.data && (
+        <div className={`transition-[opacity,transform] duration-700 ease-out starting:opacity-0 starting:translate-y-3 ${isRecording ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
+          <ConvoBriefingDisplay Name={briefingRes.data.name} Briefing={briefingRes.data.summary}/>
+        </div>
+      )}
 
       
     </main>

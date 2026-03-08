@@ -49,9 +49,7 @@ const StartRecordingButton = ({ isRecording, setIsRecording, detectedName, patie
   const isStartPending = startMutation.isPending;
   const isStopPending = stopMutation.isPending;
 
-  const label = isStartPending
-    ? "Starting..."
-    : isStopPending
+  const label = isStopPending
     ? isRecording
       ? "Stopping..."
       : "Transcribing..."
