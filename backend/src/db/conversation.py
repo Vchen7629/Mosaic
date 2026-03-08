@@ -85,24 +85,24 @@ async def get_all_conversations(
         raise
 
 
-async def getbreifing(
+async def get_briefing(
     db: AsyncDatabase, 
     patient_id: str, 
     name: str,
-):
+) -> "":
     try:
         collection = db["patients"]
         patient = await collection.find_one({"user_id": patient_id})
 
         if not patient or not patient.get("interacted_users"):
-            return []
+            return ""
         
         name_convo = next((u for u in patient["interacted_users"] if u["name"] == name), None)
         if not name_convo:
-            return []
+            return ""
       
-        test = name_convo.get{"last_convo_briefing"}
+        test = name_convo.get("last_convo_briefing", "")
 
-        return text
+        return test
     except PyMongoError as e:
         raise
