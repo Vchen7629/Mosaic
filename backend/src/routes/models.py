@@ -18,3 +18,7 @@ class SummarizeConvoRequest(BaseModel):
 class GenerateBriefingRequest(BaseModel):
     patient_id: str
     name: str
+    
+class fetch_briefing_Request(BaseModel):
+    patient_id: str
+    name: str

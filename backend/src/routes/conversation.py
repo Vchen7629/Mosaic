@@ -6,11 +6,13 @@ from pymongo.asynchronous.database import AsyncDatabase
 from fastapi import Depends
 from fastapi import APIRouter
 from ..db.conn import get_db
+from ..db.conversation import get_briefing
 from ..db.conversation import get_all_conversations
 from ..db.models import ConversationRecord
 from ..db.conversation import add_conversation
 from ..routes.models import AddConversationRequest
 from ..routes.models import FetchAllConversationRequest
+from ..routes.models import fetch_briefing_Request
 SESSION_COOKIE_NAME = "session_token"
 
 
@@ -44,3 +46,15 @@ async def fetch_all_conversations(
     except PyMongoError as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
 
+
+@router.post("/fetch_briefing")
+async def fetch_one_briefing(
+    request: fetch_briefing_Request,
+    db: Annotated[AsyncDatabase, Depends(get_db)]
+):
+    try:
+        briefing = await get_briefing(db, request.patient_id, request.name)
+
+        return {"name": request.name, "summary": briefing}
+    except PyMongoError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
