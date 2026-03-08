@@ -1,30 +1,70 @@
 import { StartAudioRecording, StopAudioRecording } from "../api/hooks/audio";
+import { GenerateBriefing, SummarizeTranscript } from "../api/hooks/llm";
+import { SaveConversation } from "../api/hooks/transcript";
+
 
 interface Props {
   isRecording: boolean;
   setIsRecording: (val: boolean) => void;
+  detectedName: string | null;
+  patientId: string;
 }
 
-const StartRecordingButton = ({ isRecording, setIsRecording }: Props) => {
+const StartRecordingButton = ({ isRecording, setIsRecording, detectedName, patientId }: Props) => {
   const startMutation = StartAudioRecording(setIsRecording);
   const stopMutation = StopAudioRecording(setIsRecording);
+  const summarizeMutation = SummarizeTranscript();
+  const saveMutation = SaveConversation();
+  const briefingMutation = GenerateBriefing();
 
-  const handleToggle = () => {
+  async function handleStop() {
+    try {
+      const { transcript } = await stopMutation.mutateAsync(undefined);
+      if (!transcript || !detectedName) return;
+
+      const summary = await summarizeMutation.mutateAsync(transcript);
+
+      await saveMutation.mutateAsync({
+        patient_id: patientId,
+        name: detectedName,
+        timestamp: new Date().toISOString(),
+        conversation_summary: summary,
+        topics: [],
+      });
+
+      await briefingMutation.mutateAsync({ patient_id: patientId, name: detectedName });
+    } catch (e) {
+      console.error("handleStop failed:", e);
+    }
+  };
+
+  function handleToggle() {
     if (isRecording) {
-      stopMutation.mutate();
+      handleStop();
     } else {
       startMutation.mutate();
     }
   };
 
-  const isPending = startMutation.isPending || stopMutation.isPending;
+  const isStartPending = startMutation.isPending;
+  const isStopPending = stopMutation.isPending;
+
+  const label = isStartPending
+    ? "Starting..."
+    : isStopPending
+    ? isRecording
+      ? "Stopping..."
+      : "Transcribing..."
+    : isRecording
+    ? "Stop"
+    : "Start";
 
   return (
     <button
       onClick={handleToggle}
-      disabled={isPending}
+      disabled={isStartPending || isStopPending}
       className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold transition-all duration-200 border ${
-        isPending
+        isStartPending || isStopPending
           ? "bg-red-700/20 border-red-700/40 text-red-500 hover:bg-red-500/30 cursor-not-allowed"
           : isRecording
           ? "bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30 cursor-pointer"
@@ -36,7 +76,7 @@ const StartRecordingButton = ({ isRecording, setIsRecording }: Props) => {
           isRecording ? "bg-red-400 recording-dot" : "bg-emerald-400"
         }`}
       />
-      {stopMutation.isPending ? "Stopping..." : isRecording ? "Stop" : "Start"}
+      {label}
     </button>
   );
 };

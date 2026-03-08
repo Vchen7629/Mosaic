@@ -62,6 +62,8 @@ function App() {
             <StartRecordingButton
               isRecording={isRecording}
               setIsRecording={setIsRecording}
+              detectedName={detectedName}
+              patientId={patientId}
             />
             <button
               onClick={() => getCurrentWindow().close().catch(console.error)}
