@@ -6,6 +6,7 @@ pub fn kill_processes_on_ports() {
     #[cfg(target_os = "windows")]
     {
         use std::os::windows::process::CommandExt;
+        use std::collections::HashSet;
         const CREATE_NO_WINDOW: u32 = 0x08000000;
 
         println!("[Rust] Checking for processes using port {} via netstat", port);
@@ -16,6 +17,9 @@ pub fn kill_processes_on_ports() {
 
         if let Ok(out) = netstat_cmd.output() {
             let text = String::from_utf8_lossy(&out.stdout).to_string();
+            let mut pids_to_kill = HashSet::new();
+
+            // Collect unique PIDs first
             for line in text.lines() {
                 let parts: Vec<&str> = line.split_whitespace().collect();
                 if parts.len() >= 5 {
@@ -27,28 +31,41 @@ pub fn kill_processes_on_ports() {
                     }
                     if let Ok(pid_val) = pid_str.parse::<u32>() {
                         if state == "LISTENING" || state == "ESTABLISHED" {
-                            println!("[Rust] Found PID {} on port {} (state: {}) — taskkilling", pid_val, port, state);
-
-                            let mut kill_cmd = Command::new("taskkill");
-                            kill_cmd.args(["/T", "/F", "/PID", &pid_val.to_string()])
-                                .creation_flags(CREATE_NO_WINDOW);
-                            let _ = kill_cmd.output();
+                            pids_to_kill.insert(pid_val);
                         }
                     }
                 }
+            }
+
+            // Kill each unique PID once
+            for pid_val in pids_to_kill {
+                println!("[Rust] Found PID {} on port {} — taskkilling", pid_val, port);
+                let mut kill_cmd = Command::new("taskkill");
+                kill_cmd.args(["/T", "/F", "/PID", &pid_val.to_string()])
+                    .creation_flags(CREATE_NO_WINDOW);
+                let _ = kill_cmd.output();
             }
         }
     }
     #[cfg(not(target_os = "windows"))]
     {
+        use std::collections::HashSet;
         println!("[Rust] Checking for processes using port {} via lsof", port);
         if let Ok(out) = Command::new("sh").args(["-c", &format!("lsof -t -i:{} || true", port)]).output() {
             let text = String::from_utf8_lossy(&out.stdout).to_string();
+            let mut pids_to_kill = HashSet::new();
+
+            // Collect unique PIDs first
             for line in text.lines() {
                 if let Ok(pid_val) = line.trim().parse::<u32>() {
-                    println!("[Rust] Found PID {} on port {} — killing", pid_val, port);
-                    let _ = Command::new("kill").args(["-9", &pid_val.to_string()]).output();
+                    pids_to_kill.insert(pid_val);
                 }
+            }
+
+            // Kill each unique PID once
+            for pid_val in pids_to_kill {
+                println!("[Rust] Found PID {} on port {} — killing", pid_val, port);
+                let _ = Command::new("kill").args(["-9", &pid_val.to_string()]).output();
             }
         }
     }

@@ -1,17 +1,20 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 mod backend_utils;
 mod port_utils;
 mod path_utils;
 
+#[derive(Clone)]
 struct BackendProcesses {
-    process_children: Mutex<Vec<std::process::Child>>,
+    process_children: Arc<Mutex<Vec<std::process::Child>>>,
+    is_starting: Arc<Mutex<bool>>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .manage(BackendProcesses {
-            process_children: Mutex::new(Vec::new()),
+            process_children: Arc::new(Mutex::new(Vec::new())),
+            is_starting: Arc::new(Mutex::new(false)),
         })
         .invoke_handler(tauri::generate_handler![
             backend_utils::start_backend_api,

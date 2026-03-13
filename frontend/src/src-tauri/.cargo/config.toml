@@ -1,4 +1,0 @@
-[build]
-# Disable incremental compilation to save disk space during development
-# Note: This will make rebuilds slower but saves ~800MB+ of disk space
-incremental = false
