@@ -1,20 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import "./App.css";
 import StartRecordingButton from "./components/startRecordingBtn";
 import { SetWindowPosition } from "./utils/setWindowPosition";
 import { handleBackendLifecycle } from "./utils/handleBackendLifecycle";
-import { useFaceDetection } from "./api/hooks/detection";
+import { useFaceDetection } from "./api/utils/detection";
 import NewFaceInput from "./components/newFaceInput";
 import { AutoResizeWindow } from "./utils/autoResizeWindow";
-import { FetchBriefing } from "./api/hooks/transcript";
+import { FetchBriefing } from "./api/utils/transcript";
 import ConvoBriefingDisplay from "./components/convo_briefing";
+import { backendAudioProcess } from "./api/utils/audio";
+import "./App.css";
 
 function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [newFaceName, setNewFaceName] = useState("");
   const patientId = localStorage.getItem("patient_id") ?? "test-patient";
-  const { detectedName, unknownFaceDetected, confirmNewFace } = useFaceDetection(patientId, isRecording);
+  //const { detectedName, unknownFaceDetected, confirmNewFace } = useFaceDetection(patientId, isRecording);
   const briefingRes = FetchBriefing();
   const briefingFetched = useRef(false);
 
@@ -24,17 +25,16 @@ function App() {
       const timer = setTimeout(() => briefingRes.reset(), 700);
       return () => clearTimeout(timer);
     }
-    if (detectedName && !briefingFetched.current) {
+    /*if (detectedName && !briefingFetched.current) {
       briefingFetched.current = true;
       briefingRes.mutate({ patient_id: patientId, name: detectedName });
-    }
-  }, [detectedName, isRecording]);
+    }*/
+  }, [/*detectedName,*/ isRecording]);
 
   SetWindowPosition()
   AutoResizeWindow()
   handleBackendLifecycle()
-
-  
+  backendAudioProcess(patientId, isRecording)
 
   return (
     <main className="w-full p-2">
@@ -53,12 +53,7 @@ function App() {
             Live Transcription
           </span>
           <div className="flex items-center gap-2">
-            <StartRecordingButton
-              isRecording={isRecording}
-              setIsRecording={setIsRecording}
-              detectedName={detectedName}
-              patientId={patientId}
-            />
+            <StartRecordingButton isRecording={isRecording} setIsRecording={setIsRecording}/>
             <button
               onClick={() => getCurrentWindow().close().catch(console.error)}
               className="w-6 h-6 rounded-full flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.08] transition-all duration-150 cursor-pointer"
@@ -74,9 +69,9 @@ function App() {
         {/* Divider */}
         <div className="relative z-10 h-px bg-zinc-800 flex-shrink-0" />
 
-        {unknownFaceDetected && (
+        {/*unknownFaceDetected && (
           <NewFaceInput newFaceName={newFaceName} setNewFaceName={setNewFaceName} confirmNewFace={confirmNewFace}/>
-        )}
+        )*/}
 
       </div>
 
