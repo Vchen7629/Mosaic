@@ -6,6 +6,7 @@ use crate::{BackendProcesses, port_utils, path_utils};
 pub fn start_backend_api(state: State<BackendProcesses>, app_handle: tauri::AppHandle) -> Result<String, String> {
     println!("[Rust] start_backend_api called");
 
+    // Check if already running
     {
         let children = state.process_children.lock().unwrap();
         if !children.is_empty() {
@@ -14,73 +15,88 @@ pub fn start_backend_api(state: State<BackendProcesses>, app_handle: tauri::AppH
         }
     }
 
-    if port_utils::ports_in_use() {
-        println!("[Rust] Port 8000 in use by untracked process, cleaning up...");
-        port_utils::kill_processes_on_ports();
-        port_utils::wait_for_ports_free(std::time::Duration::from_secs(5));
-    }
-
-    let backend_path = path_utils::get_backend_path(&app_handle)?;
-
-    println!("[Rust] Backend resource path: {}", backend_path.display());
-
-    #[cfg(target_os = "windows")]
-    let venv_python = backend_path.join(".venv").join("Scripts").join("python.exe");
-    #[cfg(not(target_os = "windows"))]
-    let venv_python = backend_path.join(".venv").join("bin").join("python3");
-
-    let venv_path = backend_path.join(".venv");
-    #[cfg(target_os = "windows")]
-    let venv_bin = venv_path.join("Scripts");
-    #[cfg(not(target_os = "windows"))]
-    let venv_bin = venv_path.join("bin");
-    let current_path = std::env::var("PATH").unwrap_or_default();
-    #[cfg(target_os = "windows")]
-    let new_path = format!("{};{}", venv_bin.display(), current_path);
-    #[cfg(not(target_os = "windows"))]
-    let new_path = format!("{}:{}", venv_bin.display(), current_path);
-
-    port_utils::wait_for_ports_free(std::time::Duration::from_secs(5));
-
-    let workspace_root = backend_path
-        .parent()
-        .expect("failed to get workspace root from backend path");
-
-    println!("[Rust] Workspace root: {}", workspace_root.display());
-    println!("[Rust] Python executable: {}", venv_python.display());
-
-    let mut backend_cmd = Command::new(&venv_python);
-    backend_cmd
-        .args(&["-m", "uvicorn", "src.main:app", "--host", "127.0.0.1", "--port", "8000"])
-        .current_dir(&backend_path)
-        .env("PATH", &new_path)
-        .env("VIRTUAL_ENV", &venv_path)
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit());
-
-    #[cfg(target_os = "windows")]
     {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x08000000;
-        backend_cmd.creation_flags(CREATE_NO_WINDOW);
+        let mut is_starting = state.is_starting.lock().unwrap();
+        if *is_starting {
+            println!("[Rust] Backend already starting, ignoring duplicate call");
+            return Ok("Backend already starting".to_string());
+        }
+        *is_starting = true;
     }
 
-    let backend_process = backend_cmd
-        .spawn()
-        .map_err(|e| format!("Failed to start backend: {}\nWorkspace: {}\nPython: {}",
-            e, workspace_root.display(), venv_python.display()))?;
+    // Clone state for background thread
+    let state_clone = state.inner().clone();
 
-    let backend_pid = backend_process.id();
+    // Spawn backend startup in background thread to avoid blocking UI
+    std::thread::spawn(move || {
+        println!("[Rust] Background thread: Starting backend startup sequence");
 
-    let mut children = state.process_children.lock().unwrap();
-    children.clear();
-    children.push(backend_process);
+        // Check and clean up ports if needed
+        if port_utils::ports_in_use() {
+            println!("[Rust] Port 8000 in use by untracked process, cleaning up...");
+            port_utils::kill_processes_on_ports();
+            port_utils::wait_for_ports_free(std::time::Duration::from_secs(5));
+        }
 
-    println!("[Rust] Backend started successfully! PID: {}", backend_pid);
+        let backend_path = match path_utils::get_backend_path(&app_handle) {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("[Rust] Failed to get backend path: {}", e);
+                *state_clone.is_starting.lock().unwrap() = false;
+                return;
+            }
+        };
 
-    port_utils::wait_for_port_ready(std::time::Duration::from_secs(15));
+        println!("[Rust] Backend resource path: {}", backend_path.display());
 
-    Ok(format!("Backend started (PID: {})", backend_pid))
+        // Go client is in backend/client directory
+        let go_client_path = backend_path.join("client");
+
+        if !go_client_path.exists() {
+            eprintln!("[Rust] Go client directory not found at: {}", go_client_path.display());
+            *state_clone.is_starting.lock().unwrap() = false;
+            return;
+        }
+
+        let workspace_root = backend_path
+            .parent()
+            .expect("failed to get workspace root from backend path");
+
+        println!("[Rust] Workspace root: {}", workspace_root.display());
+        println!("[Rust] Go client path: {}", go_client_path.display());
+
+        let mut backend_cmd = Command::new("go");
+        backend_cmd
+            .args(&["run", "./cmd/main.go"])
+            .current_dir(&go_client_path)
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit());
+
+        let backend_process = match backend_cmd.spawn() {
+            Ok(p) => p,
+            Err(e) => {
+                eprintln!("[Rust] Failed to start Go backend: {}\nWorkspace: {}\nGo client path: {}",
+                    e, workspace_root.display(), go_client_path.display());
+                *state_clone.is_starting.lock().unwrap() = false;
+                return;
+            }
+        };
+
+        let backend_pid = backend_process.id();
+
+        // Store the process
+        let mut children = state_clone.process_children.lock().unwrap();
+        children.clear();
+        children.push(backend_process);
+
+        println!("[Rust] Backend started successfully! PID: {}", backend_pid);
+
+        // Reset the starting flag now that we've successfully started
+        *state_clone.is_starting.lock().unwrap() = false;
+    });
+
+    // Return immediately to UI
+    Ok("Backend starting in background...".to_string())
 }
 
 #[tauri::command]
