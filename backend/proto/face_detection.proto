@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+option go_package = "mosaic-client.com/gen";
+
+package proto;
+
+// Face detection processing service definition
+service FaceDetectionService {
+    // Send face bytes, get back briefing if known or unknown signal
+    rpc ProcessFaces (ProcessFacesRequest) returns (ProcessFacesResponse) {}
+    
+    // Called after the user enters a name for an unknown face
+    rpc RegisterFace (RegisterFaceRequest) returns (RegisterFaceResponse) {}
+}
+
+// The request containing the face image in bytes and patient id
+message ProcessFacesRequest {
+    bytes face_bytes = 1;
+    string patient_id = 2;
+}
+
+// The response containing briefing if face matches an existing face
+// or is_known false if face doesnt match
+message ProcessFacesResponse {
+    bool is_known = 1;
+    string visitor_id = 2; // populated if known
+    string briefing = 3; // populated if face matches and has a briefing
+    bytes face_embedding = 4; // populated if unknown, pass back to RegisterFace to register the new face name
+}
+
+// Response containing data to register a new unknown face
+message RegisterFaceRequest {
+    bytes face_embedding = 1; // embedding returned from ProcessFace
+    string visitor_name = 2;
+    string patient_id = 3;
+}
+
+// Response containing data about if request succeeded and visitor id
+message RegisterFaceResponse {
+    bool success = 1;
+    string visitor_id = 2;
+}
