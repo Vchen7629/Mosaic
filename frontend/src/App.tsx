@@ -3,19 +3,20 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import StartRecordingButton from "./components/startRecordingBtn";
 import { SetWindowPosition } from "./utils/setWindowPosition";
 import { handleBackendLifecycle } from "./utils/handleBackendLifecycle";
-import { useFaceDetection } from "./api/utils/detection";
 import NewFaceInput from "./components/newFaceInput";
 import { AutoResizeWindow } from "./utils/autoResizeWindow";
 import { FetchBriefing } from "./api/utils/transcript";
 import ConvoBriefingDisplay from "./components/convo_briefing";
 import { backendAudioProcess } from "./api/utils/audio";
+import { backendFaceProcess } from "./api/utils/face";
+import { useWebSocketConnection } from "./api/hooks/useWebSocketConnection";
 import "./App.css";
 
 function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [newFaceName, setNewFaceName] = useState("");
   const patientId = localStorage.getItem("patient_id") ?? "test-patient";
-  //const { detectedName, unknownFaceDetected, confirmNewFace } = useFaceDetection(patientId, isRecording);
+  const wsRef = useWebSocketConnection(patientId, isRecording)
   const briefingRes = FetchBriefing();
   const briefingFetched = useRef(false);
 
@@ -34,7 +35,8 @@ function App() {
   SetWindowPosition()
   AutoResizeWindow()
   handleBackendLifecycle()
-  backendAudioProcess(patientId, isRecording)
+  backendAudioProcess(wsRef, isRecording)
+  backendFaceProcess(wsRef, isRecording)
 
   return (
     <main className="w-full p-2">
