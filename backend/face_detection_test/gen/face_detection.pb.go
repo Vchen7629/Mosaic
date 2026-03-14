@@ -79,7 +79,7 @@ type FaceResult struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	IsKnown       bool                   `protobuf:"varint,1,opt,name=is_known,json=isKnown,proto3" json:"is_known,omitempty"`
 	Briefing      string                 `protobuf:"bytes,2,opt,name=briefing,proto3" json:"briefing,omitempty"`
-	FaceEmbedding []byte                 `protobuf:"bytes,3,opt,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // populated if unknown
+	FaceEmbedding []float32              `protobuf:"fixed32,3,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // 128 dim embedding
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -128,7 +128,7 @@ func (x *FaceResult) GetBriefing() string {
 	return ""
 }
 
-func (x *FaceResult) GetFaceEmbedding() []byte {
+func (x *FaceResult) GetFaceEmbedding() []float32 {
 	if x != nil {
 		return x.FaceEmbedding
 	}
@@ -200,7 +200,7 @@ func (x *ProcessFacesResponse) GetSuccess() bool {
 // Response containing data to register a new unknown face
 type RegisterFaceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FaceEmbedding []byte                 `protobuf:"bytes,1,opt,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // embedding returned from ProcessFace
+	FaceEmbedding []float32              `protobuf:"fixed32,1,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // 128 dim emb
 	PatientId     int32                  `protobuf:"varint,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
 	VisitorName   string                 `protobuf:"bytes,3,opt,name=visitor_name,json=visitorName,proto3" json:"visitor_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -237,7 +237,7 @@ func (*RegisterFaceRequest) Descriptor() ([]byte, []int) {
 	return file_face_detection_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *RegisterFaceRequest) GetFaceEmbedding() []byte {
+func (x *RegisterFaceRequest) GetFaceEmbedding() []float32 {
 	if x != nil {
 		return x.FaceEmbedding
 	}
@@ -317,13 +317,13 @@ const file_face_detection_proto_rawDesc = "" +
 	"FaceResult\x12\x19\n" +
 	"\bis_known\x18\x01 \x01(\bR\aisKnown\x12\x1a\n" +
 	"\bbriefing\x18\x02 \x01(\tR\bbriefing\x12%\n" +
-	"\x0eface_embedding\x18\x03 \x01(\fR\rfaceEmbedding\"\x8d\x01\n" +
+	"\x0eface_embedding\x18\x03 \x03(\x02R\rfaceEmbedding\"\x8d\x01\n" +
 	"\x14ProcessFacesResponse\x12#\n" +
 	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x126\n" +
 	"\x05faces\x18\x02 \x03(\v2 .proto.face_detection.FaceResultR\x05faces\x12\x18\n" +
 	"\asuccess\x18\x03 \x01(\bR\asuccess\"~\n" +
 	"\x13RegisterFaceRequest\x12%\n" +
-	"\x0eface_embedding\x18\x01 \x01(\fR\rfaceEmbedding\x12\x1d\n" +
+	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\x12\x1d\n" +
 	"\n" +
 	"patient_id\x18\x02 \x01(\x05R\tpatientId\x12!\n" +
 	"\fvisitor_name\x18\x03 \x01(\tR\vvisitorName\"0\n" +

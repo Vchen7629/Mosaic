@@ -23,7 +23,7 @@ message ProcessFacesRequest {
 message FaceResult {                                                                                                                  
     bool is_known = 1;                                                                                                                
     string briefing = 2;                                                                                                              
-    bytes face_embedding = 3; // populated if unknown
+    repeated float face_embedding = 3; // 128 dim embedding
 }  
 
 // The response containing briefing if face matches an existing face
@@ -36,7 +36,7 @@ message ProcessFacesResponse {
 
 // Response containing data to register a new unknown face
 message RegisterFaceRequest {
-    bytes face_embedding = 1; // embedding returned from ProcessFace
+    repeated float face_embedding = 1; // 128 dim emb
     int32 patient_id = 2;
     string visitor_name = 3;
 }
