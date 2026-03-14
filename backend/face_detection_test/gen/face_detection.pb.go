@@ -25,7 +25,7 @@ const (
 type ProcessFacesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FaceBytes     []byte                 `protobuf:"bytes,1,opt,name=face_bytes,json=faceBytes,proto3" json:"face_bytes,omitempty"`
-	PatientId     string                 `protobuf:"bytes,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
+	PatientId     int32                  `protobuf:"varint,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -67,11 +67,11 @@ func (x *ProcessFacesRequest) GetFaceBytes() []byte {
 	return nil
 }
 
-func (x *ProcessFacesRequest) GetPatientId() string {
+func (x *ProcessFacesRequest) GetPatientId() int32 {
 	if x != nil {
 		return x.PatientId
 	}
-	return ""
+	return 0
 }
 
 // single face message containing the metadata and if we should register name for it
@@ -193,7 +193,7 @@ func (x *ProcessFacesResponse) GetFaces() []*FaceResult {
 type RegisterFaceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FaceEmbedding []byte                 `protobuf:"bytes,1,opt,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // embedding returned from ProcessFace
-	PatientId     string                 `protobuf:"bytes,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
+	PatientId     int32                  `protobuf:"varint,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -235,11 +235,11 @@ func (x *RegisterFaceRequest) GetFaceEmbedding() []byte {
 	return nil
 }
 
-func (x *RegisterFaceRequest) GetPatientId() string {
+func (x *RegisterFaceRequest) GetPatientId() int32 {
 	if x != nil {
 		return x.PatientId
 	}
-	return ""
+	return 0
 }
 
 // Response containing data about if request succeeded and visitor id
@@ -296,7 +296,7 @@ const file_face_detection_proto_rawDesc = "" +
 	"\n" +
 	"face_bytes\x18\x01 \x01(\fR\tfaceBytes\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x02 \x01(\tR\tpatientId\"j\n" +
+	"patient_id\x18\x02 \x01(\x05R\tpatientId\"j\n" +
 	"\n" +
 	"FaceResult\x12\x19\n" +
 	"\bis_known\x18\x01 \x01(\bR\aisKnown\x12\x1a\n" +
@@ -308,7 +308,7 @@ const file_face_detection_proto_rawDesc = "" +
 	"\x13RegisterFaceRequest\x12%\n" +
 	"\x0eface_embedding\x18\x01 \x01(\fR\rfaceEmbedding\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x02 \x01(\tR\tpatientId\"0\n" +
+	"patient_id\x18\x02 \x01(\x05R\tpatientId\"0\n" +
 	"\x14RegisterFaceResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess2\xe8\x01\n" +
 	"\x14FaceDetectionService\x12g\n" +

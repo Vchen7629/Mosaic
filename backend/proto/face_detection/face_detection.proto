@@ -16,7 +16,7 @@ service FaceDetectionService {
 // The request containing the face image in bytes and patient id
 message ProcessFacesRequest {
     bytes face_bytes = 1;
-    string patient_id = 2;
+    int32 patient_id = 2;
 }
 
 // single face message containing the metadata and if we should register name for it
@@ -36,7 +36,7 @@ message ProcessFacesResponse {
 // Response containing data to register a new unknown face
 message RegisterFaceRequest {
     bytes face_embedding = 1; // embedding returned from ProcessFace
-    string patient_id = 2;
+    int32 patient_id = 2;
 }
 
 // Response containing data about if request succeeded and visitor id
