@@ -31,6 +31,7 @@ message FaceResult {
 message ProcessFacesResponse {
     bool face_detected = 1; // used so if no face is detected it doesnt send a req
     repeated FaceResult faces = 2;
+    bool success = 3; // boolean to see if the process succeeded for handling retry
 }
 
 // Response containing data to register a new unknown face

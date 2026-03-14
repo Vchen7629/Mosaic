@@ -141,6 +141,7 @@ type ProcessFacesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FaceDetected  bool                   `protobuf:"varint,1,opt,name=face_detected,json=faceDetected,proto3" json:"face_detected,omitempty"` // used so if no face is detected it doesnt send a req
 	Faces         []*FaceResult          `protobuf:"bytes,2,rep,name=faces,proto3" json:"faces,omitempty"`
+	Success       bool                   `protobuf:"varint,3,opt,name=success,proto3" json:"success,omitempty"` // boolean to see if the process succeeded for handling retry
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -187,6 +188,13 @@ func (x *ProcessFacesResponse) GetFaces() []*FaceResult {
 		return x.Faces
 	}
 	return nil
+}
+
+func (x *ProcessFacesResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
 }
 
 // Response containing data to register a new unknown face
@@ -301,10 +309,11 @@ const file_face_detection_proto_rawDesc = "" +
 	"FaceResult\x12\x19\n" +
 	"\bis_known\x18\x01 \x01(\bR\aisKnown\x12\x1a\n" +
 	"\bbriefing\x18\x02 \x01(\tR\bbriefing\x12%\n" +
-	"\x0eface_embedding\x18\x03 \x01(\fR\rfaceEmbedding\"s\n" +
+	"\x0eface_embedding\x18\x03 \x01(\fR\rfaceEmbedding\"\x8d\x01\n" +
 	"\x14ProcessFacesResponse\x12#\n" +
 	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x126\n" +
-	"\x05faces\x18\x02 \x03(\v2 .proto.face_detection.FaceResultR\x05faces\"[\n" +
+	"\x05faces\x18\x02 \x03(\v2 .proto.face_detection.FaceResultR\x05faces\x12\x18\n" +
+	"\asuccess\x18\x03 \x01(\bR\asuccess\"[\n" +
 	"\x13RegisterFaceRequest\x12%\n" +
 	"\x0eface_embedding\x18\x01 \x01(\fR\rfaceEmbedding\x12\x1d\n" +
 	"\n" +
