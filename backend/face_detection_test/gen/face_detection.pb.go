@@ -79,9 +79,10 @@ func (x *ProcessFacesRequest) GetPatientId() string {
 type ProcessFacesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	IsKnown       bool                   `protobuf:"varint,1,opt,name=is_known,json=isKnown,proto3" json:"is_known,omitempty"`
-	VisitorId     string                 `protobuf:"bytes,2,opt,name=visitor_id,json=visitorId,proto3" json:"visitor_id,omitempty"`             // populated if known
-	Briefing      string                 `protobuf:"bytes,3,opt,name=briefing,proto3" json:"briefing,omitempty"`                                // populated if face matches and has a briefing
-	FaceEmbedding []byte                 `protobuf:"bytes,4,opt,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // populated if unknown, pass back to RegisterFace to register the new face name
+	FaceDetected  bool                   `protobuf:"varint,2,opt,name=face_detected,json=faceDetected,proto3" json:"face_detected,omitempty"`   // used so if no face is detected it doesnt send a req
+	VisitorId     string                 `protobuf:"bytes,3,opt,name=visitor_id,json=visitorId,proto3" json:"visitor_id,omitempty"`             // populated if known
+	Briefing      string                 `protobuf:"bytes,4,opt,name=briefing,proto3" json:"briefing,omitempty"`                                // populated if face matches and has a briefing
+	FaceEmbedding []byte                 `protobuf:"bytes,5,opt,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // populated if unknown, pass back to RegisterFace to register the new face name
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -119,6 +120,13 @@ func (*ProcessFacesResponse) Descriptor() ([]byte, []int) {
 func (x *ProcessFacesResponse) GetIsKnown() bool {
 	if x != nil {
 		return x.IsKnown
+	}
+	return false
+}
+
+func (x *ProcessFacesResponse) GetFaceDetected() bool {
+	if x != nil {
+		return x.FaceDetected
 	}
 	return false
 }
@@ -267,13 +275,14 @@ const file_face_detection_proto_rawDesc = "" +
 	"\n" +
 	"face_bytes\x18\x01 \x01(\fR\tfaceBytes\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x02 \x01(\tR\tpatientId\"\x93\x01\n" +
+	"patient_id\x18\x02 \x01(\tR\tpatientId\"\xb8\x01\n" +
 	"\x14ProcessFacesResponse\x12\x19\n" +
-	"\bis_known\x18\x01 \x01(\bR\aisKnown\x12\x1d\n" +
+	"\bis_known\x18\x01 \x01(\bR\aisKnown\x12#\n" +
+	"\rface_detected\x18\x02 \x01(\bR\ffaceDetected\x12\x1d\n" +
 	"\n" +
-	"visitor_id\x18\x02 \x01(\tR\tvisitorId\x12\x1a\n" +
-	"\bbriefing\x18\x03 \x01(\tR\bbriefing\x12%\n" +
-	"\x0eface_embedding\x18\x04 \x01(\fR\rfaceEmbedding\"~\n" +
+	"visitor_id\x18\x03 \x01(\tR\tvisitorId\x12\x1a\n" +
+	"\bbriefing\x18\x04 \x01(\tR\bbriefing\x12%\n" +
+	"\x0eface_embedding\x18\x05 \x01(\fR\rfaceEmbedding\"~\n" +
 	"\x13RegisterFaceRequest\x12%\n" +
 	"\x0eface_embedding\x18\x01 \x01(\fR\rfaceEmbedding\x12!\n" +
 	"\fvisitor_name\x18\x02 \x01(\tR\vvisitorName\x12\x1d\n" +
