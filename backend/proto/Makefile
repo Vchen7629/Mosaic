@@ -6,9 +6,13 @@ face_detection_gen:
 			--go-grpc_out=../client/gen/face_detection \
 			--go_opt=paths=source_relative \
 			--go-grpc_opt=paths=source_relative
-	uv run python -m grpc_tools.protoc -I face_detection face_detection/face_detection.proto \
-			--python_out=../face_detection_service/gen \
-			--grpc_python_out=../face_detection_service/gen
+	protoc -I face_detection face_detection/face_detection.proto \
+		--go_out=../face_detection_test/gen \
+		--go_opt=Mface_detection.proto=mosaic-face-detection.com/gen \
+		--go_opt=paths=source_relative \
+		--go-grpc_out=../face_detection_test/gen \
+		--go-grpc_opt=Mface_detection.proto=mosaic-face-detection.com/genn \
+		--go-grpc_opt=paths=source_relative
 
 audio_transcription_gen:
 	protoc -I audio_transcription audio_transcription/audio_transcription.proto \
