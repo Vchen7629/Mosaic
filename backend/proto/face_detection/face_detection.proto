@@ -38,6 +38,7 @@ message ProcessFacesResponse {
 message RegisterFaceRequest {
     bytes face_embedding = 1; // embedding returned from ProcessFace
     int32 patient_id = 2;
+    string visitor_name = 3;
 }
 
 // Response containing data about if request succeeded and visitor id

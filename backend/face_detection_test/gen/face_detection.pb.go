@@ -202,6 +202,7 @@ type RegisterFaceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FaceEmbedding []byte                 `protobuf:"bytes,1,opt,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // embedding returned from ProcessFace
 	PatientId     int32                  `protobuf:"varint,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
+	VisitorName   string                 `protobuf:"bytes,3,opt,name=visitor_name,json=visitorName,proto3" json:"visitor_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -248,6 +249,13 @@ func (x *RegisterFaceRequest) GetPatientId() int32 {
 		return x.PatientId
 	}
 	return 0
+}
+
+func (x *RegisterFaceRequest) GetVisitorName() string {
+	if x != nil {
+		return x.VisitorName
+	}
+	return ""
 }
 
 // Response containing data about if request succeeded and visitor id
@@ -313,11 +321,12 @@ const file_face_detection_proto_rawDesc = "" +
 	"\x14ProcessFacesResponse\x12#\n" +
 	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x126\n" +
 	"\x05faces\x18\x02 \x03(\v2 .proto.face_detection.FaceResultR\x05faces\x12\x18\n" +
-	"\asuccess\x18\x03 \x01(\bR\asuccess\"[\n" +
+	"\asuccess\x18\x03 \x01(\bR\asuccess\"~\n" +
 	"\x13RegisterFaceRequest\x12%\n" +
 	"\x0eface_embedding\x18\x01 \x01(\fR\rfaceEmbedding\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x02 \x01(\x05R\tpatientId\"0\n" +
+	"patient_id\x18\x02 \x01(\x05R\tpatientId\x12!\n" +
+	"\fvisitor_name\x18\x03 \x01(\tR\vvisitorName\"0\n" +
 	"\x14RegisterFaceResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess2\xe8\x01\n" +
 	"\x14FaceDetectionService\x12g\n" +
