@@ -78,9 +78,8 @@ func (x *ProcessFacesRequest) GetPatientId() string {
 type FaceResult struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	IsKnown       bool                   `protobuf:"varint,1,opt,name=is_known,json=isKnown,proto3" json:"is_known,omitempty"`
-	VisitorId     string                 `protobuf:"bytes,2,opt,name=visitor_id,json=visitorId,proto3" json:"visitor_id,omitempty"`
-	Briefing      string                 `protobuf:"bytes,3,opt,name=briefing,proto3" json:"briefing,omitempty"`
-	FaceEmbedding []byte                 `protobuf:"bytes,4,opt,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // populated if unknown
+	Briefing      string                 `protobuf:"bytes,2,opt,name=briefing,proto3" json:"briefing,omitempty"`
+	FaceEmbedding []byte                 `protobuf:"bytes,3,opt,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // populated if unknown
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -120,13 +119,6 @@ func (x *FaceResult) GetIsKnown() bool {
 		return x.IsKnown
 	}
 	return false
-}
-
-func (x *FaceResult) GetVisitorId() string {
-	if x != nil {
-		return x.VisitorId
-	}
-	return ""
 }
 
 func (x *FaceResult) GetBriefing() string {
@@ -201,8 +193,7 @@ func (x *ProcessFacesResponse) GetFaces() []*FaceResult {
 type RegisterFaceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FaceEmbedding []byte                 `protobuf:"bytes,1,opt,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // embedding returned from ProcessFace
-	VisitorName   string                 `protobuf:"bytes,2,opt,name=visitor_name,json=visitorName,proto3" json:"visitor_name,omitempty"`
-	PatientId     string                 `protobuf:"bytes,3,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
+	PatientId     string                 `protobuf:"bytes,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -244,13 +235,6 @@ func (x *RegisterFaceRequest) GetFaceEmbedding() []byte {
 	return nil
 }
 
-func (x *RegisterFaceRequest) GetVisitorName() string {
-	if x != nil {
-		return x.VisitorName
-	}
-	return ""
-}
-
 func (x *RegisterFaceRequest) GetPatientId() string {
 	if x != nil {
 		return x.PatientId
@@ -262,7 +246,6 @@ func (x *RegisterFaceRequest) GetPatientId() string {
 type RegisterFaceResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	VisitorId     string                 `protobuf:"bytes,2,opt,name=visitor_id,json=visitorId,proto3" json:"visitor_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -304,13 +287,6 @@ func (x *RegisterFaceResponse) GetSuccess() bool {
 	return false
 }
 
-func (x *RegisterFaceResponse) GetVisitorId() string {
-	if x != nil {
-		return x.VisitorId
-	}
-	return ""
-}
-
 var File_face_detection_proto protoreflect.FileDescriptor
 
 const file_face_detection_proto_rawDesc = "" +
@@ -320,26 +296,21 @@ const file_face_detection_proto_rawDesc = "" +
 	"\n" +
 	"face_bytes\x18\x01 \x01(\fR\tfaceBytes\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x02 \x01(\tR\tpatientId\"\x89\x01\n" +
+	"patient_id\x18\x02 \x01(\tR\tpatientId\"j\n" +
 	"\n" +
 	"FaceResult\x12\x19\n" +
-	"\bis_known\x18\x01 \x01(\bR\aisKnown\x12\x1d\n" +
-	"\n" +
-	"visitor_id\x18\x02 \x01(\tR\tvisitorId\x12\x1a\n" +
-	"\bbriefing\x18\x03 \x01(\tR\bbriefing\x12%\n" +
-	"\x0eface_embedding\x18\x04 \x01(\fR\rfaceEmbedding\"s\n" +
+	"\bis_known\x18\x01 \x01(\bR\aisKnown\x12\x1a\n" +
+	"\bbriefing\x18\x02 \x01(\tR\bbriefing\x12%\n" +
+	"\x0eface_embedding\x18\x03 \x01(\fR\rfaceEmbedding\"s\n" +
 	"\x14ProcessFacesResponse\x12#\n" +
 	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x126\n" +
-	"\x05faces\x18\x02 \x03(\v2 .proto.face_detection.FaceResultR\x05faces\"~\n" +
+	"\x05faces\x18\x02 \x03(\v2 .proto.face_detection.FaceResultR\x05faces\"[\n" +
 	"\x13RegisterFaceRequest\x12%\n" +
-	"\x0eface_embedding\x18\x01 \x01(\fR\rfaceEmbedding\x12!\n" +
-	"\fvisitor_name\x18\x02 \x01(\tR\vvisitorName\x12\x1d\n" +
+	"\x0eface_embedding\x18\x01 \x01(\fR\rfaceEmbedding\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x03 \x01(\tR\tpatientId\"O\n" +
+	"patient_id\x18\x02 \x01(\tR\tpatientId\"0\n" +
 	"\x14RegisterFaceResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
-	"\n" +
-	"visitor_id\x18\x02 \x01(\tR\tvisitorId2\xe8\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xe8\x01\n" +
 	"\x14FaceDetectionService\x12g\n" +
 	"\fProcessFaces\x12).proto.face_detection.ProcessFacesRequest\x1a*.proto.face_detection.ProcessFacesResponse\"\x00\x12g\n" +
 	"\fRegisterFace\x12).proto.face_detection.RegisterFaceRequest\x1a*.proto.face_detection.RegisterFaceResponse\"\x00B&Z$mosaic-client.com/gen/face_detectionb\x06proto3"

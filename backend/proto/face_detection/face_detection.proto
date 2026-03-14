@@ -22,9 +22,8 @@ message ProcessFacesRequest {
 // single face message containing the metadata and if we should register name for it
 message FaceResult {                                                                                                                  
     bool is_known = 1;                                                                                                                
-    string visitor_id = 2;                                                                                                            
-    string briefing = 3;                                                                                                              
-    bytes face_embedding = 4; // populated if unknown
+    string briefing = 2;                                                                                                              
+    bytes face_embedding = 3; // populated if unknown
 }  
 
 // The response containing briefing if face matches an existing face
@@ -37,12 +36,10 @@ message ProcessFacesResponse {
 // Response containing data to register a new unknown face
 message RegisterFaceRequest {
     bytes face_embedding = 1; // embedding returned from ProcessFace
-    string visitor_name = 2;
-    string patient_id = 3;
+    string patient_id = 2;
 }
 
 // Response containing data about if request succeeded and visitor id
 message RegisterFaceResponse {
     bool success = 1;
-    string visitor_id = 2;
 }
