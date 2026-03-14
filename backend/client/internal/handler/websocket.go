@@ -1,17 +1,25 @@
 package handler
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
+	at "mosaic-client.com/gen/audio_transcription"
+	fd "mosaic-client.com/gen/face_detection"
 	"mosaic-client.com/internal/service"
 )
 
 type Message struct {
 	Type string `json:"type"` // either "frame" or "audio"
 	Data string `json:"data"` // base64 encoded
+}
+
+type WebSocketHandler struct {
+	AudioClient at.AudioTranscriptionServiceClient
+	FaceClient  fd.FaceDetectionServiceClient
 }
 
 var upgrader = websocket.Upgrader{
@@ -22,7 +30,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[WebSocket] Connection attempt from origin: %s", r.Header.Get("Origin"))
 
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -41,16 +49,28 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			log.Println("Read ws error: ", err)
+			if websocket.IsUnexpectedCloseError(err) {
+				log.Printf("[WebSocket] Unexpected close: %v", err)
+			}
 			break
 		}
 
 		switch msg.Type {
-		case "frame":
-			go service.ProcessImageFrame(msg.Data, patientID, conn)
+		case "face_frame":
+			go service.ProcessImageFrame(msg.Data, patientID, conn, h.FaceClient)
 		case "audio":
-			log.Printf("[WebSocket] Received audio message, data length: %d bytes", len(msg.Data))
-			go service.ProcessAudio(msg.Data, patientID)
+			service.Wg.Add(1)
+			go func() {
+				defer service.Wg.Done()
+				service.ProcessAudio(msg.Data, patientID, h.AudioClient)
+			}()
 		}
+	}
+
+	ctx := context.Background()
+	service.FlushAudio(ctx, patientID, h.AudioClient)
+	err = service.SaveTranscriptWithRetry(ctx, patientID, h.AudioClient)
+	if err != nil {
+		log.Printf("error saving transcript: %v", err)
 	}
 }
