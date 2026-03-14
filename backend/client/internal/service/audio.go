@@ -1,17 +1,22 @@
 package service
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
 	"log"
 	"math"
 	"sync"
+	"time"
+
+	at "mosaic-client.com/gen/audio_transcription"
 )
 
 var (
 	audioBuffer []float32
 	bufferMutex sync.Mutex
+	Wg          sync.WaitGroup
 )
 
 const (
@@ -22,7 +27,13 @@ const (
 	batchSize 		 = sampleRate * batchDuration
 )
 
-func ProcessAudio(audioData string, patientID string) error {
+
+func ProcessAudio(
+	audioData string, 
+	patientID string,
+	client at.AudioTranscriptionServiceClient,
+) error {
+	ctx := context.Background()
 	// Decode base64
 	audioBytes, err := base64.StdEncoding.DecodeString(audioData)
 	if err != nil {
@@ -47,28 +58,101 @@ func ProcessAudio(audioData string, patientID string) error {
 		audioBuffer = audioBuffer[batchSize:]
 		bufferMutex.Unlock()
 
+		
 		log.Printf("[ProcessAudio] Sending batch: %d audio bytes, remaining: %d audio bytes", len(batch), len(audioBuffer))
 
-		return nil
+		err := transcribeWithRetry(ctx, client, batch, patientID)
+		if err != nil {
+			log.Printf("Error transcribing: %v", err)
+			return err
+		}
 	}
 
 	// send to whisper for transcribing audio to text via gRPC
 	return nil
 }
 
+// Method for flushing remaining audio bytes to gRPC service
+// prevents audio sent before 10s batch from being lost when
+// user clicks stop recording
+func FlushAudio(
+	ctx context.Context,
+	patientID string, 
+	client at.AudioTranscriptionServiceClient,
+) {
+	Wg.Wait()
+
+	bufferMutex.Lock()
+	remaining := audioBuffer
+	audioBuffer = nil
+	bufferMutex.Unlock()
+
+	// handles case where there is audio less than 1 second
+	if len(remaining) < sampleRate {
+		return
+	}
+
+	err := transcribeWithRetry(ctx, client, remaining, patientID)
+	if err != nil {
+		log.Printf("Error flushing audio: %v", err)
+	}
+}
+
+// Method for sending gRPC request to save the transcript for the
+// patientID to the database, handles retries with exp backoff
+func SaveTranscriptWithRetry(
+	ctx context.Context,
+	patientID string,
+	client at.AudioTranscriptionServiceClient,
+) error {
+	var err error
+
+	for attempt := range 3 {
+		resp, rpcErr := client.SaveTranscript(ctx, &at.SaveTranscriptRequest{ PatientId: patientID })
+		if rpcErr == nil && resp.Success {
+			return nil
+		}
+		err = rpcErr
+		wait := time.Duration(1<<attempt) * time.Second // 1s, 2s, 4s
+		time.Sleep(wait)
+	}
+
+	return fmt.Errorf("save transcript failed after 3 attempts: %w", err)
+}
+
+// Helper function that sends the audio batch to whisper service for transcription
+// handles retries with exponential backoff
+func transcribeWithRetry(
+	ctx context.Context, 
+	client at.AudioTranscriptionServiceClient,
+	batch []float32,
+	patientID string,
+) error {
+	var err error
+
+	for attempt := range 3 {
+		resp, rpcErr := client.TranscribeAudio(ctx, &at.TranscribeAudioRequest{
+			AudioBytes: batch,
+			PatientId: patientID,
+		})
+		if rpcErr == nil && resp.Success {
+			return nil
+		}
+		err = rpcErr
+		wait := time.Duration(1<<attempt) * time.Second // 1s, 2s, 4s
+		time.Sleep(wait)
+	}
+
+	return fmt.Errorf("transcription failed after 3 attempts: %w", err)
+}
+
 func isAudioValid(audioBytes []float32) bool {
 	rms := calculateRMS(audioBytes)
 
-	if rms < silenceThreshold {
-		log.Printf("Silence (rms=%.4f), skipping", rms)
+	if rms < silenceThreshold || rms > loudThreshold {
 		return false
 	}
-
-	if rms > loudThreshold {
-		log.Printf("Audio too loud (rms=%.4f), skipping", rms)
-		return false
-	}
-
+	
 	return true
 }
 

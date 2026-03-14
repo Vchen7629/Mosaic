@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option go_package = "mosaic-client.com/gen/audio_transcription";
+
+package proto.audio_transcription;
+
+// Audio to text transcription processing service definition
+service AudioTranscriptionService {
+    // Send audio bytes to transcribe to text, returns successful or not for retry
+    rpc TranscribeAudio (TranscribeAudioRequest) returns (TranscribeAudioResponse) {}
+
+    // Send request to save transcript to db, returns successful or not for retry
+    rpc SaveTranscript (SaveTranscriptRequest) returns (SaveTranscriptResponse) {}
+}
+
+// Request containing the 10 second audio chunk and name to be processed
+message TranscribeAudioRequest {
+    repeated float audio_bytes = 1;
+    string patient_id = 2;
+}
+
+// Response containing success to indicate if its successful or not
+message TranscribeAudioResponse {
+    bool success = 1;
+}
+
+// Request containing patient id to save transcript for
+message SaveTranscriptRequest {
+    string patient_id = 1;
+}
+
+// Response containing success to indicate if its successful or not
+message SaveTranscriptResponse {
+    bool success = 1;
+}

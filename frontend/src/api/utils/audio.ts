@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { RefObject } from "react";
 import { useAudioCapture } from "../../hooks/useAudioCapture";
 
 /**
@@ -6,26 +6,7 @@ import { useAudioCapture } from "../../hooks/useAudioCapture";
  * @param patientId 
  * @param isRecording 
  */
-export function backendAudioProcess(patientId: string | null, isRecording: boolean) {
-    const wsRef = useRef<WebSocket | null>(null)
-
-    useEffect(() => {
-        if (!isRecording) {
-            wsRef.current?.close()
-            wsRef.current = null
-            return
-        }
-
-        const ws = new WebSocket(`ws://localhost:8000/api/v1/ws?patient_id=${patientId}`)
-        wsRef.current = ws
-
-        ws.onopen = () => console.log("Audio WebSocket connected")
-        ws.onerror = (err) => console.error("Audio WS error:", err)
-        ws.onclose = () => console.log("Audio WebSocket closed")
-
-        return () => ws.close()
-    }, [isRecording, patientId])
-
+export function backendAudioProcess(wsRef: RefObject<WebSocket | null>, isRecording: boolean) {
     useAudioCapture({
         enabled: isRecording,
         onAudioData: (samples) => {
