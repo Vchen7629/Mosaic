@@ -44,13 +44,14 @@ func WebsocketServer(
 func main() {
 	fmt.Println("[Go Backend] Starting Mosaic backend server...")
 
-	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	audioConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	faceConn, err := grpc.NewClient("localhost:40040", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal("Unable to start gRPC client")
 	}
 
-	atClient := at.NewAudioTranscriptionServiceClient(conn)
-	fdClient := fd.NewFaceDetectionServiceClient(conn)
+	atClient := at.NewAudioTranscriptionServiceClient(audioConn)
+	fdClient := fd.NewFaceDetectionServiceClient(faceConn)
 
 	go WebsocketServer(atClient, fdClient)
 
@@ -63,6 +64,7 @@ func main() {
 	<-sigChan
 	log.Println("Shutting down gracefully...")
 
-	conn.Close()
+	audioConn.Close()
+	faceConn.Close()
 	log.Println("Closed gRPC connection")
 }
