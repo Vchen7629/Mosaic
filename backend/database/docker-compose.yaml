@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:16
+    image: pgvector/pgvector:pg17
     restart: always
     shm_size: 128mb # Set shared memory limit
     environment:
