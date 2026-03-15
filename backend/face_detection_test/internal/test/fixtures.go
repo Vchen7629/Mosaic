@@ -122,6 +122,27 @@ func CheckVisitorEmbeddings(
 	return embeddingFromDB
 }
 
+func CheckUserEmbeddings(
+	t *testing.T, 
+	pool *pgxpool.Pool, 
+	patientID int32,
+) face.Descriptor {
+	ctx := context.Background()
+
+	query := `SELECT face_embedding FROM patient WHERE id = $1`
+	var embeddingRes pgvector.Vector
+	err := pool.QueryRow(ctx, query, patientID).Scan(&embeddingRes)
+
+	assert.Nil(t, err)
+
+	// convert pgvector back to face.Descriptor since thats what we're comparing
+	var embeddingFromDB face.Descriptor
+	copy(embeddingFromDB[:], embeddingRes.Slice())
+
+	return embeddingFromDB
+}
+
+
 // creates float32 array embeddings
 func MakeEmbedding(value float32, size int) []float32 {
 	emb := make([]float32, size)
