@@ -67,7 +67,7 @@ message ProcessProfileFaceResponse {
 
 // Request containing face image in bytes
 message RegisterProfileFaceRequest {
-    bytes face_bytes = 1;
+    repeated float face_embedding = 1; // 128 dim embedding
 }
 
 message RegisterProfileFaceResponse {

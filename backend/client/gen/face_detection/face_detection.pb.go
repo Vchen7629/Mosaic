@@ -427,7 +427,7 @@ func (x *ProcessProfileFaceResponse) GetNewFace() bool {
 // Request containing face image in bytes
 type RegisterProfileFaceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FaceBytes     []byte                 `protobuf:"bytes,1,opt,name=face_bytes,json=faceBytes,proto3" json:"face_bytes,omitempty"`
+	FaceEmbedding []float32              `protobuf:"fixed32,1,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // 128 dim embedding
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -462,9 +462,9 @@ func (*RegisterProfileFaceRequest) Descriptor() ([]byte, []int) {
 	return file_face_detection_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *RegisterProfileFaceRequest) GetFaceBytes() []byte {
+func (x *RegisterProfileFaceRequest) GetFaceEmbedding() []float32 {
 	if x != nil {
-		return x.FaceBytes
+		return x.FaceEmbedding
 	}
 	return nil
 }
@@ -556,10 +556,9 @@ const file_face_detection_proto_rawDesc = "" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x1d\n" +
 	"\n" +
 	"patient_id\x18\x03 \x01(\x05R\tpatientId\x12\x19\n" +
-	"\bnew_face\x18\x04 \x01(\bR\anewFace\";\n" +
-	"\x1aRegisterProfileFaceRequest\x12\x1d\n" +
-	"\n" +
-	"face_bytes\x18\x01 \x01(\fR\tfaceBytes\"V\n" +
+	"\bnew_face\x18\x04 \x01(\bR\anewFace\"C\n" +
+	"\x1aRegisterProfileFaceRequest\x12%\n" +
+	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\"V\n" +
 	"\x1bRegisterProfileFaceResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
 	"\n" +
