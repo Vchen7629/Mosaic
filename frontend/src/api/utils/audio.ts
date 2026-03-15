@@ -1,4 +1,4 @@
-import { RefObject } from "react";
+import { RefObject, useCallback } from "react";
 import { useAudioCapture } from "../../hooks/useAudioCapture";
 
 /**
@@ -6,16 +6,27 @@ import { useAudioCapture } from "../../hooks/useAudioCapture";
  * @param patientId 
  * @param isRecording 
  */
-export function backendAudioProcess(wsRef: RefObject<WebSocket | null>, isRecording: boolean) {
-    useAudioCapture({
-        enabled: isRecording,
-        onAudioData: (samples) => {
-            if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
-            // encode float32Array with base64
-            const base64 = btoa(String.fromCharCode(...new Uint8Array(samples.buffer)))
-            console.log(`[Audio Capture] Sending...`)
-            wsRef.current.send(JSON.stringify({ type: "audio", data: base64}))
-            console.log(`[Audio Capture] Sent websocket`)
+export function backendAudioProcess(
+    wsRef: RefObject<WebSocket | null>, 
+    isRecording: boolean,
+    patientID: string
+) {
+    const onAudioData = useCallback((samples: Float32Array) => {
+        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
+
+        const bytes = new Uint8Array(samples.buffer)
+        let binary = ""
+        for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i])
         }
-    })
+
+        const base64 = btoa(binary)
+        console.log(`[Audio Capture] Sending...`)
+        wsRef.current.send(JSON.stringify({ 
+            type: "audio", audio_data: base64, patient_id: patientID
+        }))
+        console.log(`[Audio Capture] Sent websocket`)
+    }, [wsRef, patientID])
+
+    useAudioCapture({ enabled: isRecording, onAudioData })
 }
