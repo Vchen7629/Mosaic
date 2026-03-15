@@ -8,11 +8,11 @@ import (
 	"github.com/Kagami/go-face"
 )
 
-var modelsDir = filepath.Join("models")
+var ModelsDir = filepath.Join("models")
 
 // initializes the face detection model
 func InitializeFaceDetector() (*face.Recognizer, error) {
-	rec, err := face.NewRecognizer(modelsDir)
+	rec, err := face.NewRecognizer(ModelsDir)
 	if err != nil {
 		log.Fatalf("can't init face recognizer: %v", err)
 	}
@@ -60,9 +60,18 @@ func CompareFaces(
 		knownEmbeddings[i] = v.Embedding
 		knownIDs[i] = v.ID
 	}
-	rec.SetSamples(knownEmbeddings, knownIDs)
 
 	results := make(map[int]int32, len(embeddings))
+
+	if len(knownVisitors) == 0 {
+		for i := range embeddings {
+			results[i] = -1
+		}
+		return results
+	}
+
+	rec.SetSamples(knownEmbeddings, knownIDs)
+
 	for i, embedding := range embeddings {
 		results[i] = int32(rec.ClassifyThreshold(embedding, 0.6))
 	}
