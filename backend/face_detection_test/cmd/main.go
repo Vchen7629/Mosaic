@@ -22,6 +22,7 @@ import (
 type Config struct {
 	ServerPort string `envconfig:"SERVER_PORT" default:"40040"`
 	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
+	ModelsDir string `envconfig:"MODELS_DIR" default:"models"`
 }
 
 // handles starting the gRPC server
@@ -64,7 +65,7 @@ func main() {
 
 	defer pool.Close()
 
-	rec, err := service.InitializeFaceDetector()
+	rec, err := service.InitializeFaceDetector(cfg.ModelsDir)
 	if err != nil {
 		log.Fatalf("failed to init face detector: %v", err)
 	}

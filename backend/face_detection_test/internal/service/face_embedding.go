@@ -3,16 +3,13 @@ package service
 import (
 	"fmt"
 	"log"
-	"path/filepath"
 
 	"github.com/Kagami/go-face"
 )
 
-var ModelsDir = filepath.Join("models")
-
 // initializes the face detection model
-func InitializeFaceDetector() (*face.Recognizer, error) {
-	rec, err := face.NewRecognizer(ModelsDir)
+func InitializeFaceDetector(modelsDir string) (*face.Recognizer, error) {
+	rec, err := face.NewRecognizer(modelsDir)
 	if err != nil {
 		log.Fatalf("can't init face recognizer: %v", err)
 	}
