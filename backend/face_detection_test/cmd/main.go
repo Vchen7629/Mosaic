@@ -44,7 +44,7 @@ func gRPCServer(
 	)
 
 	go func() {
-		log.Println("face detection gRPC server listening on :50051")
+		log.Printf("face detection gRPC server listening on: %s", cfg.ServerPort)
 		err = grpcServer.Serve(lis)
 		if err != nil {
 			log.Fatalf("failed to serve: %v", err)
