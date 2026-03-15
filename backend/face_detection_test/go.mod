@@ -6,6 +6,7 @@ require (
 	github.com/Kagami/go-face v0.0.0-20210630145111-0c14797b4d0e
 	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgx/v4 v4.18.3
+	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pgvector/pgvector-go v0.3.0
 	github.com/stretchr/testify v1.11.1
