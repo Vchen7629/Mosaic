@@ -31,7 +31,7 @@ const StartRecordingButton = ({ isRecording, setIsRecording, isCapturingFace, se
       }`}
     >
       <span
-        className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
           isRecording ? "bg-red-400 recording-dot" : "bg-emerald-400"
         }`}
       />
