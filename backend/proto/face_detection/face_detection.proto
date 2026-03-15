@@ -61,8 +61,6 @@ message ProcessProfileFaceResponse {
     bool face_detected = 1; // used so can prompt the frontend to maybe get a clearer view?
     bool success = 2; // used for retry logic
     int32 patient_id = 3;
-    bool new_face = 4; // indicates whether application needs to call register rpc
-    float face_embedding = 5; // used for the registration logic if new face is detected
 }
 
 // Request containing face image in bytes
