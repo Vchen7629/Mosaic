@@ -10,6 +10,7 @@ import (
 
 	"github.com/Kagami/go-face"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
 	fd "mosaic-face-detection.com/gen"
@@ -92,6 +93,7 @@ func main() {
 
 // method to load config values
 func loadConfig() (*Config, error) {
+	godotenv.Load("../.env")
 	var cfg Config
 
 	err := envconfig.Process("", &cfg)
