@@ -121,3 +121,12 @@ func CheckVisitorEmbeddings(
 
 	return embeddingFromDB
 }
+
+// creates float32 array embeddings
+func MakeEmbedding(value float32, size int) []float32 {
+	emb := make([]float32, size)
+	for i := range emb {
+		emb[i] = value
+	}
+	return emb
+}

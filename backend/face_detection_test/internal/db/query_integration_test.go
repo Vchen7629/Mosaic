@@ -27,22 +27,14 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func makeEmbedding(value float32, size int) []float32 {
-	emb := make([]float32, size)
-	for i := range emb {
-		emb[i] = value
-	}
-	return emb
-}
-
 func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 	pool := testDB.Pool
 	dbPool := db.NewDBPool(pool)
 	t.Run("returns error for negative patientID", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
-		patientID := test.SeedPatient(t, pool, makeEmbedding(0.1, 128))
-		_ = test.SeedVisitor(t, pool, patientID, "testvisitor", makeEmbedding(0.1, 128))
+		patientID := test.SeedPatient(t, pool, test.MakeEmbedding(0.1, 128))
+		_ = test.SeedVisitor(t, pool, patientID, "testvisitor", test.MakeEmbedding(0.1, 128))
 
 		visitorEmbList, err := dbPool.FetchAllVisitorFaceEmbForPatient(-1)
 
@@ -53,13 +45,13 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 	t.Run("returns list of visitor embeddings", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
-		patientID := test.SeedPatient(t, pool, makeEmbedding(0.1, 128))
+		patientID := test.SeedPatient(t, pool, test.MakeEmbedding(0.1, 128))
 
 		visitorEmbs := []float32{0.1, 0.2, 0.3}
 		visitorIDs := make([]int32, 3)
 		for i, val := range visitorEmbs {
 			visitorIDs[i] = test.SeedVisitor(
-				t, pool, patientID, fmt.Sprintf("visitor%d", i+1), makeEmbedding(val, 128),
+				t, pool, patientID, fmt.Sprintf("visitor%d", i+1), test.MakeEmbedding(val, 128),
 			)
 		}
 
@@ -79,7 +71,7 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 
 	t.Run("returns error when trying to fetch for a patient that doesnt exist", func(t *testing.T) {
 		test.CleanupTables(t, pool)
-		embedding := makeEmbedding(0.1, 128)
+		embedding := test.MakeEmbedding(0.1, 128)
 
 		patientID := test.SeedPatient(t, pool, embedding)
 		_ = test.SeedVisitor(t, pool, patientID, "visitor", embedding)
@@ -94,7 +86,7 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 func TestFetchVisitorBriefing(t *testing.T) {
 	pool := testDB.Pool
 	dbPool := db.NewDBPool(pool)
-	embedding := makeEmbedding(0.1, 128)
+	embedding := test.MakeEmbedding(0.1, 128)
 
 	t.Run("returns error for negative patientID and visitorID", func(t *testing.T) {
 		test.CleanupTables(t, pool)
@@ -162,7 +154,7 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 
 	t.Run("returns error for invalid patientID, name, and embedding", func(t *testing.T) {
 		test.CleanupTables(t, pool)
-		validEmbedding := makeEmbedding(0.1, 128)
+		validEmbedding := test.MakeEmbedding(0.1, 128)
 
 		patientID := test.SeedPatient(t, pool, validEmbedding)
 		var embedding face.Descriptor
@@ -174,7 +166,7 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 		err = dbPool.AddNewFaceForVisitor(patientID, "", embedding)
 		assert.Equal(t, "name must be a non empty string", err.Error())
 
-		zerosEmbedding := makeEmbedding(0, 128)
+		zerosEmbedding := test.MakeEmbedding(0, 128)
 		var invalidEmbedding face.Descriptor
 		copy(invalidEmbedding[:], zerosEmbedding)
 
@@ -185,7 +177,7 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 	t.Run("successfully creates the new face embedding for visitor", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
-		validEmbedding := makeEmbedding(0.1, 128)
+		validEmbedding := test.MakeEmbedding(0.1, 128)
 
 		patientID := test.SeedPatient(t, pool, validEmbedding)
 		var embedding face.Descriptor
@@ -202,7 +194,7 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 	t.Run("duplicate visitor embedding call for same patient doesnt error", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
-		validEmbedding1 := makeEmbedding(0.1, 128)
+		validEmbedding1 := test.MakeEmbedding(0.1, 128)
 
 		patientID := test.SeedPatient(t, pool, validEmbedding1)
 		var embedding1 face.Descriptor
@@ -216,7 +208,7 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 		assert.EqualValues(t, embedding1, embeddingFromDB)
 
 		// upsert value
-		validEmbedding2 := makeEmbedding(0.5, 128)
+		validEmbedding2 := test.MakeEmbedding(0.5, 128)
 		var embedding2 face.Descriptor
 		copy(embedding2[:], validEmbedding2)
 
