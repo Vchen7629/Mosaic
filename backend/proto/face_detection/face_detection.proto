@@ -27,9 +27,10 @@ message ProcessVisitorFacesRequest {
 
 // single face message containing the metadata and if we should register name for it
 message FaceResult {                                                                                                                  
-    bool is_known = 1;                                                                                                                
-    string briefing = 2;                                                                                                              
-    repeated float face_embedding = 3; // 128 dim embedding
+    bool is_known = 1;
+    string name = 2;                                                                                                                
+    string briefing = 3;                                                                                                              
+    repeated float face_embedding = 4; // 128 dim embedding
 }  
 
 // The response containing briefing if face matches an existing face
@@ -42,7 +43,7 @@ message ProcessVisitorFacesResponse {
 
 // Response containing data to register a new unknown visitor face
 message RegisterVisitorFaceRequest {
-    repeated float face_embedding = 1; // 128 dim emb
+    repeated float face_embedding = 1; // 128 dim embedding
     int32 patient_id = 2;
     string visitor_name = 3;
 }

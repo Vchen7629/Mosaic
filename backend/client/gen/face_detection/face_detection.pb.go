@@ -78,8 +78,9 @@ func (x *ProcessVisitorFacesRequest) GetPatientId() int32 {
 type FaceResult struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	IsKnown       bool                   `protobuf:"varint,1,opt,name=is_known,json=isKnown,proto3" json:"is_known,omitempty"`
-	Briefing      string                 `protobuf:"bytes,2,opt,name=briefing,proto3" json:"briefing,omitempty"`
-	FaceEmbedding []float32              `protobuf:"fixed32,3,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // 128 dim embedding
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Briefing      string                 `protobuf:"bytes,3,opt,name=briefing,proto3" json:"briefing,omitempty"`
+	FaceEmbedding []float32              `protobuf:"fixed32,4,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // 128 dim embedding
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -119,6 +120,13 @@ func (x *FaceResult) GetIsKnown() bool {
 		return x.IsKnown
 	}
 	return false
+}
+
+func (x *FaceResult) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
 }
 
 func (x *FaceResult) GetBriefing() string {
@@ -200,7 +208,7 @@ func (x *ProcessVisitorFacesResponse) GetSuccess() bool {
 // Response containing data to register a new unknown visitor face
 type RegisterVisitorFaceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FaceEmbedding []float32              `protobuf:"fixed32,1,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // 128 dim emb
+	FaceEmbedding []float32              `protobuf:"fixed32,1,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // 128 dim embedding
 	PatientId     int32                  `protobuf:"varint,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
 	VisitorName   string                 `protobuf:"bytes,3,opt,name=visitor_name,json=visitorName,proto3" json:"visitor_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -522,12 +530,13 @@ const file_face_detection_proto_rawDesc = "" +
 	"\n" +
 	"face_bytes\x18\x01 \x01(\fR\tfaceBytes\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x02 \x01(\x05R\tpatientId\"j\n" +
+	"patient_id\x18\x02 \x01(\x05R\tpatientId\"~\n" +
 	"\n" +
 	"FaceResult\x12\x19\n" +
-	"\bis_known\x18\x01 \x01(\bR\aisKnown\x12\x1a\n" +
-	"\bbriefing\x18\x02 \x01(\tR\bbriefing\x12%\n" +
-	"\x0eface_embedding\x18\x03 \x03(\x02R\rfaceEmbedding\"\x94\x01\n" +
+	"\bis_known\x18\x01 \x01(\bR\aisKnown\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
+	"\bbriefing\x18\x03 \x01(\tR\bbriefing\x12%\n" +
+	"\x0eface_embedding\x18\x04 \x03(\x02R\rfaceEmbedding\"\x94\x01\n" +
 	"\x1bProcessVisitorFacesResponse\x12#\n" +
 	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x126\n" +
 	"\x05faces\x18\x02 \x03(\v2 .proto.face_detection.FaceResultR\x05faces\x12\x18\n" +
