@@ -6,42 +6,71 @@ package proto.face_detection;
 
 // Face detection processing service definition
 service FaceDetectionService {
-    // Send face bytes, get back briefing if known or unknown signal
-    rpc ProcessFaces (ProcessFacesRequest) returns (ProcessFacesResponse) {}
+    // Send face bytes for potential visitors, get back briefing if known or unknown signal
+    rpc ProcessVisitorFaces (ProcessVisitorFacesRequest) returns (ProcessVisitorFacesResponse) {}
     
-    // Called after the user enters a name for an unknown face
-    rpc RegisterFace (RegisterFaceRequest) returns (RegisterFaceResponse) {}
+    // Used to register a new face when a new face is detected while app is recording
+    rpc RegisterVisitorFace (RegisterVisitorFaceRequest) returns (RegisterVisitorFaceResponse) {}
+
+    // Send face bytes for loading user profile, get back patientID if known or request to create new profile
+    rpc ProcessProfileFace (ProcessProfileFaceRequest) returns (ProcessProfileFaceResponse) {}
+    
+    // Used to register a new face when a new face is detected while syncing profile
+    rpc RegisterProfileFace (RegisterProfileFaceRequest) returns (RegisterProfileFaceResponse) {}
 }
 
 // The request containing the face image in bytes and patient id
-message ProcessFacesRequest {
+message ProcessVisitorFacesRequest {
     bytes face_bytes = 1;
     int32 patient_id = 2;
 }
 
 // single face message containing the metadata and if we should register name for it
 message FaceResult {                                                                                                                  
-    bool is_known = 1;                                                                                                                
-    string briefing = 2;                                                                                                              
-    repeated float face_embedding = 3; // 128 dim embedding
+    bool is_known = 1;
+    string name = 2;                                                                                                                
+    string briefing = 3;                                                                                                              
+    repeated float face_embedding = 4; // 128 dim embedding
 }  
 
 // The response containing briefing if face matches an existing face
 // or is_known false if face doesnt match
-message ProcessFacesResponse {
+message ProcessVisitorFacesResponse {
     bool face_detected = 1; // used so if no face is detected it doesnt send a req
     repeated FaceResult faces = 2;
     bool success = 3; // boolean to see if the process succeeded for handling retry
 }
 
-// Response containing data to register a new unknown face
-message RegisterFaceRequest {
-    repeated float face_embedding = 1; // 128 dim emb
+// Response containing data to register a new unknown visitor face
+message RegisterVisitorFaceRequest {
+    repeated float face_embedding = 1; // 128 dim embedding
     int32 patient_id = 2;
     string visitor_name = 3;
 }
 
 // Response containing data about if request succeeded and visitor id
-message RegisterFaceResponse {
+message RegisterVisitorFaceResponse {
     bool success = 1;
+}
+
+// The request containing the face image in bytes
+message ProcessProfileFaceRequest {
+    bytes face_bytes = 1;
+}
+
+message ProcessProfileFaceResponse {
+    bool face_detected = 1; // used so can prompt the frontend to maybe get a clearer view?
+    bool success = 2; // used for retry logic
+    int32 patient_id = 3;
+    bool new_face = 4;
+}
+
+// Request containing face image in bytes
+message RegisterProfileFaceRequest {
+    repeated float face_embedding = 1; // 128 dim embedding
+}
+
+message RegisterProfileFaceResponse {
+    bool success = 1; // used for retry logic
+    int32 patient_id = 2; // sent back to frontend to save
 }

@@ -22,28 +22,28 @@ const (
 )
 
 // The request containing the face image in bytes and patient id
-type ProcessFacesRequest struct {
+type ProcessVisitorFacesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FaceBytes     []byte                 `protobuf:"bytes,1,opt,name=face_bytes,json=faceBytes,proto3" json:"face_bytes,omitempty"`
-	PatientId     string                 `protobuf:"bytes,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
+	PatientId     int32                  `protobuf:"varint,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ProcessFacesRequest) Reset() {
-	*x = ProcessFacesRequest{}
+func (x *ProcessVisitorFacesRequest) Reset() {
+	*x = ProcessVisitorFacesRequest{}
 	mi := &file_face_detection_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ProcessFacesRequest) String() string {
+func (x *ProcessVisitorFacesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ProcessFacesRequest) ProtoMessage() {}
+func (*ProcessVisitorFacesRequest) ProtoMessage() {}
 
-func (x *ProcessFacesRequest) ProtoReflect() protoreflect.Message {
+func (x *ProcessVisitorFacesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_face_detection_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -55,51 +55,50 @@ func (x *ProcessFacesRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ProcessFacesRequest.ProtoReflect.Descriptor instead.
-func (*ProcessFacesRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ProcessVisitorFacesRequest.ProtoReflect.Descriptor instead.
+func (*ProcessVisitorFacesRequest) Descriptor() ([]byte, []int) {
 	return file_face_detection_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *ProcessFacesRequest) GetFaceBytes() []byte {
+func (x *ProcessVisitorFacesRequest) GetFaceBytes() []byte {
 	if x != nil {
 		return x.FaceBytes
 	}
 	return nil
 }
 
-func (x *ProcessFacesRequest) GetPatientId() string {
+func (x *ProcessVisitorFacesRequest) GetPatientId() int32 {
 	if x != nil {
 		return x.PatientId
 	}
-	return ""
+	return 0
 }
 
-// The response containing briefing if face matches an existing face
-// or is_known false if face doesnt match
-type ProcessFacesResponse struct {
+// single face message containing the metadata and if we should register name for it
+type FaceResult struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	IsKnown       bool                   `protobuf:"varint,1,opt,name=is_known,json=isKnown,proto3" json:"is_known,omitempty"`
-	VisitorId     string                 `protobuf:"bytes,2,opt,name=visitor_id,json=visitorId,proto3" json:"visitor_id,omitempty"`             // populated if known
-	Briefing      string                 `protobuf:"bytes,3,opt,name=briefing,proto3" json:"briefing,omitempty"`                                // populated if face matches and has a briefing
-	FaceEmbedding []byte                 `protobuf:"bytes,4,opt,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // populated if unknown, pass back to RegisterFace to register the new face name
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Briefing      string                 `protobuf:"bytes,3,opt,name=briefing,proto3" json:"briefing,omitempty"`
+	FaceEmbedding []float32              `protobuf:"fixed32,4,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // 128 dim embedding
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ProcessFacesResponse) Reset() {
-	*x = ProcessFacesResponse{}
+func (x *FaceResult) Reset() {
+	*x = FaceResult{}
 	mi := &file_face_detection_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ProcessFacesResponse) String() string {
+func (x *FaceResult) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ProcessFacesResponse) ProtoMessage() {}
+func (*FaceResult) ProtoMessage() {}
 
-func (x *ProcessFacesResponse) ProtoReflect() protoreflect.Message {
+func (x *FaceResult) ProtoReflect() protoreflect.Message {
 	mi := &file_face_detection_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -111,63 +110,64 @@ func (x *ProcessFacesResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ProcessFacesResponse.ProtoReflect.Descriptor instead.
-func (*ProcessFacesResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use FaceResult.ProtoReflect.Descriptor instead.
+func (*FaceResult) Descriptor() ([]byte, []int) {
 	return file_face_detection_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ProcessFacesResponse) GetIsKnown() bool {
+func (x *FaceResult) GetIsKnown() bool {
 	if x != nil {
 		return x.IsKnown
 	}
 	return false
 }
 
-func (x *ProcessFacesResponse) GetVisitorId() string {
+func (x *FaceResult) GetName() string {
 	if x != nil {
-		return x.VisitorId
+		return x.Name
 	}
 	return ""
 }
 
-func (x *ProcessFacesResponse) GetBriefing() string {
+func (x *FaceResult) GetBriefing() string {
 	if x != nil {
 		return x.Briefing
 	}
 	return ""
 }
 
-func (x *ProcessFacesResponse) GetFaceEmbedding() []byte {
+func (x *FaceResult) GetFaceEmbedding() []float32 {
 	if x != nil {
 		return x.FaceEmbedding
 	}
 	return nil
 }
 
-// Response containing data to register a new unknown face
-type RegisterFaceRequest struct {
+// The response containing briefing if face matches an existing face
+// or is_known false if face doesnt match
+type ProcessVisitorFacesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FaceEmbedding []byte                 `protobuf:"bytes,1,opt,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // embedding returned from ProcessFace
-	VisitorName   string                 `protobuf:"bytes,2,opt,name=visitor_name,json=visitorName,proto3" json:"visitor_name,omitempty"`
-	PatientId     string                 `protobuf:"bytes,3,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
+	FaceDetected  bool                   `protobuf:"varint,1,opt,name=face_detected,json=faceDetected,proto3" json:"face_detected,omitempty"` // used so if no face is detected it doesnt send a req
+	Faces         []*FaceResult          `protobuf:"bytes,2,rep,name=faces,proto3" json:"faces,omitempty"`
+	Success       bool                   `protobuf:"varint,3,opt,name=success,proto3" json:"success,omitempty"` // boolean to see if the process succeeded for handling retry
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RegisterFaceRequest) Reset() {
-	*x = RegisterFaceRequest{}
+func (x *ProcessVisitorFacesResponse) Reset() {
+	*x = ProcessVisitorFacesResponse{}
 	mi := &file_face_detection_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RegisterFaceRequest) String() string {
+func (x *ProcessVisitorFacesResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RegisterFaceRequest) ProtoMessage() {}
+func (*ProcessVisitorFacesResponse) ProtoMessage() {}
 
-func (x *RegisterFaceRequest) ProtoReflect() protoreflect.Message {
+func (x *ProcessVisitorFacesResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_face_detection_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -179,113 +179,395 @@ func (x *RegisterFaceRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RegisterFaceRequest.ProtoReflect.Descriptor instead.
-func (*RegisterFaceRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ProcessVisitorFacesResponse.ProtoReflect.Descriptor instead.
+func (*ProcessVisitorFacesResponse) Descriptor() ([]byte, []int) {
 	return file_face_detection_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *RegisterFaceRequest) GetFaceEmbedding() []byte {
+func (x *ProcessVisitorFacesResponse) GetFaceDetected() bool {
 	if x != nil {
-		return x.FaceEmbedding
+		return x.FaceDetected
+	}
+	return false
+}
+
+func (x *ProcessVisitorFacesResponse) GetFaces() []*FaceResult {
+	if x != nil {
+		return x.Faces
 	}
 	return nil
 }
 
-func (x *RegisterFaceRequest) GetVisitorName() string {
-	if x != nil {
-		return x.VisitorName
-	}
-	return ""
-}
-
-func (x *RegisterFaceRequest) GetPatientId() string {
-	if x != nil {
-		return x.PatientId
-	}
-	return ""
-}
-
-// Response containing data about if request succeeded and visitor id
-type RegisterFaceResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	VisitorId     string                 `protobuf:"bytes,2,opt,name=visitor_id,json=visitorId,proto3" json:"visitor_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RegisterFaceResponse) Reset() {
-	*x = RegisterFaceResponse{}
-	mi := &file_face_detection_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RegisterFaceResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RegisterFaceResponse) ProtoMessage() {}
-
-func (x *RegisterFaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_face_detection_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RegisterFaceResponse.ProtoReflect.Descriptor instead.
-func (*RegisterFaceResponse) Descriptor() ([]byte, []int) {
-	return file_face_detection_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *RegisterFaceResponse) GetSuccess() bool {
+func (x *ProcessVisitorFacesResponse) GetSuccess() bool {
 	if x != nil {
 		return x.Success
 	}
 	return false
 }
 
-func (x *RegisterFaceResponse) GetVisitorId() string {
+// Response containing data to register a new unknown visitor face
+type RegisterVisitorFaceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FaceEmbedding []float32              `protobuf:"fixed32,1,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // 128 dim embedding
+	PatientId     int32                  `protobuf:"varint,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
+	VisitorName   string                 `protobuf:"bytes,3,opt,name=visitor_name,json=visitorName,proto3" json:"visitor_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterVisitorFaceRequest) Reset() {
+	*x = RegisterVisitorFaceRequest{}
+	mi := &file_face_detection_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterVisitorFaceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterVisitorFaceRequest) ProtoMessage() {}
+
+func (x *RegisterVisitorFaceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_face_detection_proto_msgTypes[3]
 	if x != nil {
-		return x.VisitorId
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterVisitorFaceRequest.ProtoReflect.Descriptor instead.
+func (*RegisterVisitorFaceRequest) Descriptor() ([]byte, []int) {
+	return file_face_detection_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *RegisterVisitorFaceRequest) GetFaceEmbedding() []float32 {
+	if x != nil {
+		return x.FaceEmbedding
+	}
+	return nil
+}
+
+func (x *RegisterVisitorFaceRequest) GetPatientId() int32 {
+	if x != nil {
+		return x.PatientId
+	}
+	return 0
+}
+
+func (x *RegisterVisitorFaceRequest) GetVisitorName() string {
+	if x != nil {
+		return x.VisitorName
 	}
 	return ""
+}
+
+// Response containing data about if request succeeded and visitor id
+type RegisterVisitorFaceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterVisitorFaceResponse) Reset() {
+	*x = RegisterVisitorFaceResponse{}
+	mi := &file_face_detection_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterVisitorFaceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterVisitorFaceResponse) ProtoMessage() {}
+
+func (x *RegisterVisitorFaceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_face_detection_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterVisitorFaceResponse.ProtoReflect.Descriptor instead.
+func (*RegisterVisitorFaceResponse) Descriptor() ([]byte, []int) {
+	return file_face_detection_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *RegisterVisitorFaceResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+// The request containing the face image in bytes
+type ProcessProfileFaceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FaceBytes     []byte                 `protobuf:"bytes,1,opt,name=face_bytes,json=faceBytes,proto3" json:"face_bytes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProcessProfileFaceRequest) Reset() {
+	*x = ProcessProfileFaceRequest{}
+	mi := &file_face_detection_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProcessProfileFaceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProcessProfileFaceRequest) ProtoMessage() {}
+
+func (x *ProcessProfileFaceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_face_detection_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProcessProfileFaceRequest.ProtoReflect.Descriptor instead.
+func (*ProcessProfileFaceRequest) Descriptor() ([]byte, []int) {
+	return file_face_detection_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ProcessProfileFaceRequest) GetFaceBytes() []byte {
+	if x != nil {
+		return x.FaceBytes
+	}
+	return nil
+}
+
+type ProcessProfileFaceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FaceDetected  bool                   `protobuf:"varint,1,opt,name=face_detected,json=faceDetected,proto3" json:"face_detected,omitempty"` // used so can prompt the frontend to maybe get a clearer view?
+	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`                               // used for retry logic
+	PatientId     int32                  `protobuf:"varint,3,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
+	NewFace       bool                   `protobuf:"varint,4,opt,name=new_face,json=newFace,proto3" json:"new_face,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProcessProfileFaceResponse) Reset() {
+	*x = ProcessProfileFaceResponse{}
+	mi := &file_face_detection_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProcessProfileFaceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProcessProfileFaceResponse) ProtoMessage() {}
+
+func (x *ProcessProfileFaceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_face_detection_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProcessProfileFaceResponse.ProtoReflect.Descriptor instead.
+func (*ProcessProfileFaceResponse) Descriptor() ([]byte, []int) {
+	return file_face_detection_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ProcessProfileFaceResponse) GetFaceDetected() bool {
+	if x != nil {
+		return x.FaceDetected
+	}
+	return false
+}
+
+func (x *ProcessProfileFaceResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ProcessProfileFaceResponse) GetPatientId() int32 {
+	if x != nil {
+		return x.PatientId
+	}
+	return 0
+}
+
+func (x *ProcessProfileFaceResponse) GetNewFace() bool {
+	if x != nil {
+		return x.NewFace
+	}
+	return false
+}
+
+// Request containing face image in bytes
+type RegisterProfileFaceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FaceEmbedding []float32              `protobuf:"fixed32,1,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // 128 dim embedding
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterProfileFaceRequest) Reset() {
+	*x = RegisterProfileFaceRequest{}
+	mi := &file_face_detection_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterProfileFaceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterProfileFaceRequest) ProtoMessage() {}
+
+func (x *RegisterProfileFaceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_face_detection_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterProfileFaceRequest.ProtoReflect.Descriptor instead.
+func (*RegisterProfileFaceRequest) Descriptor() ([]byte, []int) {
+	return file_face_detection_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *RegisterProfileFaceRequest) GetFaceEmbedding() []float32 {
+	if x != nil {
+		return x.FaceEmbedding
+	}
+	return nil
+}
+
+type RegisterProfileFaceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`                      // used for retry logic
+	PatientId     int32                  `protobuf:"varint,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"` // sent back to frontend to save
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterProfileFaceResponse) Reset() {
+	*x = RegisterProfileFaceResponse{}
+	mi := &file_face_detection_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterProfileFaceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterProfileFaceResponse) ProtoMessage() {}
+
+func (x *RegisterProfileFaceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_face_detection_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterProfileFaceResponse.ProtoReflect.Descriptor instead.
+func (*RegisterProfileFaceResponse) Descriptor() ([]byte, []int) {
+	return file_face_detection_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *RegisterProfileFaceResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *RegisterProfileFaceResponse) GetPatientId() int32 {
+	if x != nil {
+		return x.PatientId
+	}
+	return 0
 }
 
 var File_face_detection_proto protoreflect.FileDescriptor
 
 const file_face_detection_proto_rawDesc = "" +
 	"\n" +
-	"\x14face_detection.proto\x12\x14proto.face_detection\"S\n" +
-	"\x13ProcessFacesRequest\x12\x1d\n" +
+	"\x14face_detection.proto\x12\x14proto.face_detection\"Z\n" +
+	"\x1aProcessVisitorFacesRequest\x12\x1d\n" +
 	"\n" +
 	"face_bytes\x18\x01 \x01(\fR\tfaceBytes\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x02 \x01(\tR\tpatientId\"\x93\x01\n" +
-	"\x14ProcessFacesResponse\x12\x19\n" +
-	"\bis_known\x18\x01 \x01(\bR\aisKnown\x12\x1d\n" +
+	"patient_id\x18\x02 \x01(\x05R\tpatientId\"~\n" +
 	"\n" +
-	"visitor_id\x18\x02 \x01(\tR\tvisitorId\x12\x1a\n" +
+	"FaceResult\x12\x19\n" +
+	"\bis_known\x18\x01 \x01(\bR\aisKnown\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
 	"\bbriefing\x18\x03 \x01(\tR\bbriefing\x12%\n" +
-	"\x0eface_embedding\x18\x04 \x01(\fR\rfaceEmbedding\"~\n" +
-	"\x13RegisterFaceRequest\x12%\n" +
-	"\x0eface_embedding\x18\x01 \x01(\fR\rfaceEmbedding\x12!\n" +
-	"\fvisitor_name\x18\x02 \x01(\tR\vvisitorName\x12\x1d\n" +
+	"\x0eface_embedding\x18\x04 \x03(\x02R\rfaceEmbedding\"\x94\x01\n" +
+	"\x1bProcessVisitorFacesResponse\x12#\n" +
+	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x126\n" +
+	"\x05faces\x18\x02 \x03(\v2 .proto.face_detection.FaceResultR\x05faces\x12\x18\n" +
+	"\asuccess\x18\x03 \x01(\bR\asuccess\"\x85\x01\n" +
+	"\x1aRegisterVisitorFaceRequest\x12%\n" +
+	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x03 \x01(\tR\tpatientId\"O\n" +
-	"\x14RegisterFaceResponse\x12\x18\n" +
+	"patient_id\x18\x02 \x01(\x05R\tpatientId\x12!\n" +
+	"\fvisitor_name\x18\x03 \x01(\tR\vvisitorName\"7\n" +
+	"\x1bRegisterVisitorFaceResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\":\n" +
+	"\x19ProcessProfileFaceRequest\x12\x1d\n" +
+	"\n" +
+	"face_bytes\x18\x01 \x01(\fR\tfaceBytes\"\x95\x01\n" +
+	"\x1aProcessProfileFaceResponse\x12#\n" +
+	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x12\x18\n" +
+	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x1d\n" +
+	"\n" +
+	"patient_id\x18\x03 \x01(\x05R\tpatientId\x12\x19\n" +
+	"\bnew_face\x18\x04 \x01(\bR\anewFace\"C\n" +
+	"\x1aRegisterProfileFaceRequest\x12%\n" +
+	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\"V\n" +
+	"\x1bRegisterProfileFaceResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
 	"\n" +
-	"visitor_id\x18\x02 \x01(\tR\tvisitorId2\xe8\x01\n" +
-	"\x14FaceDetectionService\x12g\n" +
-	"\fProcessFaces\x12).proto.face_detection.ProcessFacesRequest\x1a*.proto.face_detection.ProcessFacesResponse\"\x00\x12g\n" +
-	"\fRegisterFace\x12).proto.face_detection.RegisterFaceRequest\x1a*.proto.face_detection.RegisterFaceResponse\"\x00B&Z$mosaic-client.com/gen/face_detectionb\x06proto3"
+	"patient_id\x18\x02 \x01(\x05R\tpatientId2\x8b\x04\n" +
+	"\x14FaceDetectionService\x12|\n" +
+	"\x13ProcessVisitorFaces\x120.proto.face_detection.ProcessVisitorFacesRequest\x1a1.proto.face_detection.ProcessVisitorFacesResponse\"\x00\x12|\n" +
+	"\x13RegisterVisitorFace\x120.proto.face_detection.RegisterVisitorFaceRequest\x1a1.proto.face_detection.RegisterVisitorFaceResponse\"\x00\x12y\n" +
+	"\x12ProcessProfileFace\x12/.proto.face_detection.ProcessProfileFaceRequest\x1a0.proto.face_detection.ProcessProfileFaceResponse\"\x00\x12|\n" +
+	"\x13RegisterProfileFace\x120.proto.face_detection.RegisterProfileFaceRequest\x1a1.proto.face_detection.RegisterProfileFaceResponse\"\x00B&Z$mosaic-client.com/gen/face_detectionb\x06proto3"
 
 var (
 	file_face_detection_proto_rawDescOnce sync.Once
@@ -299,23 +581,33 @@ func file_face_detection_proto_rawDescGZIP() []byte {
 	return file_face_detection_proto_rawDescData
 }
 
-var file_face_detection_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_face_detection_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_face_detection_proto_goTypes = []any{
-	(*ProcessFacesRequest)(nil),  // 0: proto.face_detection.ProcessFacesRequest
-	(*ProcessFacesResponse)(nil), // 1: proto.face_detection.ProcessFacesResponse
-	(*RegisterFaceRequest)(nil),  // 2: proto.face_detection.RegisterFaceRequest
-	(*RegisterFaceResponse)(nil), // 3: proto.face_detection.RegisterFaceResponse
+	(*ProcessVisitorFacesRequest)(nil),  // 0: proto.face_detection.ProcessVisitorFacesRequest
+	(*FaceResult)(nil),                  // 1: proto.face_detection.FaceResult
+	(*ProcessVisitorFacesResponse)(nil), // 2: proto.face_detection.ProcessVisitorFacesResponse
+	(*RegisterVisitorFaceRequest)(nil),  // 3: proto.face_detection.RegisterVisitorFaceRequest
+	(*RegisterVisitorFaceResponse)(nil), // 4: proto.face_detection.RegisterVisitorFaceResponse
+	(*ProcessProfileFaceRequest)(nil),   // 5: proto.face_detection.ProcessProfileFaceRequest
+	(*ProcessProfileFaceResponse)(nil),  // 6: proto.face_detection.ProcessProfileFaceResponse
+	(*RegisterProfileFaceRequest)(nil),  // 7: proto.face_detection.RegisterProfileFaceRequest
+	(*RegisterProfileFaceResponse)(nil), // 8: proto.face_detection.RegisterProfileFaceResponse
 }
 var file_face_detection_proto_depIdxs = []int32{
-	0, // 0: proto.face_detection.FaceDetectionService.ProcessFaces:input_type -> proto.face_detection.ProcessFacesRequest
-	2, // 1: proto.face_detection.FaceDetectionService.RegisterFace:input_type -> proto.face_detection.RegisterFaceRequest
-	1, // 2: proto.face_detection.FaceDetectionService.ProcessFaces:output_type -> proto.face_detection.ProcessFacesResponse
-	3, // 3: proto.face_detection.FaceDetectionService.RegisterFace:output_type -> proto.face_detection.RegisterFaceResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	1, // 0: proto.face_detection.ProcessVisitorFacesResponse.faces:type_name -> proto.face_detection.FaceResult
+	0, // 1: proto.face_detection.FaceDetectionService.ProcessVisitorFaces:input_type -> proto.face_detection.ProcessVisitorFacesRequest
+	3, // 2: proto.face_detection.FaceDetectionService.RegisterVisitorFace:input_type -> proto.face_detection.RegisterVisitorFaceRequest
+	5, // 3: proto.face_detection.FaceDetectionService.ProcessProfileFace:input_type -> proto.face_detection.ProcessProfileFaceRequest
+	7, // 4: proto.face_detection.FaceDetectionService.RegisterProfileFace:input_type -> proto.face_detection.RegisterProfileFaceRequest
+	2, // 5: proto.face_detection.FaceDetectionService.ProcessVisitorFaces:output_type -> proto.face_detection.ProcessVisitorFacesResponse
+	4, // 6: proto.face_detection.FaceDetectionService.RegisterVisitorFace:output_type -> proto.face_detection.RegisterVisitorFaceResponse
+	6, // 7: proto.face_detection.FaceDetectionService.ProcessProfileFace:output_type -> proto.face_detection.ProcessProfileFaceResponse
+	8, // 8: proto.face_detection.FaceDetectionService.RegisterProfileFace:output_type -> proto.face_detection.RegisterProfileFaceResponse
+	5, // [5:9] is the sub-list for method output_type
+	1, // [1:5] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_face_detection_proto_init() }
@@ -329,7 +621,7 @@ func file_face_detection_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_face_detection_proto_rawDesc), len(file_face_detection_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

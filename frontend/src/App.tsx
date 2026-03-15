@@ -3,19 +3,23 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import StartRecordingButton from "./components/startRecordingBtn";
 import { SetWindowPosition } from "./utils/setWindowPosition";
 import { handleBackendLifecycle } from "./utils/handleBackendLifecycle";
-import NewFaceInput from "./components/newFaceInput";
 import { AutoResizeWindow } from "./utils/autoResizeWindow";
 import { FetchBriefing } from "./api/utils/transcript";
 import ConvoBriefingDisplay from "./components/convo_briefing";
 import { backendAudioProcess } from "./api/utils/audio";
 import { backendFaceProcess } from "./api/utils/face";
 import { useWebSocketConnection } from "./api/hooks/useWebSocketConnection";
+import { ProfileStatus, SyncProfileButton } from "./components/syncProfile";
 import "./App.css";
+
+type SyncState = "idle" | "scanning" | "confirming" | "active";
 
 function App() {
   const [isRecording, setIsRecording] = useState(false);
-  const [newFaceName, setNewFaceName] = useState("");
+  const [isCapturingFace, setIsCapturingFace] = useState(false);
   const patientId = localStorage.getItem("patient_id") ?? "test-patient";
+  const patientName = localStorage.getItem("patient_name");
+  const [syncState, setSyncState] = useState<SyncState>(patientName ? "active" : "idle");
   const wsRef = useWebSocketConnection(patientId, isRecording)
   const briefingRes = FetchBriefing();
   const briefingFetched = useRef(false);
@@ -36,29 +40,29 @@ function App() {
   AutoResizeWindow()
   handleBackendLifecycle()
   backendAudioProcess(wsRef, isRecording)
-  backendFaceProcess(wsRef, isRecording)
+  backendFaceProcess(wsRef, isCapturingFace)
 
   return (
     <main className="w-full p-2">
       {/* Glossy dark panel */}
-      <div className="relative flex flex-col rounded-2xl overflow-hidden
-                      bg-zinc-900/90 backdrop-blur-2xl
-                      border border-white/[0.06]
-                      shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_8px_32px_rgba(0,0,0,0.6)]">
-
+      <div className="relative flex flex-col rounded-2xl overflow-hidden bg-zinc-900/90 backdrop-blur-2xl border border-white/6">
         {/* Gloss sheen overlay */}
-        <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/[0.05] to-transparent pointer-events-none z-0 rounded-t-2xl" />
+        <div className="absolute inset-x-0 top-0 h-1/2 bg-linear-to-b from-white/5 to-transparent pointer-events-none z-0 rounded-t-2xl" />
 
         {/* Header */}
-        <div className="relative z-10 flex items-center justify-between px-4 py-3 flex-shrink-0">
+        <div className="relative z-10 flex items-center justify-between px-4 py-3 shrink-0">
           <span className="text-[15px] font-medium text-zinc-300 tracking-tight">
             Live Transcription
           </span>
           <div className="flex items-center gap-2">
-            <StartRecordingButton isRecording={isRecording} setIsRecording={setIsRecording}/>
+            <StartRecordingButton 
+              isRecording={isRecording} 
+              setIsRecording={setIsRecording}
+              isCapturingFace={isCapturingFace}
+              setIsCapturingFace={setIsCapturingFace}/>
             <button
               onClick={() => getCurrentWindow().close().catch(console.error)}
-              className="w-6 h-6 rounded-full flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.08] transition-all duration-150 cursor-pointer"
+              className="w-6 h-6 rounded-full flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-white/8 transition-all duration-150 cursor-pointer"
               aria-label="Close"
             >
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -69,12 +73,13 @@ function App() {
         </div>
 
         {/* Divider */}
-        <div className="relative z-10 h-px bg-zinc-800 flex-shrink-0" />
+        <div className="relative z-10 h-px bg-zinc-800 shrink-0" />
 
-        {/*unknownFaceDetected && (
-          <NewFaceInput newFaceName={newFaceName} setNewFaceName={setNewFaceName} confirmNewFace={confirmNewFace}/>
-        )*/}
-
+        {/* Patient status */}
+        <div className="relative z-10 flex items-center px-4 pt-2.5 pb-3 justify-between">
+            <ProfileStatus syncState={syncState}/>
+            <SyncProfileButton syncState={syncState} setSyncState={setSyncState} setIsCapturingFace={setIsCapturingFace}/>
+        </div>
       </div>
 
       {briefingRes.data && (

@@ -10,46 +10,38 @@ import (
 	"mosaic-face-detection.com/internal/service"
 )
 
+// fetch all user profile embeddings saved in the database
+func (db *DBPool) FetchAllProfileFaceEmb() ([]service.Faces, error) {
+	ctx := context.Background()
+
+	rows, err := db.pool.Query(ctx, `SELECT id, face_embedding FROM patient`)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching profile face embeddings from db: %v", err)
+	}
+
+	return scanFaceEmbeddings(rows, "profile")
+}
+
 // fetch all the visitor id embeddings for a patient using patientID
 func (db *DBPool) FetchAllVisitorFaceEmbForPatient(
 	patientID int32,
-) ([]service.KnownVisitor, error) {
+) ([]service.Faces, error) {
 	if patientID <= 0 {
 		return nil, errors.New("patientID must be positive")
 	} 
 	ctx := context.Background()
-	var visitorEmbList []service.KnownVisitor
 
-	query := `
+	rows, err := db.pool.Query(ctx, `
 		SELECT id, face_embedding
 		FROM visitor_face_embeddings
 		WHERE patient_id = $1
-	`
+	`, patientID)
 
-	rows, err := db.pool.Query(ctx, query, patientID)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching from db for patientID: %v", err)
 	}
 
-	for rows.Next() {
-		var visitorEmb service.KnownVisitor
-		var embVector pgvector.Vector
-
-		err := rows.Scan(
-			&visitorEmb.ID,
-			&embVector,
-		)
-
-		if err != nil {
-			return nil, fmt.Errorf("error fetching visitor emb: %v", err)
-		}
-
-		// Convert pgvector to face.Descriptor ([128]float32)
-		copy(visitorEmb.Embedding[:], embVector.Slice())
-		visitorEmbList = append(visitorEmbList, visitorEmb)
-	}
-
-	return visitorEmbList, nil
+	return scanFaceEmbeddings(rows, "visitor")
 }
 
 // fetch briefing for the visitor for the patient
@@ -114,4 +106,27 @@ func (db *DBPool) AddNewFaceForVisitor(
 	}
 
 	return nil
+}
+
+// Add a new visitor for a user with their name and face_embedding
+func (db *DBPool) AddNewFaceForUser(embedding face.Descriptor) (*int32, error) {
+	err := service.ValidateEmbedding(embedding)
+	if err != nil {
+		return nil, err
+	}
+	
+	ctx := context.Background()
+
+	var patientID int32
+
+	embeddingVector := pgvector.NewVector(embedding[:])
+
+	query := `INSERT INTO patient (face_embedding) VALUES ($1) RETURNING id`
+
+	err = db.pool.QueryRow(ctx, query, embeddingVector).Scan(&patientID)
+	if err != nil {
+		return nil, fmt.Errorf("error adding new user: %w", err)
+	}
+
+	return &patientID, nil
 }

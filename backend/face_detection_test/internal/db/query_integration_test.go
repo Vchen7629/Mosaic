@@ -83,6 +83,42 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 	})
 }
 
+func TestFetchAllProfileFaceEmb(t *testing.T) {
+	pool := testDB.Pool
+	dbPool := db.NewDBPool(pool)
+	t.Run("returns empty list when fetching from an empty db", func(t *testing.T) {
+		test.CleanupTables(t, pool)
+
+		profileEmbList, err := dbPool.FetchAllProfileFaceEmb()
+
+		assert.Nil(t, err)
+		assert.Empty(t, profileEmbList)
+	})
+
+	t.Run("returns the list containing id and emb", func(t *testing.T) {
+		test.CleanupTables(t, pool)
+
+		patientEmbs := []float32{0.1, 0.3, 0.5}
+		patientIDs := make([]int32, 3)
+		for i, val := range patientEmbs {
+			patientIDs[i] = test.SeedPatient(t, pool, test.MakeEmbedding(val, 128))
+		}
+
+		profileEmbList, err := dbPool.FetchAllProfileFaceEmb()
+
+		assert.Nil(t, err)
+		assert.Equal(t, 3, len(profileEmbList))
+		for i, expected := range patientEmbs {
+			assert.Equal(t, patientIDs[i], profileEmbList[i].ID)
+			expectedEmb := [128]float32{}
+			for j := range expectedEmb {
+				expectedEmb[j] = expected
+			}
+			assert.EqualValues(t, expectedEmb, profileEmbList[i].Embedding)
+		}
+	})
+}
+
 func TestFetchVisitorBriefing(t *testing.T) {
 	pool := testDB.Pool
 	dbPool := db.NewDBPool(pool)
@@ -220,3 +256,36 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 		assert.EqualValues(t, embedding2, upsertEmbedding, "should update the embedding to new one")
 	})
 }	
+
+func TestAddNewFaceForUser(t *testing.T) {
+	pool := testDB.Pool
+	dbPool := db.NewDBPool(pool)
+
+	t.Run("returns error and nil id for invalid embedding", func(t *testing.T) {
+		test.CleanupTables(t, pool)
+
+		zerosEmbedding := test.MakeEmbedding(0, 128)
+		var invalidEmbedding face.Descriptor
+		copy(invalidEmbedding[:], zerosEmbedding)
+
+		id, err := dbPool.AddNewFaceForUser(invalidEmbedding)
+		assert.Equal(t, "embedding cannot be all zeros", err.Error())
+		assert.Nil(t, id)
+	})
+
+	t.Run("successfully adds the face embedding for patient", func(t *testing.T) {
+		test.CleanupTables(t, pool)
+
+		validEmbedding := test.MakeEmbedding(0.1, 128)
+
+		var embedding face.Descriptor
+		copy(embedding[:], validEmbedding)
+
+		id, err := dbPool.AddNewFaceForUser(embedding)
+		assert.Nil(t, err)
+
+		embeddingFromDB := test.CheckUserEmbeddings(t, pool, *id)
+
+		assert.EqualValues(t, embedding, embeddingFromDB)
+	})
+}

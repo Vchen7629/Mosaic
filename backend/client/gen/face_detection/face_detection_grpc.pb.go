@@ -19,8 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FaceDetectionService_ProcessFaces_FullMethodName = "/proto.face_detection.FaceDetectionService/ProcessFaces"
-	FaceDetectionService_RegisterFace_FullMethodName = "/proto.face_detection.FaceDetectionService/RegisterFace"
+	FaceDetectionService_ProcessVisitorFaces_FullMethodName = "/proto.face_detection.FaceDetectionService/ProcessVisitorFaces"
+	FaceDetectionService_RegisterVisitorFace_FullMethodName = "/proto.face_detection.FaceDetectionService/RegisterVisitorFace"
+	FaceDetectionService_ProcessProfileFace_FullMethodName  = "/proto.face_detection.FaceDetectionService/ProcessProfileFace"
+	FaceDetectionService_RegisterProfileFace_FullMethodName = "/proto.face_detection.FaceDetectionService/RegisterProfileFace"
 )
 
 // FaceDetectionServiceClient is the client API for FaceDetectionService service.
@@ -29,10 +31,14 @@ const (
 //
 // Face detection processing service definition
 type FaceDetectionServiceClient interface {
-	// Send face bytes, get back briefing if known or unknown signal
-	ProcessFaces(ctx context.Context, in *ProcessFacesRequest, opts ...grpc.CallOption) (*ProcessFacesResponse, error)
-	// Called after the user enters a name for an unknown face
-	RegisterFace(ctx context.Context, in *RegisterFaceRequest, opts ...grpc.CallOption) (*RegisterFaceResponse, error)
+	// Send face bytes for potential visitors, get back briefing if known or unknown signal
+	ProcessVisitorFaces(ctx context.Context, in *ProcessVisitorFacesRequest, opts ...grpc.CallOption) (*ProcessVisitorFacesResponse, error)
+	// Used to register a new face when a new face is detected while app is recording
+	RegisterVisitorFace(ctx context.Context, in *RegisterVisitorFaceRequest, opts ...grpc.CallOption) (*RegisterVisitorFaceResponse, error)
+	// Send face bytes for loading user profile, get back patientID if known or request to create new profile
+	ProcessProfileFace(ctx context.Context, in *ProcessProfileFaceRequest, opts ...grpc.CallOption) (*ProcessProfileFaceResponse, error)
+	// Used to register a new face when a new face is detected while syncing profile
+	RegisterProfileFace(ctx context.Context, in *RegisterProfileFaceRequest, opts ...grpc.CallOption) (*RegisterProfileFaceResponse, error)
 }
 
 type faceDetectionServiceClient struct {
@@ -43,20 +49,40 @@ func NewFaceDetectionServiceClient(cc grpc.ClientConnInterface) FaceDetectionSer
 	return &faceDetectionServiceClient{cc}
 }
 
-func (c *faceDetectionServiceClient) ProcessFaces(ctx context.Context, in *ProcessFacesRequest, opts ...grpc.CallOption) (*ProcessFacesResponse, error) {
+func (c *faceDetectionServiceClient) ProcessVisitorFaces(ctx context.Context, in *ProcessVisitorFacesRequest, opts ...grpc.CallOption) (*ProcessVisitorFacesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ProcessFacesResponse)
-	err := c.cc.Invoke(ctx, FaceDetectionService_ProcessFaces_FullMethodName, in, out, cOpts...)
+	out := new(ProcessVisitorFacesResponse)
+	err := c.cc.Invoke(ctx, FaceDetectionService_ProcessVisitorFaces_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *faceDetectionServiceClient) RegisterFace(ctx context.Context, in *RegisterFaceRequest, opts ...grpc.CallOption) (*RegisterFaceResponse, error) {
+func (c *faceDetectionServiceClient) RegisterVisitorFace(ctx context.Context, in *RegisterVisitorFaceRequest, opts ...grpc.CallOption) (*RegisterVisitorFaceResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RegisterFaceResponse)
-	err := c.cc.Invoke(ctx, FaceDetectionService_RegisterFace_FullMethodName, in, out, cOpts...)
+	out := new(RegisterVisitorFaceResponse)
+	err := c.cc.Invoke(ctx, FaceDetectionService_RegisterVisitorFace_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *faceDetectionServiceClient) ProcessProfileFace(ctx context.Context, in *ProcessProfileFaceRequest, opts ...grpc.CallOption) (*ProcessProfileFaceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProcessProfileFaceResponse)
+	err := c.cc.Invoke(ctx, FaceDetectionService_ProcessProfileFace_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *faceDetectionServiceClient) RegisterProfileFace(ctx context.Context, in *RegisterProfileFaceRequest, opts ...grpc.CallOption) (*RegisterProfileFaceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RegisterProfileFaceResponse)
+	err := c.cc.Invoke(ctx, FaceDetectionService_RegisterProfileFace_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -69,10 +95,14 @@ func (c *faceDetectionServiceClient) RegisterFace(ctx context.Context, in *Regis
 //
 // Face detection processing service definition
 type FaceDetectionServiceServer interface {
-	// Send face bytes, get back briefing if known or unknown signal
-	ProcessFaces(context.Context, *ProcessFacesRequest) (*ProcessFacesResponse, error)
-	// Called after the user enters a name for an unknown face
-	RegisterFace(context.Context, *RegisterFaceRequest) (*RegisterFaceResponse, error)
+	// Send face bytes for potential visitors, get back briefing if known or unknown signal
+	ProcessVisitorFaces(context.Context, *ProcessVisitorFacesRequest) (*ProcessVisitorFacesResponse, error)
+	// Used to register a new face when a new face is detected while app is recording
+	RegisterVisitorFace(context.Context, *RegisterVisitorFaceRequest) (*RegisterVisitorFaceResponse, error)
+	// Send face bytes for loading user profile, get back patientID if known or request to create new profile
+	ProcessProfileFace(context.Context, *ProcessProfileFaceRequest) (*ProcessProfileFaceResponse, error)
+	// Used to register a new face when a new face is detected while syncing profile
+	RegisterProfileFace(context.Context, *RegisterProfileFaceRequest) (*RegisterProfileFaceResponse, error)
 	mustEmbedUnimplementedFaceDetectionServiceServer()
 }
 
@@ -83,11 +113,17 @@ type FaceDetectionServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedFaceDetectionServiceServer struct{}
 
-func (UnimplementedFaceDetectionServiceServer) ProcessFaces(context.Context, *ProcessFacesRequest) (*ProcessFacesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ProcessFaces not implemented")
+func (UnimplementedFaceDetectionServiceServer) ProcessVisitorFaces(context.Context, *ProcessVisitorFacesRequest) (*ProcessVisitorFacesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ProcessVisitorFaces not implemented")
 }
-func (UnimplementedFaceDetectionServiceServer) RegisterFace(context.Context, *RegisterFaceRequest) (*RegisterFaceResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RegisterFace not implemented")
+func (UnimplementedFaceDetectionServiceServer) RegisterVisitorFace(context.Context, *RegisterVisitorFaceRequest) (*RegisterVisitorFaceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RegisterVisitorFace not implemented")
+}
+func (UnimplementedFaceDetectionServiceServer) ProcessProfileFace(context.Context, *ProcessProfileFaceRequest) (*ProcessProfileFaceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ProcessProfileFace not implemented")
+}
+func (UnimplementedFaceDetectionServiceServer) RegisterProfileFace(context.Context, *RegisterProfileFaceRequest) (*RegisterProfileFaceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RegisterProfileFace not implemented")
 }
 func (UnimplementedFaceDetectionServiceServer) mustEmbedUnimplementedFaceDetectionServiceServer() {}
 func (UnimplementedFaceDetectionServiceServer) testEmbeddedByValue()                              {}
@@ -110,38 +146,74 @@ func RegisterFaceDetectionServiceServer(s grpc.ServiceRegistrar, srv FaceDetecti
 	s.RegisterService(&FaceDetectionService_ServiceDesc, srv)
 }
 
-func _FaceDetectionService_ProcessFaces_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ProcessFacesRequest)
+func _FaceDetectionService_ProcessVisitorFaces_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProcessVisitorFacesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FaceDetectionServiceServer).ProcessFaces(ctx, in)
+		return srv.(FaceDetectionServiceServer).ProcessVisitorFaces(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: FaceDetectionService_ProcessFaces_FullMethodName,
+		FullMethod: FaceDetectionService_ProcessVisitorFaces_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FaceDetectionServiceServer).ProcessFaces(ctx, req.(*ProcessFacesRequest))
+		return srv.(FaceDetectionServiceServer).ProcessVisitorFaces(ctx, req.(*ProcessVisitorFacesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _FaceDetectionService_RegisterFace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterFaceRequest)
+func _FaceDetectionService_RegisterVisitorFace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterVisitorFaceRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FaceDetectionServiceServer).RegisterFace(ctx, in)
+		return srv.(FaceDetectionServiceServer).RegisterVisitorFace(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: FaceDetectionService_RegisterFace_FullMethodName,
+		FullMethod: FaceDetectionService_RegisterVisitorFace_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FaceDetectionServiceServer).RegisterFace(ctx, req.(*RegisterFaceRequest))
+		return srv.(FaceDetectionServiceServer).RegisterVisitorFace(ctx, req.(*RegisterVisitorFaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FaceDetectionService_ProcessProfileFace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProcessProfileFaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FaceDetectionServiceServer).ProcessProfileFace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FaceDetectionService_ProcessProfileFace_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FaceDetectionServiceServer).ProcessProfileFace(ctx, req.(*ProcessProfileFaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FaceDetectionService_RegisterProfileFace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterProfileFaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FaceDetectionServiceServer).RegisterProfileFace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FaceDetectionService_RegisterProfileFace_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FaceDetectionServiceServer).RegisterProfileFace(ctx, req.(*RegisterProfileFaceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -154,12 +226,20 @@ var FaceDetectionService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*FaceDetectionServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ProcessFaces",
-			Handler:    _FaceDetectionService_ProcessFaces_Handler,
+			MethodName: "ProcessVisitorFaces",
+			Handler:    _FaceDetectionService_ProcessVisitorFaces_Handler,
 		},
 		{
-			MethodName: "RegisterFace",
-			Handler:    _FaceDetectionService_RegisterFace_Handler,
+			MethodName: "RegisterVisitorFace",
+			Handler:    _FaceDetectionService_RegisterVisitorFace_Handler,
+		},
+		{
+			MethodName: "ProcessProfileFace",
+			Handler:    _FaceDetectionService_ProcessProfileFace_Handler,
+		},
+		{
+			MethodName: "RegisterProfileFace",
+			Handler:    _FaceDetectionService_RegisterProfileFace_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
