@@ -102,6 +102,7 @@ func (s *FaceDetectionServer) ProcessUserProfileFace(
 			FaceDetected: true,
 			Success: true,
 			NewFace: true,
+			FaceEmbedding: embeddings[0][:],
 		}, nil
 	}
 
