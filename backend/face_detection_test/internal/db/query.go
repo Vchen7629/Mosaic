@@ -41,7 +41,7 @@ func (db *DBPool) FetchAllVisitorFaceEmbForPatient(
 		)
 
 		if err != nil {
-			return nil, fmt.Errorf("Error fetching visitor emb: %v", err)
+			return nil, fmt.Errorf("error fetching visitor emb: %v", err)
 		}
 
 		// Convert pgvector to face.Descriptor ([128]float32)

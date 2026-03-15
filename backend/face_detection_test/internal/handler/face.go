@@ -87,8 +87,7 @@ func (s*FaceDetectionServer) RegisterFace(
 	copy(embedding[:], req.FaceEmbedding)
 
 	err = db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
-		var err error
-		err = s.pool.AddNewFaceForVisitor(req.PatientId, req.VisitorName, embedding)
+		err := s.pool.AddNewFaceForVisitor(req.PatientId, req.VisitorName, embedding)
 		return err
 	})
 	if err != nil {
