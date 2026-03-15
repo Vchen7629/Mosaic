@@ -10,12 +10,11 @@ import (
 	"mosaic-face-detection.com/internal/service"
 )
 
-// Handler to process face pipeline that
-// does entire processing pipeline
-func (s *FaceDetectionServer) ProcessFaces(
+// Handler to process faces for visitors
+func (s *FaceDetectionServer) ProcessVisitorFace(
 	ctx context.Context, 
-	req *fd.ProcessFacesRequest,
-) (*fd.ProcessFacesResponse, error) {	
+	req *fd.ProcessVisitorFacesRequest,
+) (*fd.ProcessVisitorFacesResponse, error) {	
 	embeddings, err := service.GenerateFaceEmbeddings(s.rec, req.FaceBytes)
 	if err != nil {
 		return nil, err
@@ -23,20 +22,20 @@ func (s *FaceDetectionServer) ProcessFaces(
 
 	// return early if no faces in frame
 	if len(embeddings) == 0 {
-		return &fd.ProcessFacesResponse{FaceDetected: false}, nil
+		return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, nil
 	}
 
-	var knownVisitors []service.KnownVisitor
+	var knownVisitors []service.Faces
 	err = db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
 		var err error
 		knownVisitors, err = s.pool.FetchAllVisitorFaceEmbForPatient(req.PatientId)
 		return err
 	})
 	if err != nil {
-		return &fd.ProcessFacesResponse{ Success: false }, err
+		return &fd.ProcessVisitorFacesResponse{ Success: false }, err
 	}
 
-	matchingFaceRes := service.CompareFaces(s.rec, embeddings, knownVisitors)
+	matchingFaceRes := service.CompareVisitorFaces(s.rec, embeddings, knownVisitors)
 
 	faceResults := make([]*fd.FaceResult, len(embeddings))
 	for i, visitorID := range matchingFaceRes {
@@ -64,19 +63,61 @@ func (s *FaceDetectionServer) ProcessFaces(
 		}
 	}
 
-	return &fd.ProcessFacesResponse{
+	return &fd.ProcessVisitorFacesResponse{
 		FaceDetected: true,
 		Faces: faceResults,
 		Success: true,
 	}, nil
 }
 
+// Handler to process faces for syncing user profile
+func (s *FaceDetectionServer) ProcessUserProfileFace(
+	ctx context.Context, 
+	req *fd.ProcessProfileFaceRequest,
+) (*fd.ProcessProfileFaceResponse, error) {	
+	embeddings, err := service.GenerateFaceEmbeddings(s.rec, req.FaceBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// return early if no faces in frame
+	if len(embeddings) == 0 {
+		return &fd.ProcessProfileFaceResponse{FaceDetected: false}, nil
+	}
+
+	var knownProfileFaceEmbs []service.Faces
+	err = db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
+		var err error
+		knownProfileFaceEmbs, err = s.pool.FetchAllProfileFaceEmb()
+		return err
+	})
+	if err != nil {
+		return &fd.ProcessProfileFaceResponse{ Success: false }, err
+	}
+
+	matchingProfileID, matched := service.CompareProfileFaces(s.rec, embeddings, knownProfileFaceEmbs)
+
+	if !matched {
+		return &fd.ProcessProfileFaceResponse{
+			FaceDetected: true,
+			Success: true,
+			NewFace: true,
+		}, nil
+	}
+
+	return &fd.ProcessProfileFaceResponse{
+		FaceDetected: true,
+		PatientId: matchingProfileID,
+		Success: true,
+	}, nil
+}
+
 // Handler for when the face embedding doesnt 
-// match with an existing embedding
-func (s*FaceDetectionServer) RegisterFace(
+// match with an existing embedding for a visitor
+func (s*FaceDetectionServer) RegisterVisitorFace(
 	ctx context.Context,
-	req *fd.RegisterFaceRequest,
-) (*fd.RegisterFaceResponse, error) {
+	req *fd.RegisterVisitorFaceRequest,
+) (*fd.RegisterVisitorFaceResponse, error) {
 	err := service.ValidateEmbeddingSlice(req.FaceEmbedding)
 	if err != nil {
 		return nil, err
@@ -91,8 +132,35 @@ func (s*FaceDetectionServer) RegisterFace(
 		return err
 	})
 	if err != nil {
-		return &fd.RegisterFaceResponse{Success: false}, nil
+		return &fd.RegisterVisitorFaceResponse{Success: false}, nil
 	}
 
-	return &fd.RegisterFaceResponse{Success: true}, nil
+	return &fd.RegisterVisitorFaceResponse{Success: true}, nil
+}
+
+// Handler for when the face embedding doesnt 
+// match with an existing embedding for users
+func (s*FaceDetectionServer) RegisterUserFace(
+	ctx context.Context,
+	req *fd.RegisterProfileFaceRequest,
+) (*fd.RegisterProfileFaceResponse, error) {
+	err := service.ValidateEmbeddingSlice(req.FaceEmbedding)
+	if err != nil {
+		return nil, err
+	}
+
+	// converting []float32 to face.Descriptor [128]float32
+	var embedding face.Descriptor
+	copy(embedding[:], req.FaceEmbedding)
+	var patientID *int32
+
+	err = db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
+		patientID, err = s.pool.AddNewFaceForUser(embedding)
+		return err
+	})
+	if err != nil {
+		return &fd.RegisterProfileFaceResponse{Success: false}, nil
+	}
+
+	return &fd.RegisterProfileFaceResponse{PatientId: *patientID, Success: true}, nil
 }
