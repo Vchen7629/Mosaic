@@ -2,11 +2,11 @@ import { RefObject, useCallback } from "react";
 import { useAudioCapture } from "../../hooks/useAudioCapture";
 
 /**
- * @description handles websocket connection to send audio to backend for processing 
+ * @description custom hook to handle websocket connection to send audio to backend for processing 
  * @param patientId 
  * @param isRecording 
  */
-export function backendAudioProcess(
+export function useBackendAudioProcess(
     wsRef: RefObject<WebSocket | null>, 
     isRecording: boolean,
     patientID: string | null
