@@ -1,12 +1,12 @@
-import { useEffect, useRef } from "react";
+import { RefObject, useEffect, useRef } from "react";
 
 /**
  * hook to handle websocket lifecycle and connecting to the backend client
  * @param patientId 
  * @param isActive 
- * @returns 
+ * @returns a ref with the websocket connection
  */
-export function useWebSocketConnection(isActive: boolean) {
+export function useWebSocketConnection(isActive: boolean): RefObject<WebSocket | null> {
     const wsRef = useRef<WebSocket | null>(null)
 
     useEffect(() => {
