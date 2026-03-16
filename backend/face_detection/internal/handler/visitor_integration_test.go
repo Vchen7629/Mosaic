@@ -56,11 +56,11 @@ func TestProcessVisitorFaces(t *testing.T) {
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
 
-		patientID, _ := test.AddNewVisitor(t, recPool, imgBytes, testDB)
+		profileID, _ := test.AddNewVisitor(t, recPool, imgBytes, testDB)
 
 		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
 			FaceBytes: imgBytes,
-			PatientId: patientID,
+			ProfileId: profileID,
 		})
 
 		assert.NoError(t, err)
@@ -86,15 +86,15 @@ func TestRegisterVisitorFace(t *testing.T) {
 		var embedding face.Descriptor
 		copy(embedding[:], validEmbedding)
 
-		patientID := test.SeedProfile(t, pool, validEmbedding)
+		profileID := test.SeedProfile(t, pool, validEmbedding)
 
 		res, err := server.RegisterVisitorFace(context.Background(), &fd.RegisterVisitorFaceRequest{
 			FaceEmbedding: embedding[:],
-			PatientId:     patientID,
+			ProfileId:     profileID,
 			VisitorName:   "test_visitor",
 		})
 
-		dbEmb := test.CheckVisitorEmbeddings(t, pool, patientID, "test_visitor")
+		dbEmb := test.CheckVisitorEmbeddings(t, pool, profileID, "test_visitor")
 
 		assert.NoError(t, err)
 		assert.True(t, res.Success)
@@ -108,7 +108,7 @@ func TestRegisterVisitorFace(t *testing.T) {
 
 		_, err := server.RegisterVisitorFace(context.Background(), &fd.RegisterVisitorFaceRequest{
 			FaceEmbedding: invalidEmbedding,
-			PatientId:     1,
+			ProfileId:     1,
 			VisitorName:   "test_visitor",
 		})
 
@@ -120,7 +120,7 @@ func TestRegisterVisitorFace(t *testing.T) {
 
 		_, err := server.RegisterVisitorFace(context.Background(), &fd.RegisterVisitorFaceRequest{
 			FaceEmbedding: []float32{},
-			PatientId:     1,
+			ProfileId:     1,
 			VisitorName:   "test_visitor",
 		})
 

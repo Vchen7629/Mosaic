@@ -25,8 +25,8 @@ func (db *DBPool) FetchAllProfileFaceEmb() ([]service.Faces, error) {
 	return scanFaceEmbeddings(rows, "profile")
 }
 
-// fetch all the visitor id embeddings for a patient using patientID
-func (db *DBPool) FetchAllVisitorFaceEmbForPatient(
+// fetch all the visitor id embeddings for a profile using profileID
+func (db *DBPool) FetchAllVisitorFaceEmbForProfile(
 	profileID int32,
 ) ([]service.Faces, error) {
 	if profileID <= 0 {

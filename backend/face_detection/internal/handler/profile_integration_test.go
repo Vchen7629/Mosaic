@@ -79,7 +79,7 @@ func TestSyncProfile(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, res.FaceDetected)
 		assert.False(t, res.NewFace)
-		assert.Equal(t, expectedID, res.PatientId)
+		assert.Equal(t, expectedID, res.ProfileId)
 	})
 
 	t.Run("Face detected but no matches with existing profile should return emb", func(t *testing.T) {
@@ -119,7 +119,7 @@ func TestSyncProfile(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, res.FaceDetected)
 		assert.False(t, res.NewFace, "should match existing profile, not be a new face")
-		assert.Equal(t, expectedID, res.PatientId, "should return the matching profile ID")
+		assert.Equal(t, expectedID, res.ProfileId, "should return the matching profile ID")
 	})
 }
 
@@ -144,7 +144,7 @@ func TestRegisterProfileFace(t *testing.T) {
 			},
 		})
 
-		dbEmb := test.CheckProfileEmbeddings(t, pool, res.PatientId)
+		dbEmb := test.CheckProfileEmbeddings(t, pool, res.ProfileId)
 
 		assert.NoError(t, err)
 		assert.True(t, res.Success)
@@ -171,7 +171,7 @@ func TestRegisterProfileFace(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, res.Success)
 
-		dbEmbs := test.CheckAllProfileEmbeddings(t, pool, res.PatientId)
+		dbEmbs := test.CheckAllProfileEmbeddings(t, pool, res.ProfileId)
 		assert.Len(t, dbEmbs, len(embeddings), "all embeddings should be saved")
 		assert.EqualValues(t, embeddings, dbEmbs)
 	})

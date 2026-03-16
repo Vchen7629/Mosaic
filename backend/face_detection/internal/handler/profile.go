@@ -63,7 +63,7 @@ func (s *FaceDetectionServer) SyncProfile(
 
 	return &fd.SyncProfileResponse{
 		FaceDetected: true,
-		PatientId: matchingProfileID,
+		ProfileId: matchingProfileID,
 		Success: true,
 	}, nil
 }
@@ -98,5 +98,5 @@ func (s*FaceDetectionServer) RegisterProfileFace(
 		return &fd.RegisterProfileFaceResponse{Success: false}, nil
 	}
 
-	return &fd.RegisterProfileFaceResponse{PatientId: *profileID, Success: true}, nil
+	return &fd.RegisterProfileFaceResponse{ProfileId: *profileID, Success: true}, nil
 }

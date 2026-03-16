@@ -24,10 +24,10 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 	}
 
 	var knownVisitors []service.Faces
-	if req.PatientId > 0 {
+	if req.ProfileId > 0 {
 		err = db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
 			var err error
-			knownVisitors, err = s.pool.FetchAllVisitorFaceEmbForPatient(req.PatientId)
+			knownVisitors, err = s.pool.FetchAllVisitorFaceEmbForProfile(req.ProfileId)
 			return err
 		})
 		if err != nil {
@@ -48,7 +48,7 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 			var briefing string
 			err := db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
 				var err error
-				briefing, err = s.pool.FetchVisitorBriefing(req.PatientId, visitorID)
+				briefing, err = s.pool.FetchVisitorBriefing(req.ProfileId, visitorID)
 				return err
 			})
 			if err != nil {
@@ -86,7 +86,7 @@ func (s*FaceDetectionServer) RegisterVisitorFace(
 	copy(embedding[:], req.FaceEmbedding)
 
 	err = db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
-		err := s.pool.AddNewFaceForVisitor(req.PatientId, req.VisitorName, embedding)
+		err := s.pool.AddNewFaceForVisitor(req.ProfileId, req.VisitorName, embedding)
 		return err
 	})
 	if err != nil {
