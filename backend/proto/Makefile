@@ -7,10 +7,10 @@ face_detection_gen:
 			--go_opt=paths=source_relative \
 			--go-grpc_opt=paths=source_relative
 	protoc -I face_detection face_detection/face_detection.proto \
-		--go_out=../face_detection_test/gen \
+		--go_out=../face_detection/gen \
 		--go_opt=Mface_detection.proto=mosaic-face-detection.com/gen \
 		--go_opt=paths=source_relative \
-		--go-grpc_out=../face_detection_test/gen \
+		--go-grpc_out=../face_detection/gen \
 		--go-grpc_opt=Mface_detection.proto=mosaic-face-detection.com/genn \
 		--go-grpc_opt=paths=source_relative
 

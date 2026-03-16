@@ -25,7 +25,7 @@ const (
 type ProcessVisitorFacesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FaceBytes     []byte                 `protobuf:"bytes,1,opt,name=face_bytes,json=faceBytes,proto3" json:"face_bytes,omitempty"`
-	PatientId     int32                  `protobuf:"varint,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
+	ProfileId     int32                  `protobuf:"varint,2,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -67,9 +67,9 @@ func (x *ProcessVisitorFacesRequest) GetFaceBytes() []byte {
 	return nil
 }
 
-func (x *ProcessVisitorFacesRequest) GetPatientId() int32 {
+func (x *ProcessVisitorFacesRequest) GetProfileId() int32 {
 	if x != nil {
-		return x.PatientId
+		return x.ProfileId
 	}
 	return 0
 }
@@ -209,7 +209,7 @@ func (x *ProcessVisitorFacesResponse) GetSuccess() bool {
 type RegisterVisitorFaceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FaceEmbedding []float32              `protobuf:"fixed32,1,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // 128 dim embedding
-	PatientId     int32                  `protobuf:"varint,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
+	ProfileId     int32                  `protobuf:"varint,2,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
 	VisitorName   string                 `protobuf:"bytes,3,opt,name=visitor_name,json=visitorName,proto3" json:"visitor_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -252,9 +252,9 @@ func (x *RegisterVisitorFaceRequest) GetFaceEmbedding() []float32 {
 	return nil
 }
 
-func (x *RegisterVisitorFaceRequest) GetPatientId() int32 {
+func (x *RegisterVisitorFaceRequest) GetProfileId() int32 {
 	if x != nil {
-		return x.PatientId
+		return x.ProfileId
 	}
 	return 0
 }
@@ -406,7 +406,7 @@ type SyncProfileResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FaceDetected  bool                   `protobuf:"varint,1,opt,name=face_detected,json=faceDetected,proto3" json:"face_detected,omitempty"` // used so can prompt the frontend to maybe get a clearer view?
 	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`                               // used for retry logic
-	PatientId     int32                  `protobuf:"varint,3,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
+	ProfileId     int32                  `protobuf:"varint,3,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
 	NewFace       bool                   `protobuf:"varint,4,opt,name=new_face,json=newFace,proto3" json:"new_face,omitempty"`
 	FaceEmbedding []*FaceEmbedding       `protobuf:"bytes,5,rep,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -457,9 +457,9 @@ func (x *SyncProfileResponse) GetSuccess() bool {
 	return false
 }
 
-func (x *SyncProfileResponse) GetPatientId() int32 {
+func (x *SyncProfileResponse) GetProfileId() int32 {
 	if x != nil {
-		return x.PatientId
+		return x.ProfileId
 	}
 	return 0
 }
@@ -523,10 +523,11 @@ func (x *RegisterProfileFaceRequest) GetFaceEmbedding() []*FaceEmbedding {
 	return nil
 }
 
+// Response with register profile response
 type RegisterProfileFaceResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`                      // used for retry logic
-	PatientId     int32                  `protobuf:"varint,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"` // sent back to frontend to save
+	ProfileId     int32                  `protobuf:"varint,2,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"` // sent back to frontend to save
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -568,9 +569,9 @@ func (x *RegisterProfileFaceResponse) GetSuccess() bool {
 	return false
 }
 
-func (x *RegisterProfileFaceResponse) GetPatientId() int32 {
+func (x *RegisterProfileFaceResponse) GetProfileId() int32 {
 	if x != nil {
-		return x.PatientId
+		return x.ProfileId
 	}
 	return 0
 }
@@ -584,7 +585,7 @@ const file_face_detection_proto_rawDesc = "" +
 	"\n" +
 	"face_bytes\x18\x01 \x01(\fR\tfaceBytes\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x02 \x01(\x05R\tpatientId\"~\n" +
+	"profile_id\x18\x02 \x01(\x05R\tprofileId\"~\n" +
 	"\n" +
 	"FaceResult\x12\x19\n" +
 	"\bis_known\x18\x01 \x01(\bR\aisKnown\x12\x12\n" +
@@ -598,7 +599,7 @@ const file_face_detection_proto_rawDesc = "" +
 	"\x1aRegisterVisitorFaceRequest\x12%\n" +
 	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x02 \x01(\x05R\tpatientId\x12!\n" +
+	"profile_id\x18\x02 \x01(\x05R\tprofileId\x12!\n" +
 	"\fvisitor_name\x18\x03 \x01(\tR\vvisitorName\"7\n" +
 	"\x1bRegisterVisitorFaceResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"3\n" +
@@ -611,7 +612,7 @@ const file_face_detection_proto_rawDesc = "" +
 	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x03 \x01(\x05R\tpatientId\x12\x19\n" +
+	"profile_id\x18\x03 \x01(\x05R\tprofileId\x12\x19\n" +
 	"\bnew_face\x18\x04 \x01(\bR\anewFace\x12J\n" +
 	"\x0eface_embedding\x18\x05 \x03(\v2#.proto.face_detection.FaceEmbeddingR\rfaceEmbedding\"h\n" +
 	"\x1aRegisterProfileFaceRequest\x12J\n" +
@@ -619,7 +620,7 @@ const file_face_detection_proto_rawDesc = "" +
 	"\x1bRegisterProfileFaceResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x02 \x01(\x05R\tpatientId2\xf6\x03\n" +
+	"profile_id\x18\x02 \x01(\x05R\tprofileId2\xf6\x03\n" +
 	"\x14FaceDetectionService\x12|\n" +
 	"\x13ProcessVisitorFaces\x120.proto.face_detection.ProcessVisitorFacesRequest\x1a1.proto.face_detection.ProcessVisitorFacesResponse\"\x00\x12|\n" +
 	"\x13RegisterVisitorFace\x120.proto.face_detection.RegisterVisitorFaceRequest\x1a1.proto.face_detection.RegisterVisitorFaceResponse\"\x00\x12d\n" +
