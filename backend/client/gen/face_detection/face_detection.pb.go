@@ -311,28 +311,28 @@ func (x *RegisterVisitorFaceResponse) GetSuccess() bool {
 	return false
 }
 
-// The request containing the face image in bytes
-type ProcessProfileFaceRequest struct {
+// The request containing the array of face image in bytes
+type SyncProfileRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FaceBytes     []byte                 `protobuf:"bytes,1,opt,name=face_bytes,json=faceBytes,proto3" json:"face_bytes,omitempty"`
+	FaceBytes     [][]byte               `protobuf:"bytes,1,rep,name=face_bytes,json=faceBytes,proto3" json:"face_bytes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ProcessProfileFaceRequest) Reset() {
-	*x = ProcessProfileFaceRequest{}
+func (x *SyncProfileRequest) Reset() {
+	*x = SyncProfileRequest{}
 	mi := &file_face_detection_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ProcessProfileFaceRequest) String() string {
+func (x *SyncProfileRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ProcessProfileFaceRequest) ProtoMessage() {}
+func (*SyncProfileRequest) ProtoMessage() {}
 
-func (x *ProcessProfileFaceRequest) ProtoReflect() protoreflect.Message {
+func (x *SyncProfileRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_face_detection_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -344,12 +344,12 @@ func (x *ProcessProfileFaceRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ProcessProfileFaceRequest.ProtoReflect.Descriptor instead.
-func (*ProcessProfileFaceRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use SyncProfileRequest.ProtoReflect.Descriptor instead.
+func (*SyncProfileRequest) Descriptor() ([]byte, []int) {
 	return file_face_detection_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *ProcessProfileFaceRequest) GetFaceBytes() []byte {
+func (x *SyncProfileRequest) GetFaceBytes() [][]byte {
 	if x != nil {
 		return x.FaceBytes
 	}
@@ -401,31 +401,32 @@ func (x *FaceEmbedding) GetFaceEmbedding() []float32 {
 	return nil
 }
 
-type ProcessProfileFaceResponse struct {
+// response for the sync profile
+type SyncProfileResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FaceDetected  bool                   `protobuf:"varint,1,opt,name=face_detected,json=faceDetected,proto3" json:"face_detected,omitempty"` // used so can prompt the frontend to maybe get a clearer view?
 	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`                               // used for retry logic
 	PatientId     int32                  `protobuf:"varint,3,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
 	NewFace       bool                   `protobuf:"varint,4,opt,name=new_face,json=newFace,proto3" json:"new_face,omitempty"`
-	FaceEmbedding []float32              `protobuf:"fixed32,5,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"`
+	FaceEmbedding []*FaceEmbedding       `protobuf:"bytes,5,rep,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ProcessProfileFaceResponse) Reset() {
-	*x = ProcessProfileFaceResponse{}
+func (x *SyncProfileResponse) Reset() {
+	*x = SyncProfileResponse{}
 	mi := &file_face_detection_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ProcessProfileFaceResponse) String() string {
+func (x *SyncProfileResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ProcessProfileFaceResponse) ProtoMessage() {}
+func (*SyncProfileResponse) ProtoMessage() {}
 
-func (x *ProcessProfileFaceResponse) ProtoReflect() protoreflect.Message {
+func (x *SyncProfileResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_face_detection_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -437,40 +438,40 @@ func (x *ProcessProfileFaceResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ProcessProfileFaceResponse.ProtoReflect.Descriptor instead.
-func (*ProcessProfileFaceResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use SyncProfileResponse.ProtoReflect.Descriptor instead.
+func (*SyncProfileResponse) Descriptor() ([]byte, []int) {
 	return file_face_detection_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *ProcessProfileFaceResponse) GetFaceDetected() bool {
+func (x *SyncProfileResponse) GetFaceDetected() bool {
 	if x != nil {
 		return x.FaceDetected
 	}
 	return false
 }
 
-func (x *ProcessProfileFaceResponse) GetSuccess() bool {
+func (x *SyncProfileResponse) GetSuccess() bool {
 	if x != nil {
 		return x.Success
 	}
 	return false
 }
 
-func (x *ProcessProfileFaceResponse) GetPatientId() int32 {
+func (x *SyncProfileResponse) GetPatientId() int32 {
 	if x != nil {
 		return x.PatientId
 	}
 	return 0
 }
 
-func (x *ProcessProfileFaceResponse) GetNewFace() bool {
+func (x *SyncProfileResponse) GetNewFace() bool {
 	if x != nil {
 		return x.NewFace
 	}
 	return false
 }
 
-func (x *ProcessProfileFaceResponse) GetFaceEmbedding() []float32 {
+func (x *SyncProfileResponse) GetFaceEmbedding() []*FaceEmbedding {
 	if x != nil {
 		return x.FaceEmbedding
 	}
@@ -600,29 +601,29 @@ const file_face_detection_proto_rawDesc = "" +
 	"patient_id\x18\x02 \x01(\x05R\tpatientId\x12!\n" +
 	"\fvisitor_name\x18\x03 \x01(\tR\vvisitorName\"7\n" +
 	"\x1bRegisterVisitorFaceResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\":\n" +
-	"\x19ProcessProfileFaceRequest\x12\x1d\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"3\n" +
+	"\x12SyncProfileRequest\x12\x1d\n" +
 	"\n" +
-	"face_bytes\x18\x01 \x01(\fR\tfaceBytes\"6\n" +
+	"face_bytes\x18\x01 \x03(\fR\tfaceBytes\"6\n" +
 	"\rFaceEmbedding\x12%\n" +
-	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\"\xbc\x01\n" +
-	"\x1aProcessProfileFaceResponse\x12#\n" +
+	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\"\xda\x01\n" +
+	"\x13SyncProfileResponse\x12#\n" +
 	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x1d\n" +
 	"\n" +
 	"patient_id\x18\x03 \x01(\x05R\tpatientId\x12\x19\n" +
-	"\bnew_face\x18\x04 \x01(\bR\anewFace\x12%\n" +
-	"\x0eface_embedding\x18\x05 \x03(\x02R\rfaceEmbedding\"h\n" +
+	"\bnew_face\x18\x04 \x01(\bR\anewFace\x12J\n" +
+	"\x0eface_embedding\x18\x05 \x03(\v2#.proto.face_detection.FaceEmbeddingR\rfaceEmbedding\"h\n" +
 	"\x1aRegisterProfileFaceRequest\x12J\n" +
 	"\x0eface_embedding\x18\x01 \x03(\v2#.proto.face_detection.FaceEmbeddingR\rfaceEmbedding\"V\n" +
 	"\x1bRegisterProfileFaceResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x02 \x01(\x05R\tpatientId2\x8b\x04\n" +
+	"patient_id\x18\x02 \x01(\x05R\tpatientId2\xf6\x03\n" +
 	"\x14FaceDetectionService\x12|\n" +
 	"\x13ProcessVisitorFaces\x120.proto.face_detection.ProcessVisitorFacesRequest\x1a1.proto.face_detection.ProcessVisitorFacesResponse\"\x00\x12|\n" +
-	"\x13RegisterVisitorFace\x120.proto.face_detection.RegisterVisitorFaceRequest\x1a1.proto.face_detection.RegisterVisitorFaceResponse\"\x00\x12y\n" +
-	"\x12ProcessProfileFace\x12/.proto.face_detection.ProcessProfileFaceRequest\x1a0.proto.face_detection.ProcessProfileFaceResponse\"\x00\x12|\n" +
+	"\x13RegisterVisitorFace\x120.proto.face_detection.RegisterVisitorFaceRequest\x1a1.proto.face_detection.RegisterVisitorFaceResponse\"\x00\x12d\n" +
+	"\vSyncProfile\x12(.proto.face_detection.SyncProfileRequest\x1a).proto.face_detection.SyncProfileResponse\"\x00\x12|\n" +
 	"\x13RegisterProfileFace\x120.proto.face_detection.RegisterProfileFaceRequest\x1a1.proto.face_detection.RegisterProfileFaceResponse\"\x00B&Z$mosaic-client.com/gen/face_detectionb\x06proto3"
 
 var (
@@ -644,28 +645,29 @@ var file_face_detection_proto_goTypes = []any{
 	(*ProcessVisitorFacesResponse)(nil), // 2: proto.face_detection.ProcessVisitorFacesResponse
 	(*RegisterVisitorFaceRequest)(nil),  // 3: proto.face_detection.RegisterVisitorFaceRequest
 	(*RegisterVisitorFaceResponse)(nil), // 4: proto.face_detection.RegisterVisitorFaceResponse
-	(*ProcessProfileFaceRequest)(nil),   // 5: proto.face_detection.ProcessProfileFaceRequest
+	(*SyncProfileRequest)(nil),          // 5: proto.face_detection.SyncProfileRequest
 	(*FaceEmbedding)(nil),               // 6: proto.face_detection.FaceEmbedding
-	(*ProcessProfileFaceResponse)(nil),  // 7: proto.face_detection.ProcessProfileFaceResponse
+	(*SyncProfileResponse)(nil),         // 7: proto.face_detection.SyncProfileResponse
 	(*RegisterProfileFaceRequest)(nil),  // 8: proto.face_detection.RegisterProfileFaceRequest
 	(*RegisterProfileFaceResponse)(nil), // 9: proto.face_detection.RegisterProfileFaceResponse
 }
 var file_face_detection_proto_depIdxs = []int32{
 	1, // 0: proto.face_detection.ProcessVisitorFacesResponse.faces:type_name -> proto.face_detection.FaceResult
-	6, // 1: proto.face_detection.RegisterProfileFaceRequest.face_embedding:type_name -> proto.face_detection.FaceEmbedding
-	0, // 2: proto.face_detection.FaceDetectionService.ProcessVisitorFaces:input_type -> proto.face_detection.ProcessVisitorFacesRequest
-	3, // 3: proto.face_detection.FaceDetectionService.RegisterVisitorFace:input_type -> proto.face_detection.RegisterVisitorFaceRequest
-	5, // 4: proto.face_detection.FaceDetectionService.ProcessProfileFace:input_type -> proto.face_detection.ProcessProfileFaceRequest
-	8, // 5: proto.face_detection.FaceDetectionService.RegisterProfileFace:input_type -> proto.face_detection.RegisterProfileFaceRequest
-	2, // 6: proto.face_detection.FaceDetectionService.ProcessVisitorFaces:output_type -> proto.face_detection.ProcessVisitorFacesResponse
-	4, // 7: proto.face_detection.FaceDetectionService.RegisterVisitorFace:output_type -> proto.face_detection.RegisterVisitorFaceResponse
-	7, // 8: proto.face_detection.FaceDetectionService.ProcessProfileFace:output_type -> proto.face_detection.ProcessProfileFaceResponse
-	9, // 9: proto.face_detection.FaceDetectionService.RegisterProfileFace:output_type -> proto.face_detection.RegisterProfileFaceResponse
-	6, // [6:10] is the sub-list for method output_type
-	2, // [2:6] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	6, // 1: proto.face_detection.SyncProfileResponse.face_embedding:type_name -> proto.face_detection.FaceEmbedding
+	6, // 2: proto.face_detection.RegisterProfileFaceRequest.face_embedding:type_name -> proto.face_detection.FaceEmbedding
+	0, // 3: proto.face_detection.FaceDetectionService.ProcessVisitorFaces:input_type -> proto.face_detection.ProcessVisitorFacesRequest
+	3, // 4: proto.face_detection.FaceDetectionService.RegisterVisitorFace:input_type -> proto.face_detection.RegisterVisitorFaceRequest
+	5, // 5: proto.face_detection.FaceDetectionService.SyncProfile:input_type -> proto.face_detection.SyncProfileRequest
+	8, // 6: proto.face_detection.FaceDetectionService.RegisterProfileFace:input_type -> proto.face_detection.RegisterProfileFaceRequest
+	2, // 7: proto.face_detection.FaceDetectionService.ProcessVisitorFaces:output_type -> proto.face_detection.ProcessVisitorFacesResponse
+	4, // 8: proto.face_detection.FaceDetectionService.RegisterVisitorFace:output_type -> proto.face_detection.RegisterVisitorFaceResponse
+	7, // 9: proto.face_detection.FaceDetectionService.SyncProfile:output_type -> proto.face_detection.SyncProfileResponse
+	9, // 10: proto.face_detection.FaceDetectionService.RegisterProfileFace:output_type -> proto.face_detection.RegisterProfileFaceResponse
+	7, // [7:11] is the sub-list for method output_type
+	3, // [3:7] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_face_detection_proto_init() }
