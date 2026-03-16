@@ -15,10 +15,13 @@ import (
 func (s *FaceDetectionServer) SyncProfile(
 	ctx context.Context, 
 	req *fd.SyncProfileRequest,
-) (*fd.SyncProfileResponse, error) {	
+) (*fd.SyncProfileResponse, error) {
+	rec := s.recPool.Acquire() // acquiring one instance of the rec model from pool
+	defer s.recPool.Release(rec)
+	
 	var allEmbeddings []face.Descriptor
 	for _, frameBytes := range req.FaceBytes {
-		embeddings, err := service.GenerateFaceEmbeddings(s.rec, frameBytes)
+		embeddings, err := service.GenerateFaceEmbeddings(rec, frameBytes)
 		if err != nil {
 			return nil, err
 		}	
@@ -42,7 +45,7 @@ func (s *FaceDetectionServer) SyncProfile(
 		return &fd.SyncProfileResponse{Success: false}, err
 	}
 
-	matchingProfileID, matched := service.CompareProfileFaces(s.rec, allEmbeddings, knownProfileFaceEmbs)
+	matchingProfileID, matched := service.CompareProfileFaces(rec, allEmbeddings, knownProfileFaceEmbs)
 
 	if !matched {
 		log.Println("GRPC profile no faces matched!, returning embeddings for registration")

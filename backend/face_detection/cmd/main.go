@@ -8,7 +8,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/Kagami/go-face"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -20,15 +19,16 @@ import (
 )
 
 type Config struct {
-	ServerPort string `envconfig:"SERVER_PORT" default:"40040"`
-	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
-	ModelsDir string `envconfig:"MODELS_DIR" default:"models"`
+	ServerPort 	string 	`envconfig:"SERVER_PORT" default:"40040"`
+	DatabaseURL string 	`envconfig:"DATABASE_URL" default:""`
+	ModelsDir 	string 	`envconfig:"MODELS_DIR" default:"models"`
+	RecPoolSize int		`envconfig:"REC_POOL_SIZE" default:"5"`	
 }
 
 // handles starting the gRPC server
 func gRPCServer(
 	cfg *Config,
-	rec *face.Recognizer, 
+	recPool *service.RecognizerPool, 
 	pool *pgxpool.Pool,
 ) (*grpc.Server, error) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", cfg.ServerPort))
@@ -40,7 +40,7 @@ func gRPCServer(
 
 	grpcServer := grpc.NewServer()
 	fd.RegisterFaceDetectionServiceServer(
-		grpcServer, handler.NewFaceDetectionServer(rec, dbPool),
+		grpcServer, handler.NewFaceDetectionServer(recPool, dbPool),
 	)
 
 	go func() {
@@ -65,14 +65,14 @@ func main() {
 
 	defer pool.Close()
 
-	rec, err := service.InitializeFaceDetector(cfg.ModelsDir)
+	recPool, err := service.NewRecognizerPool(cfg.ModelsDir, cfg.RecPoolSize)
 	if err != nil {
-		log.Fatalf("failed to init face detector: %v", err)
+		log.Fatalf("failed to init recognizer pool: %v", err)
 	}
 	
-	defer rec.Close()
+	defer recPool.Close()
 
-	grpcServer, err := gRPCServer(cfg, rec, pool)
+	grpcServer, err := gRPCServer(cfg, recPool, pool)
 	if err != nil {
 		log.Fatalf("failed to start gRPC server: %v", err)
 	}

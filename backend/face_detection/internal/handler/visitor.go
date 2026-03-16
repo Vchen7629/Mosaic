@@ -15,7 +15,10 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 	ctx context.Context, 
 	req *fd.ProcessVisitorFacesRequest,
 ) (*fd.ProcessVisitorFacesResponse, error) {	
-	embeddings, err := service.GenerateFaceEmbeddings(s.rec, req.FaceBytes)
+	rec := s.recPool.Acquire() // acquiring one instance of the rec model from pool
+	defer s.recPool.Release(rec)
+
+	embeddings, err := service.GenerateFaceEmbeddings(rec, req.FaceBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +38,7 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 		return &fd.ProcessVisitorFacesResponse{ Success: false }, err
 	}
 
-	matchingFaceRes := service.CompareVisitorFaces(s.rec, embeddings, knownVisitors)
+	matchingFaceRes := service.CompareVisitorFaces(rec, embeddings, knownVisitors)
 
 	faceResults := make([]*fd.FaceResult, len(embeddings))
 	for i, visitorID := range matchingFaceRes {

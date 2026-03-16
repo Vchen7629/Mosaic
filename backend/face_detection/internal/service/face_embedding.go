@@ -2,20 +2,9 @@ package service
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/Kagami/go-face"
 )
-
-// initializes the face detection model
-func InitializeFaceDetector(modelsDir string) (*face.Recognizer, error) {
-	rec, err := face.NewRecognizer(modelsDir)
-	if err != nil {
-		log.Fatalf("can't init face recognizer: %v", err)
-	}
-
-	return rec, nil
-}
 
 // takes raw image bytes, runs face detection, and returns
 // the 128-d  descriptor for the first detected face

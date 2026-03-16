@@ -1,24 +1,23 @@
 package handler
 
 import (
-	"github.com/Kagami/go-face"
 	fd "mosaic-face-detection.com/gen"
 	"mosaic-face-detection.com/internal/db"
+	"mosaic-face-detection.com/internal/service"
 )
 
 type FaceDetectionServer struct {
 	fd.UnimplementedFaceDetectionServiceServer
-	rec *face.Recognizer
+	recPool *service.RecognizerPool
 	pool   *db.DBPool
-
 }
 
 func NewFaceDetectionServer(
-	rec *face.Recognizer, 
+	recPool *service.RecognizerPool, 
 	dbPool *db.DBPool,
 ) *FaceDetectionServer {
 	return &FaceDetectionServer{
-		rec: rec,
+		recPool: recPool,
 		pool: dbPool,
 	}
 }
