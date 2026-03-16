@@ -22,9 +22,7 @@ func AddNewProfile(
 	assert.Len(t, embeddings, 1)
 
 	embFloat32 := make([]float32, len(embeddings[0]))
-	for i, v := range embeddings[0] {
-		embFloat32[i] = v
-	}
+	copy(embFloat32, embeddings[0][:])
 	expectedID := SeedProfile(t, testDB.Pool, embFloat32)
 
 	return expectedID
@@ -77,3 +75,30 @@ func CheckProfileEmbeddings(
 
 	return embeddingFromDB
 }
+
+func CheckAllProfileEmbeddings(
+	t *testing.T,
+	pool *pgxpool.Pool,
+	profileID int32,
+) []face.Descriptor {
+	t.Helper()
+
+	ctx := context.Background()
+
+	query := `SELECT face_embedding FROM profile_face_embeddings WHERE profile_id = $1 ORDER BY id`
+	rows, err := pool.Query(ctx, query, profileID)
+	assert.Nil(t, err)
+	defer rows.Close()
+
+	var descriptors []face.Descriptor
+	for rows.Next() {
+		var embeddingRes pgvector.Vector
+		assert.Nil(t, rows.Scan(&embeddingRes))
+		var d face.Descriptor
+		copy(d[:], embeddingRes.Slice())
+		descriptors = append(descriptors, d)
+	}
+
+	return descriptors
+}
+
