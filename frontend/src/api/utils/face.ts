@@ -10,7 +10,7 @@ import { BriefingComponent } from "../../types/briefing";
 export function VisitorFaceProcess(
     wsRef: RefObject<WebSocket | null>, 
     isCapturingFace: boolean,
-    patientID: string,
+    patientID: string | null,
     onNewFaceDetected: (
         patientId: number,
         faceEmbedding: number,
