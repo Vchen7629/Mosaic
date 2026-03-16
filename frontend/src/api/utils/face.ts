@@ -1,4 +1,4 @@
-import { Dispatch, RefObject, SetStateAction, useCallback, useEffect } from "react";
+import { Dispatch, RefObject, SetStateAction, useCallback, useEffect, useRef } from "react";
 import { useFaceCapture } from "../../hooks/useFaceCapture";
 import { BriefingComponent } from "../../types/briefing";
 
@@ -78,12 +78,16 @@ export function NewVisitorFaceRegister(
  * saves the returned patient_id to localStorage and calls onPatientSynced
  * @param isCapturingFace boolean to control whether to start the webcam
  * @param onPatientSynced called with the patient_id once a face is confirmed
+ * @param frameCount number of face frame to capture before sending to backend
  */
 export function SyncProfileProcess(
     wsRef: RefObject<WebSocket | null>, 
     isCapturingFace: boolean,
-    onPatientSynced: (patientId: number) => void
+    onPatientSynced: (patientId: number) => void,
+    frameCount: number = 5
 ) {
+    const framesRef = useRef<string[]>([])
+
     // reacts to the ws messages sent from backend to frontend
     useEffect(() => {
         if (!isCapturingFace) return
@@ -100,17 +104,25 @@ export function SyncProfileProcess(
         }
 
         ws.addEventListener("message", handleMessage)
-        return () => ws.removeEventListener("message", handleMessage)
+        return () => {
+            ws.removeEventListener("message", handleMessage)
+            framesRef.current = []
+        }
     }, [isCapturingFace, wsRef.current])
 
     const onFrame = useCallback((frame: string) => {
         if (!wsRef.current || wsRef.current?.readyState !== WebSocket.OPEN) return
+
+        framesRef.current.push(frame)
         
-        wsRef.current.send(JSON.stringify({
-            type: "profile_face",
-            face_bytes: frame,
-        }))
-    }, [wsRef])
+        if (framesRef.current.length >= frameCount) {
+            wsRef.current.send(JSON.stringify({
+                type: "profile_face",
+                face_bytes: framesRef.current,
+            }))
+            framesRef.current = []
+        }
+    }, [wsRef, frameCount])
 
     useFaceCapture({ enabled: isCapturingFace, onFrame, testMode: false })
 }
