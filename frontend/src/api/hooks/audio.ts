@@ -3,7 +3,7 @@ import { useAudioCapture } from "../../hooks/useAudioCapture";
 
 /**
  * @description custom hook to handle websocket connection to send audio to backend for processing 
- * @param patientId 
+ * @param patientId the synced profile id used for 
  * @param isRecording 
  */
 export function useBackendAudioProcess(

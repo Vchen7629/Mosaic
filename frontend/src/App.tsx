@@ -2,17 +2,16 @@ import { useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import StartRecordingButton from "./components/startRecordingBtn";
 import { SetWindowPosition } from "./utils/setWindowPosition";
-import { handleBackendLifecycle } from "./utils/handleBackendLifecycle";
+import { useBackendLifecycle } from "./utils/handleBackendLifecycle";
 import { AutoResizeWindow } from "./utils/autoResizeWindow";
 import ConvoBriefingDisplay from "./components/convo_briefing";
-import { backendAudioProcess } from "./api/utils/audio";
+import { useBackendAudioProcess } from "./api/hooks/audio";
 import { VisitorFaceProcess, SyncProfileProcess } from "./api/utils/face";
 import { useWebSocketConnection } from "./api/hooks/useWebSocket";
 import { ProfileStatus, SyncProfileButton } from "./components/syncProfile";
 import "./App.css";
 import { BriefingComponent } from "./types/briefing";
-
-type SyncState = "idle" | "scanning" | "active";
+import { SyncState } from "./types/profle";
 
 function App() {
   const [isRecording, setIsRecording] = useState(false);
@@ -27,8 +26,8 @@ function App() {
 
   SetWindowPosition()
   AutoResizeWindow()
-  handleBackendLifecycle()
-  backendAudioProcess(wsRef, isRecording, patientId)
+  useBackendLifecycle()
+  useBackendAudioProcess(wsRef, isRecording, patientId)
   VisitorFaceProcess(
     wsRef, 
     isFaceCapture, 
