@@ -87,6 +87,12 @@ export function SyncProfileProcess(
     frameCount: number = 5
 ) {
     const framesRef = useRef<string[]>([])
+    const hasSentRef = useRef(false)
+
+    // reset on start capturingface
+    useEffect(() => {
+        if (isCapturingFace) hasSentRef.current = false
+    }, [isCapturingFace])
 
     // reacts to the ws messages sent from backend to frontend
     useEffect(() => {
@@ -112,15 +118,14 @@ export function SyncProfileProcess(
 
     const onFrame = useCallback((frame: string) => {
         if (!wsRef.current || wsRef.current?.readyState !== WebSocket.OPEN) return
+        if (hasSentRef.current) return // prevent duplicate send
 
         framesRef.current.push(frame)
         
         if (framesRef.current.length >= frameCount) {
-            wsRef.current.send(JSON.stringify({
-                type: "profile_face",
-                face_bytes: framesRef.current,
-            }))
+            wsRef.current.send(JSON.stringify({type: "sync_profile", frames: framesRef.current }))
             framesRef.current = []
+            hasSentRef.current = true
         }
     }, [wsRef, frameCount])
 
