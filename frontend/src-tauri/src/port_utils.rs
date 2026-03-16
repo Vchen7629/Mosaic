@@ -1,4 +1,3 @@
-use std::net::TcpStream;
 use std::process::Command;
 
 pub fn kill_processes_on_ports() {
@@ -75,19 +74,6 @@ pub fn verify_ports_clear_and_print() {
     if !ports_in_use() {
         println!("[Rust] All services stopped successfully!");
     }
-}
-
-pub fn wait_for_port_ready(timeout: std::time::Duration) -> bool {
-    let start = std::time::Instant::now();
-    while start.elapsed() < timeout {
-        if TcpStream::connect("127.0.0.1:8000").is_ok() {
-            println!("[Rust] Port 8000 is ready");
-            return true;
-        }
-        std::thread::sleep(std::time::Duration::from_millis(100));
-    }
-    println!("[Rust] Warning: port 8000 not ready after {:?}", timeout);
-    false
 }
 
 pub fn wait_for_ports_free(timeout: std::time::Duration) {
