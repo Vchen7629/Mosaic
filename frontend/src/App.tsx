@@ -12,14 +12,13 @@ import { ProfileStatus, SyncProfileButton } from "./components/syncProfile";
 import "./App.css";
 import { BriefingComponent } from "./types/briefing";
 
-type SyncState = "idle" | "scanning" | "confirming" | "active";
+type SyncState = "idle" | "scanning" | "active";
 
 function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [isFaceCapture, setIsFaceCapture] = useState<boolean>(false);
   const [isSyncProfile, setIsSyncProfile] = useState<boolean>(false);
-  //const patientId = localStorage.getItem("patient_id");
-  const patientId = "69"
+  const patientId = localStorage.getItem("patient_id");
   const patientName = localStorage.getItem("patient_name");
   const [syncState, setSyncState] = useState<SyncState>(patientName ? "active" : "idle");
   const wsRef = useWebSocketConnection(isRecording || isSyncProfile)
@@ -38,7 +37,7 @@ function App() {
     setBriefingList
   )
   SyncProfileProcess(wsRef, isSyncProfile, (_patientId) => {
-    setSyncState("confirming")
+    setSyncState("active")
     setIsSyncProfile(false)
   })
 

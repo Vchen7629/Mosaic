@@ -13,7 +13,7 @@ service FaceDetectionService {
     rpc RegisterVisitorFace (RegisterVisitorFaceRequest) returns (RegisterVisitorFaceResponse) {}
 
     // Send face bytes for loading user profile, get back patientID if known or request to create new profile
-    rpc ProcessProfileFace (ProcessProfileFaceRequest) returns (ProcessProfileFaceResponse) {}
+    rpc SyncProfile (SyncProfileRequest) returns (SyncProfileResponse) {}
     
     // Used to register a new face when a new face is detected while syncing profile
     rpc RegisterProfileFace (RegisterProfileFaceRequest) returns (RegisterProfileFaceResponse) {}
@@ -53,22 +53,28 @@ message RegisterVisitorFaceResponse {
     bool success = 1;
 }
 
-// The request containing the face image in bytes
-message ProcessProfileFaceRequest {
-    bytes face_bytes = 1;
+// The request containing the array of face image in bytes
+message SyncProfileRequest {
+    repeated bytes face_bytes = 1;
 }
 
-message ProcessProfileFaceResponse {
+// contains one face embedding
+message FaceEmbedding {
+    repeated float face_embedding = 1; // 128 dim emb
+}
+
+// response for the sync profile
+message SyncProfileResponse {
     bool face_detected = 1; // used so can prompt the frontend to maybe get a clearer view?
     bool success = 2; // used for retry logic
     int32 patient_id = 3;
     bool new_face = 4;
-    repeated float face_embedding = 5;
+    repeated FaceEmbedding face_embedding = 5;
 }
 
 // Request containing face image in bytes
 message RegisterProfileFaceRequest {
-    repeated float face_embedding = 1; // 128 dim embedding
+    repeated FaceEmbedding face_embedding = 1; // contains multiple face embeddings
 }
 
 message RegisterProfileFaceResponse {

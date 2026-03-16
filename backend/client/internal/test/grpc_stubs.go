@@ -28,12 +28,12 @@ func (s *StubFaceClient) ProcessVisitorFaces(
 	return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, nil
 }
 
-func (s *StubFaceClient) ProcessProfileFace(
+func (s *StubFaceClient) SyncProfile(
 	_ context.Context,
-	_ *fd.ProcessProfileFaceRequest,
+	_ *fd.SyncProfileRequest,
 	_ ...grpc.CallOption,
-) (*fd.ProcessProfileFaceResponse, error) {
-	return &fd.ProcessProfileFaceResponse{Success: true}, nil
+) (*fd.SyncProfileResponse, error) {
+	return &fd.SyncProfileResponse{Success: true}, nil
 }
 
 func (s *StubFaceClient) RegisterVisitorFace(

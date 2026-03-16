@@ -9,7 +9,7 @@ import { useAudioCapture } from "../../hooks/useAudioCapture";
 export function backendAudioProcess(
     wsRef: RefObject<WebSocket | null>, 
     isRecording: boolean,
-    patientID: string
+    patientID: string | null
 ) {
     const onAudioData = useCallback((samples: Float32Array) => {
         if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return

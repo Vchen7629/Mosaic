@@ -1,4 +1,4 @@
-import { Camera, RefreshCcw, UserPlus } from 'lucide-react';
+import { Camera, RefreshCcw } from 'lucide-react';
 
 /**
  * Component that displays the currently logged in profile status for the current user
@@ -29,20 +29,16 @@ export const ProfileStatus = ({ syncState }: { syncState: string }) => {
             </div>
           )}
 
-          {syncState === "confirming" && (
-            <>
-                <UserPlus size={20} color='green'/>
-              <div className="flex flex-col gap-px flex-1 min-w-0 ml-2">
-                <span className="text-[10px] font-medium text-zinc-500 leading-none tracking-wide uppercase">Face detected</span>
-                <span className="text-[12px] font-medium text-zinc-300 leading-none">Is this the patient?</span>
-              </div>
-            </>
-          )}
-
           {syncState === "active" && (
-            <div className="flex flex-col gap-px">
-              <span className="text-[10px] font-medium text-zinc-500 leading-none tracking-wide uppercase">Patient</span>
-              <span className="text-[13px] font-semibold text-zinc-200 leading-none tracking-tight">Placehodler</span>
+            <div className="flex items-center gap-2">
+              <div className="relative w-3 h-3 flex items-center justify-center shrink-0">
+                <div className="absolute inset-0 rounded-full bg-emerald-400/20 animate-ping duration-300" />
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.7)]" />
+              </div>
+              <div className="flex flex-col gap-px">
+                <span className="text-[10px] font-medium text-zinc-500 leading-none tracking-wide uppercase">Patient</span>
+                <span className="text-[13px] font-semibold text-zinc-200 leading-none tracking-tight">Logged in</span>
+              </div>
             </div>
           )}
         </>
@@ -71,13 +67,6 @@ export const SyncProfileButton = ({ syncState, setSyncState, setIsCapturingFace 
     setIsCapturingFace(false);
   }
 
-  function handleConfirm() {
-    setSyncState("active");
-    // TODO: persist patient to localStorage
-  }
-
-
-
   return (
     <>
       {syncState === "idle" && (
@@ -99,37 +88,14 @@ export const SyncProfileButton = ({ syncState, setSyncState, setIsCapturingFace 
         </button>
       )}
 
-      {syncState === "confirming" && (
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            onClick={handleCancel}
-            className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-800 border border-white/6 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 transition-all duration-150 cursor-pointer"
-          >
-            No
-          </button>
-          <button
-            onClick={handleConfirm}
-            className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30 transition-all duration-150 cursor-pointer"
-          >
-            Confirm
-          </button>
-        </div>
-      )}
-
       {syncState === "active" && (
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.7)] shrink-0" />
-            <span className="text-[10px] font-semibold tracking-wide text-emerald-400">Active</span>
-          </div>
-          <button
-            onClick={handleSyncStart}
-            className="w-6 h-6 rounded-full flex items-center justify-center text-zinc-600 hover:text-zinc-300 hover:bg-white/8 transition-all duration-150 cursor-pointer"
-            aria-label="Re-sync patient"
-          >
-            <RefreshCcw size={15}/>
-          </button>
-        </div>
+        <button
+          onClick={handleSyncStart}
+          className="w-7 h-7 rounded-lg flex items-center justify-center bg-zinc-800 border border-white/10 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 hover:border-white/20 transition-all duration-150 cursor-pointer"
+          aria-label="Re-sync patient"
+        >
+          <RefreshCcw size={12}/>
+        </button>
       )}
 
     </>

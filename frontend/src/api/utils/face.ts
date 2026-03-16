@@ -1,4 +1,4 @@
-import { Dispatch, RefObject, SetStateAction, useCallback, useEffect } from "react";
+import { Dispatch, RefObject, SetStateAction, useCallback, useEffect, useRef } from "react";
 import { useFaceCapture } from "../../hooks/useFaceCapture";
 import { BriefingComponent } from "../../types/briefing";
 
@@ -10,7 +10,7 @@ import { BriefingComponent } from "../../types/briefing";
 export function VisitorFaceProcess(
     wsRef: RefObject<WebSocket | null>, 
     isCapturingFace: boolean,
-    patientID: string,
+    patientID: string | null,
     onNewFaceDetected: (
         patientId: number,
         faceEmbedding: number,
@@ -78,12 +78,22 @@ export function NewVisitorFaceRegister(
  * saves the returned patient_id to localStorage and calls onPatientSynced
  * @param isCapturingFace boolean to control whether to start the webcam
  * @param onPatientSynced called with the patient_id once a face is confirmed
+ * @param frameCount number of face frame to capture before sending to backend
  */
 export function SyncProfileProcess(
     wsRef: RefObject<WebSocket | null>, 
     isCapturingFace: boolean,
-    onPatientSynced: (patientId: number) => void
+    onPatientSynced: (patientId: number) => void,
+    frameCount: number = 5
 ) {
+    const framesRef = useRef<string[]>([])
+    const hasSentRef = useRef(false)
+
+    // reset on start capturingface
+    useEffect(() => {
+        if (isCapturingFace) hasSentRef.current = false
+    }, [isCapturingFace])
+
     // reacts to the ws messages sent from backend to frontend
     useEffect(() => {
         if (!isCapturingFace) return
@@ -94,23 +104,30 @@ export function SyncProfileProcess(
         // saves the patient_id to localstorage for later use
         const handleMessage = (event: MessageEvent) => {
             const data = JSON.parse(event.data)
-            if (data.type !== "profile_face_response" || !data.face_detected) return
+            if (data.type !== "profile_face_response" || data.type !== "profile_face_response") return
             localStorage.setItem("patient_id", String(data.patient_id))
             onPatientSynced(data.patient_id)
         }
 
         ws.addEventListener("message", handleMessage)
-        return () => ws.removeEventListener("message", handleMessage)
+        return () => {
+            ws.removeEventListener("message", handleMessage)
+            framesRef.current = []
+        }
     }, [isCapturingFace, wsRef.current])
 
     const onFrame = useCallback((frame: string) => {
         if (!wsRef.current || wsRef.current?.readyState !== WebSocket.OPEN) return
+        if (hasSentRef.current) return // prevent duplicate send
+
+        framesRef.current.push(frame)
         
-        wsRef.current.send(JSON.stringify({
-            type: "profile_face",
-            face_bytes: frame,
-        }))
-    }, [wsRef])
+        if (framesRef.current.length >= frameCount) {
+            wsRef.current.send(JSON.stringify({type: "sync_profile", frames: framesRef.current }))
+            framesRef.current = []
+            hasSentRef.current = true
+        }
+    }, [wsRef, frameCount])
 
     useFaceCapture({ enabled: isCapturingFace, onFrame, testMode: false })
 }
