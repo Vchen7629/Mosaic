@@ -25,7 +25,7 @@ const (
 type TranscribeAudioRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AudioBytes    []float32              `protobuf:"fixed32,1,rep,packed,name=audio_bytes,json=audioBytes,proto3" json:"audio_bytes,omitempty"`
-	PatientId     int32                  `protobuf:"varint,2,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
+	ProfileId     int32                  `protobuf:"varint,2,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -67,9 +67,9 @@ func (x *TranscribeAudioRequest) GetAudioBytes() []float32 {
 	return nil
 }
 
-func (x *TranscribeAudioRequest) GetPatientId() int32 {
+func (x *TranscribeAudioRequest) GetProfileId() int32 {
 	if x != nil {
-		return x.PatientId
+		return x.ProfileId
 	}
 	return 0
 }
@@ -122,7 +122,7 @@ func (x *TranscribeAudioResponse) GetSuccess() bool {
 // Request containing patient id to save transcript for
 type SaveTranscriptRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PatientId     int32                  `protobuf:"varint,1,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
+	ProfileId     int32                  `protobuf:"varint,1,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -157,9 +157,9 @@ func (*SaveTranscriptRequest) Descriptor() ([]byte, []int) {
 	return file_audio_transcription_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *SaveTranscriptRequest) GetPatientId() int32 {
+func (x *SaveTranscriptRequest) GetProfileId() int32 {
 	if x != nil {
-		return x.PatientId
+		return x.ProfileId
 	}
 	return 0
 }
@@ -218,12 +218,12 @@ const file_audio_transcription_proto_rawDesc = "" +
 	"\vaudio_bytes\x18\x01 \x03(\x02R\n" +
 	"audioBytes\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x02 \x01(\x05R\tpatientId\"3\n" +
+	"profile_id\x18\x02 \x01(\x05R\tprofileId\"3\n" +
 	"\x17TranscribeAudioResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\"6\n" +
 	"\x15SaveTranscriptRequest\x12\x1d\n" +
 	"\n" +
-	"patient_id\x18\x01 \x01(\x05R\tpatientId\"2\n" +
+	"profile_id\x18\x01 \x01(\x05R\tprofileId\"2\n" +
 	"\x16SaveTranscriptResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess2\x90\x02\n" +
 	"\x19AudioTranscriptionService\x12z\n" +
