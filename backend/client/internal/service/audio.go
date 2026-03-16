@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"strconv"
 	"sync"
 	"time"
 
@@ -34,6 +35,8 @@ func ProcessAudio(
 	client at.AudioTranscriptionServiceClient,
 ) error {
 	ctx := context.Background()
+	id64, err := strconv.ParseInt(patientID, 10, 32)
+
 	// Decode base64
 	audioBytes, err := base64.StdEncoding.DecodeString(audioData)
 	if err != nil {
@@ -61,7 +64,7 @@ func ProcessAudio(
 		
 		log.Printf("[ProcessAudio] Sending batch: %d audio bytes, remaining: %d audio bytes", len(batch), len(audioBuffer))
 
-		err := transcribeWithRetry(ctx, client, batch, patientID)
+		err := transcribeWithRetry(ctx, client, batch, int32(id64))
 		if err != nil {
 			log.Printf("Error transcribing: %v", err)
 			return err
@@ -80,6 +83,8 @@ func FlushAudio(
 	patientID string, 
 	client at.AudioTranscriptionServiceClient,
 ) {
+	id64, err := strconv.ParseInt(patientID, 10, 32)
+
 	Wg.Wait()
 
 	bufferMutex.Lock()
@@ -92,7 +97,7 @@ func FlushAudio(
 		return
 	}
 
-	err := transcribeWithRetry(ctx, client, remaining, patientID)
+	err = transcribeWithRetry(ctx, client, remaining, int32(id64))
 	if err != nil {
 		log.Printf("Error flushing audio: %v", err)
 	}
@@ -105,10 +110,13 @@ func SaveTranscriptWithRetry(
 	patientID string,
 	client at.AudioTranscriptionServiceClient,
 ) error {
-	var err error
+	id64, err := strconv.ParseInt(patientID, 10, 32)
+	if err != nil {
+		return fmt.Errorf("Error converting string to int64: %w", err)
+	}
 
 	for attempt := range 3 {
-		resp, rpcErr := client.SaveTranscript(ctx, &at.SaveTranscriptRequest{ PatientId: patientID })
+		resp, rpcErr := client.SaveTranscript(ctx, &at.SaveTranscriptRequest{ PatientId: int32(id64) })
 		if rpcErr == nil && resp.Success {
 			return nil
 		}
@@ -126,7 +134,7 @@ func transcribeWithRetry(
 	ctx context.Context, 
 	client at.AudioTranscriptionServiceClient,
 	batch []float32,
-	patientID string,
+	patientID int32,
 ) error {
 	var err error
 
@@ -138,7 +146,11 @@ func transcribeWithRetry(
 		if rpcErr == nil && resp.Success {
 			return nil
 		}
-		err = rpcErr
+		if rpcErr != nil {
+			err = rpcErr
+		} else {
+			err = fmt.Errorf("transcription returned success=false")
+		}
 		wait := time.Duration(1<<attempt) * time.Second // 1s, 2s, 4s
 		time.Sleep(wait)
 	}
