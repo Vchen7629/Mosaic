@@ -6,7 +6,7 @@ import { useBackendLifecycle } from "./utils/handleBackendLifecycle";
 import { AutoResizeWindow } from "./utils/autoResizeWindow";
 import ConvoBriefingDisplay from "./components/convo_briefing";
 import { useBackendAudioProcess } from "./api/hooks/audio";
-import { VisitorFaceProcess, SyncProfileProcess } from "./api/utils/face";
+import { VisitorFaceProcess } from "./api/utils/face";
 import { useWebSocketConnection } from "./api/hooks/useWebSocket";
 import { ProfileStatus, SyncProfileButton } from "./components/syncProfile";
 import "./App.css";
@@ -19,25 +19,21 @@ function App() {
   const [isSyncProfile, setIsSyncProfile] = useState<boolean>(false);
   const patientId = localStorage.getItem("patient_id");
   const [syncState, setSyncState] = useState<SyncState>(() => patientId ? "active" : "idle");
-  const wsRef = useWebSocketConnection(isRecording || isSyncProfile)
+  const ws = useWebSocketConnection(isRecording || isSyncProfile)
   const [briefingList, setBriefingList] = useState<BriefingComponent[]>([])
   const [newFaceDetected, setNewFaceDetected] = useState<boolean>(false)
 
   SetWindowPosition()
   AutoResizeWindow()
   useBackendLifecycle()
-  useBackendAudioProcess(wsRef, isRecording, patientId)
+  useBackendAudioProcess(ws, isRecording, patientId)
   VisitorFaceProcess(
-    wsRef,
+    ws,
     isFaceCapture,
     patientId,
     (_patientID, _faceEmbedding) => { setNewFaceDetected(true) },
     setBriefingList
   )
-  SyncProfileProcess(wsRef, syncState === "scanning", (_patientId) => {
-    setSyncState("active")
-    setIsSyncProfile(false)
-  })
 
   return (
     <main className="w-full p-2">
@@ -77,6 +73,7 @@ function App() {
         <div className="relative z-10 flex items-center px-4 pt-2.5 pb-3 justify-between">
             <ProfileStatus syncState={syncState}/>
             <SyncProfileButton
+              ws={ws}
               syncState={syncState}
               setSyncState={setSyncState}
               setIsCapturingFace={setIsSyncProfile}
