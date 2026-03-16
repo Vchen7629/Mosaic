@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/Kagami/go-face"
@@ -24,8 +25,6 @@ func (s *FaceDetectionServer) SyncProfile(
 		allEmbeddings = append(allEmbeddings, embeddings...)
 	}
 
-	log.Printf("GRPC generated %d embeddings from %d frames!", len(allEmbeddings), len(req.FaceBytes))
-
 	// return early if no faces in frame
 	if len(allEmbeddings) == 0 {
 		log.Println("GRPC profile no faces detected in any frame")
@@ -36,7 +35,6 @@ func (s *FaceDetectionServer) SyncProfile(
 	err := db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
 		var err error
 		knownProfileFaceEmbs, err = s.pool.FetchAllProfileFaceEmb()
-		log.Println("GRPC Called db once to fetch all embeddings")
 		return err
 	})
 	if err != nil {
@@ -74,6 +72,10 @@ func (s*FaceDetectionServer) RegisterProfileFace(
 	ctx context.Context,
 	req *fd.RegisterProfileFaceRequest,
 ) (*fd.RegisterProfileFaceResponse, error) {
+	if len(req.FaceEmbedding) == 0 {
+		return nil, fmt.Errorf("no face embeddings provided")
+	}
+
 	embeddings := make([]face.Descriptor, len(req.FaceEmbedding))
 	for i, e := range req.FaceEmbedding {
 		err := service.ValidateEmbeddingSlice(e.FaceEmbedding)
