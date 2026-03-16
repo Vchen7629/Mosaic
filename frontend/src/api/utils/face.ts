@@ -8,7 +8,7 @@ import { BriefingComponent } from "../../types/briefing";
  * @param isCapturingFace boolean to control whether to start the webcam
  */
 export function VisitorFaceProcess(
-    wsRef: RefObject<WebSocket | null>, 
+    wsRef: RefObject<WebSocket | null>,
     isCapturingFace: boolean,
     patientID: string | null,
     onNewFaceDetected: (
@@ -17,6 +17,12 @@ export function VisitorFaceProcess(
     ) => void,
     setBriefingList: Dispatch<SetStateAction<BriefingComponent[]>>
 ) {
+    const onNewFaceDetectedRef = useRef(onNewFaceDetected)
+    useEffect(() => { onNewFaceDetectedRef.current = onNewFaceDetected })
+
+    const setBriefingListRef = useRef(setBriefingList)
+    useEffect(() => { setBriefingListRef.current = setBriefingList })
+
     // reacts to the ws messages sent from backend to frontend
     useEffect(() => {
         if (!isCapturingFace) return
@@ -29,19 +35,19 @@ export function VisitorFaceProcess(
             if (data.type !== "new_visitor_register" && data.type !== "existing_visitor_response") return
 
             if (data.type == "new_visitor_register") {
-                onNewFaceDetected(data.patient_id, data.face_embedding)
+                onNewFaceDetectedRef.current(data.patient_id, data.face_embedding)
             }
             if (data.type == "existing_visitor_response") {
-                setBriefingList((prev: BriefingComponent[]) => [...prev, { 
-                    visitorName: data.visitor_name, 
-                    briefingText: data.briefing 
+                setBriefingListRef.current((prev: BriefingComponent[]) => [...prev, {
+                    visitorName: data.visitor_name,
+                    briefingText: data.briefing
                 }])
             }
         }
 
         ws.addEventListener("message", handleMessage)
         return () => ws.removeEventListener("message", handleMessage)
-    }, [isCapturingFace, wsRef.current])
+    }, [isCapturingFace, wsRef])
 
     const onFrame = useCallback(( frame: string ) => {
         if (!wsRef.current || wsRef.current?.readyState !== WebSocket.OPEN) return
