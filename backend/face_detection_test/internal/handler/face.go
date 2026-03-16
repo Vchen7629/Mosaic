@@ -11,7 +11,7 @@ import (
 )
 
 // Handler to process faces for visitors
-func (s *FaceDetectionServer) ProcessVisitorFace(
+func (s *FaceDetectionServer) ProcessVisitorFaces(
 	ctx context.Context, 
 	req *fd.ProcessVisitorFacesRequest,
 ) (*fd.ProcessVisitorFacesResponse, error) {	
@@ -71,7 +71,7 @@ func (s *FaceDetectionServer) ProcessVisitorFace(
 }
 
 // Handler to process faces for syncing user profile
-func (s *FaceDetectionServer) ProcessUserProfileFace(
+func (s *FaceDetectionServer) ProcessProfileFace(
 	ctx context.Context, 
 	req *fd.ProcessProfileFaceRequest,
 ) (*fd.ProcessProfileFaceResponse, error) {	
@@ -147,7 +147,7 @@ func (s*FaceDetectionServer) RegisterVisitorFace(
 
 // Handler for when the face embedding doesnt 
 // match with an existing embedding for users
-func (s*FaceDetectionServer) RegisterUserFace(
+func (s*FaceDetectionServer) RegisterProfileFace(
 	ctx context.Context,
 	req *fd.RegisterProfileFaceRequest,
 ) (*fd.RegisterProfileFaceResponse, error) {
