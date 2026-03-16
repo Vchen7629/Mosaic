@@ -119,60 +119,52 @@ func RegisterNewVisitorFace(
 	return nil
 }
 
-type ProfileFaceRes struct {
+type ProfileSyncRes struct {
 	Type 			string `json:"type"`
-	FaceDetected	bool `json:"face_detected"`
-	Success			bool `json:"success"`
 	PatientID		int32 `json:"patient_id"`
 }
 
-// Process images for loading user patient profile
-// handles registration internally if it detects a new face
-func ProcessProfileImage(
-	frameData string, 
+// Process an array of face frames for profile sync
+// matches against existing profiles or registers a new one
+func SyncProfile(
+	frames []string, 
 	conn *SafeConn,
 	client fd.FaceDetectionServiceClient,
 ) error {
 	ctx := context.Background()
-	// Decode base64
-	faceBytes, err := base64.StdEncoding.DecodeString(frameData)
-	if err != nil {
-		return fmt.Errorf("Frame decode error: %w", err)
+
+	faceBytes := make([][]byte, 0, len(frames))
+	for _, frameData := range frames {
+		// Decode base64
+		decoded, err := base64.StdEncoding.DecodeString(frameData)
+		if err != nil {
+			return fmt.Errorf("frame decode error: %w", err)
+		}		
+
+		faceBytes = append(faceBytes, decoded)
 	}
 
-	resp, err := client.ProcessProfileFace(ctx, &fd.ProcessProfileFaceRequest{FaceBytes: faceBytes})
+	resp, err := client.SyncProfile(ctx, &fd.SyncProfileRequest{FaceBytes: faceBytes})
 	if err != nil {
-		return fmt.Errorf("ProcessProfileFace gRPC error: %w", err)
+		return fmt.Errorf("Sync gRPC error: %w", err)
 	}
 
 	if !resp.FaceDetected {
-		conn.WriteJSON(ProfileFaceRes{Type: "profile_face_response", FaceDetected: false})
 		return nil
 	}
 
-	patientID := resp.PatientId
-
-	// face isnt a registered profile
-	if resp.NewFace {
-		regResp, err := client.RegisterProfileFace(ctx, &fd.RegisterProfileFaceRequest{FaceEmbedding: resp.FaceEmbedding})
-		if err != nil {
-			return fmt.Errorf("RegisterProfileFace gRPC error: %w", err)
-		}
-		patientID = regResp.PatientId
-		conn.WriteJSON(ProfileFaceRes{
-			Type:			"profile_face_response",
-			FaceDetected: 	true,
-			Success: 		regResp.Success,
-			PatientID: 		patientID,
-		})
+	if !resp.NewFace {
+		conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", PatientID: resp.PatientId})
 		return nil
 	}
 
-	conn.WriteJSON(ProfileFaceRes{
-		Type:			"profile_face_response",
-		FaceDetected: 	true,
-		Success: 		resp.Success,
-		PatientID: 		patientID,
+	regResp, err := client.RegisterProfileFace(ctx, &fd.RegisterProfileFaceRequest{
+		FaceEmbedding: resp.FaceEmbedding,
 	})
+	if err != nil {
+		return fmt.Errorf("RegisterProfileFace gRPC error: %w", err)
+	}
+
+	conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", PatientID: regResp.PatientId})
 	return nil
 }
