@@ -33,7 +33,7 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 	t.Run("returns error for negative profileID", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
-		profileID := test.SeedPatient(t, pool, test.MakeEmbedding(0.1, 128))
+		profileID := test.SeedProfile(t, pool, test.MakeEmbedding(0.1, 128))
 		_ = test.SeedVisitor(t, pool, profileID, "testvisitor", test.MakeEmbedding(0.1, 128))
 
 		visitorEmbList, err := dbPool.FetchAllVisitorFaceEmbForPatient(-1)
@@ -45,7 +45,7 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 	t.Run("returns list of visitor embeddings", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
-		profileID := test.SeedPatient(t, pool, test.MakeEmbedding(0.1, 128))
+		profileID := test.SeedProfile(t, pool, test.MakeEmbedding(0.1, 128))
 
 		visitorEmbs := []float32{0.1, 0.2, 0.3}
 		visitorIDs := make([]int32, 3)
@@ -73,7 +73,7 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 		test.CleanupTables(t, pool)
 		embedding := test.MakeEmbedding(0.1, 128)
 
-		profileID := test.SeedPatient(t, pool, embedding)
+		profileID := test.SeedProfile(t, pool, embedding)
 		_ = test.SeedVisitor(t, pool, profileID, "visitor", embedding)
 
 		visitorEmbList, err := dbPool.FetchAllVisitorFaceEmbForPatient(23)
@@ -101,7 +101,7 @@ func TestFetchAllProfileFaceEmb(t *testing.T) {
 		patientEmbs := []float32{0.1, 0.3, 0.5}
 		profileIDs := make([]int32, 3)
 		for i, val := range patientEmbs {
-			profileIDs[i] = test.SeedPatient(t, pool, test.MakeEmbedding(val, 128))
+			profileIDs[i] = test.SeedProfile(t, pool, test.MakeEmbedding(val, 128))
 		}
 
 		profileEmbList, err := dbPool.FetchAllProfileFaceEmb()
@@ -128,7 +128,7 @@ func TestFetchVisitorBriefing(t *testing.T) {
 		test.CleanupTables(t, pool)
 		testBriefing := "this is a test"
 
-		profileID := test.SeedPatient(t, pool, embedding)
+		profileID := test.SeedProfile(t, pool, embedding)
 		visitorID := test.SeedVisitor(t, pool, profileID, "testvisitor", embedding)
 		test.SeedBriefing(t, pool, profileID, visitorID, testBriefing)
 
@@ -149,7 +149,7 @@ func TestFetchVisitorBriefing(t *testing.T) {
 		testBriefing1 := "this is a test briefing 1"
 		testBriefing2 := "this is a test briefing 2"
 
-		profileID := test.SeedPatient(t, pool, embedding)
+		profileID := test.SeedProfile(t, pool, embedding)
 		visitorID1 := test.SeedVisitor(t, pool, profileID, "testvisitor1", embedding)
 		visitorID2 := test.SeedVisitor(t, pool, profileID, "testvisitor2", embedding)
 
@@ -171,7 +171,7 @@ func TestFetchVisitorBriefing(t *testing.T) {
 		
 		testBriefing := "this is a idk"
 
-		profileID := test.SeedPatient(t, pool, embedding)
+		profileID := test.SeedProfile(t, pool, embedding)
 		visitorID := test.SeedVisitor(t, pool, profileID, "testvisitor", embedding)
 		test.SeedBriefing(t, pool, profileID, visitorID, testBriefing)
 
@@ -192,7 +192,7 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 		test.CleanupTables(t, pool)
 		validEmbedding := test.MakeEmbedding(0.1, 128)
 
-		profileID := test.SeedPatient(t, pool, validEmbedding)
+		profileID := test.SeedProfile(t, pool, validEmbedding)
 		var embedding face.Descriptor
 		copy(embedding[:], validEmbedding)
 
@@ -215,7 +215,7 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 
 		validEmbedding := test.MakeEmbedding(0.1, 128)
 
-		profileID := test.SeedPatient(t, pool, validEmbedding)
+		profileID := test.SeedProfile(t, pool, validEmbedding)
 		var embedding face.Descriptor
 		copy(embedding[:], validEmbedding)
 
@@ -232,7 +232,7 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 
 		validEmbedding1 := test.MakeEmbedding(0.1, 128)
 
-		profileID := test.SeedPatient(t, pool, validEmbedding1)
+		profileID := test.SeedProfile(t, pool, validEmbedding1)
 		var embedding1 face.Descriptor
 		copy(embedding1[:], validEmbedding1)
 
@@ -285,7 +285,7 @@ func TestAddNewFaceForUser(t *testing.T) {
 		assert.Nil(t, err)
 		assert.NotNil(t, id)
 
-		embeddingFromDB := test.CheckUserEmbeddings(t, pool, *id)
+		embeddingFromDB := test.CheckProfileEmbeddings(t, pool, *id)
 
 		assert.EqualValues(t, embeddings[0], embeddingFromDB)
 	})
