@@ -19,23 +19,20 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 	defer s.recPool.Release(rec)
 
 	embeddings, err := service.GenerateFaceEmbeddings(rec, req.FaceBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	// return early if no faces in frame
-	if len(embeddings) == 0 {
+	if err != nil || len(embeddings) == 0 {
 		return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, nil
 	}
 
 	var knownVisitors []service.Faces
-	err = db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
-		var err error
-		knownVisitors, err = s.pool.FetchAllVisitorFaceEmbForPatient(req.PatientId)
-		return err
-	})
-	if err != nil {
-		return &fd.ProcessVisitorFacesResponse{ Success: false }, err
+	if req.PatientId > 0 {
+		err = db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
+			var err error
+			knownVisitors, err = s.pool.FetchAllVisitorFaceEmbForPatient(req.PatientId)
+			return err
+		})
+		if err != nil {
+			return &fd.ProcessVisitorFacesResponse{ Success: false }, err
+		}
 	}
 
 	matchingFaceRes := service.CompareVisitorFaces(rec, embeddings, knownVisitors)
