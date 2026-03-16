@@ -7,12 +7,12 @@ import { useAudioCapture } from "../../hooks/useAudioCapture";
  * @param isRecording 
  */
 export function useBackendAudioProcess(
-    wsRef: RefObject<WebSocket | null>, 
+    ws: WebSocket | null, 
     isRecording: boolean,
     patientID: string | null
 ) {
     const onAudioData = useCallback((samples: Float32Array) => {
-        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return
+        if (!ws || ws.readyState !== WebSocket.OPEN) return
 
         const bytes = new Uint8Array(samples.buffer)
         let binary = ""
@@ -22,11 +22,11 @@ export function useBackendAudioProcess(
 
         const base64 = btoa(binary)
         console.log(`[Audio Capture] Sending...`)
-        wsRef.current.send(JSON.stringify({ 
+        ws.send(JSON.stringify({ 
             type: "audio", audio_data: base64, patient_id: patientID
         }))
         console.log(`[Audio Capture] Sent websocket`)
-    }, [wsRef, patientID])
+    }, [ws, patientID])
 
     useAudioCapture({ enabled: isRecording, onAudioData })
 }

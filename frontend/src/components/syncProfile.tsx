@@ -1,6 +1,7 @@
 import { Camera, RefreshCcw } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 import { SyncState } from '../types/profle';
+import { SyncProfileProcess } from '../api/utils/face';
 
 /**
  * Component that displays the currently logged in profile status for the current user
@@ -49,17 +50,23 @@ export const ProfileStatus = ({ syncState }: { syncState: string }) => {
 
 
 type Props = {
+  ws: WebSocket | null
   syncState: string;
   setSyncState: Dispatch<SetStateAction<SyncState>>;
   setIsCapturingFace: (value: boolean) => void;
 };
 
 /**
- * The button to 
- * @param param0 
- * @returns 
+ * The button to
+ * @param param0
+ * @returns
  */
-export const SyncProfileButton = ({ syncState, setSyncState, setIsCapturingFace }: Props) => {
+export const SyncProfileButton = ({ ws, syncState, setSyncState, setIsCapturingFace }: Props) => {
+  SyncProfileProcess(ws, syncState === "scanning", (_patientId) => {
+    setSyncState("active")
+    setIsCapturingFace(false)
+  })
+
   function handleSyncStart() {
     setSyncState("scanning");
     setIsCapturingFace(true);
