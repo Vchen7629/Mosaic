@@ -58,6 +58,11 @@ message ProcessProfileFaceRequest {
     bytes face_bytes = 1;
 }
 
+// contains one face embedding
+message FaceEmbedding {
+    repeated float face_embedding = 1; // 128 dim emb
+}
+
 message ProcessProfileFaceResponse {
     bool face_detected = 1; // used so can prompt the frontend to maybe get a clearer view?
     bool success = 2; // used for retry logic
@@ -68,7 +73,7 @@ message ProcessProfileFaceResponse {
 
 // Request containing face image in bytes
 message RegisterProfileFaceRequest {
-    repeated float face_embedding = 1; // 128 dim embedding
+    repeated FaceEmbedding face_embedding = 1; // contains multiple face embeddings
 }
 
 message RegisterProfileFaceResponse {
