@@ -26,24 +26,31 @@ type PriceSnapshotConfig struct {
 	CheckedAt		*time.Time
 }
 
-// Create a patient row in the database and return id of the newly created row
+// Create a profile row and its face embedding, return the profile id
 func SeedPatient(t *testing.T, pool *pgxpool.Pool, faceEmbedding []float32) int32 {
 	t.Helper()
 
 	ctx := context.Background()
-	var patientID int32
+	var profileID int32
 
 	err := pool.QueryRow(
 		ctx,
-		`INSERT INTO patient (face_embedding) VALUES ($1) RETURNING id`,
-		pgvector.NewVector(faceEmbedding),
-	).Scan(&patientID)
-
+		`INSERT INTO profiles DEFAULT VALUES RETURNING id`,
+	).Scan(&profileID)
 	if err != nil {
-		t.Fatalf("Failed to seed patient: %v", err)
+		t.Fatalf("Failed to seed profile: %v", err)
 	}
 
-	return patientID
+	_, err = pool.Exec(
+		ctx,
+		`INSERT INTO profile_face_embeddings (profile_id, face_embedding) VALUES ($1, $2)`,
+		profileID, pgvector.NewVector(faceEmbedding),
+	)
+	if err != nil {
+		t.Fatalf("Failed to seed profile face embedding: %v", err)
+	}
+
+	return profileID
 }
 
 // Create a visitor row in the database and return id of the newly created row
@@ -61,7 +68,7 @@ func SeedVisitor(
 
 	err := pool.QueryRow(ctx,
 		`INSERT INTO visitor_face_embeddings 
-		(patient_id, visitor_name, face_embedding) 
+		(profile_id, visitor_name, face_embedding) 
 		VALUES ($1, $2, $3) 
 		RETURNING id`,
 		patientID, visitorName, pgvector.NewVector(faceEmbedding),
@@ -86,7 +93,7 @@ func SeedBriefing(
 
 	_, err := pool.Exec(ctx,
 		`INSERT INTO briefings
-		(patient_id, visitor_id, briefing_text)
+		(profile_id, visitor_id, briefing_text)
 		VALUES ($1, $2, $3)`,
 		patientID, visitorID, briefingText,
 	)
@@ -107,7 +114,7 @@ func CheckVisitorEmbeddings(
 	query := `
 		SELECT face_embedding
 		FROM visitor_face_embeddings
-		WHERE patient_id = $1
+		WHERE profile_id = $1
 		AND visitor_name = $2
 	`
 	var embeddingRes pgvector.Vector
@@ -123,15 +130,15 @@ func CheckVisitorEmbeddings(
 }
 
 func CheckUserEmbeddings(
-	t *testing.T, 
-	pool *pgxpool.Pool, 
-	patientID int32,
+	t *testing.T,
+	pool *pgxpool.Pool,
+	profileID int32,
 ) face.Descriptor {
 	ctx := context.Background()
 
-	query := `SELECT face_embedding FROM patient WHERE id = $1`
+	query := `SELECT face_embedding FROM profile_face_embeddings WHERE profile_id = $1`
 	var embeddingRes pgvector.Vector
-	err := pool.QueryRow(ctx, query, patientID).Scan(&embeddingRes)
+	err := pool.QueryRow(ctx, query, profileID).Scan(&embeddingRes)
 
 	assert.Nil(t, err)
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/Kagami/go-face"
+	"github.com/jackc/pgx/v4"
 	pgvector "github.com/pgvector/pgvector-go"
 	"mosaic-face-detection.com/internal/service"
 )
@@ -14,7 +15,9 @@ import (
 func (db *DBPool) FetchAllProfileFaceEmb() ([]service.Faces, error) {
 	ctx := context.Background()
 
-	rows, err := db.pool.Query(ctx, `SELECT id, face_embedding FROM patient`)
+	rows, err := db.pool.Query(ctx, `
+		SELECT profile_id, face_embedding FROM profile_face_embeddings
+	`)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching profile face embeddings from db: %v", err)
 	}
@@ -24,30 +27,30 @@ func (db *DBPool) FetchAllProfileFaceEmb() ([]service.Faces, error) {
 
 // fetch all the visitor id embeddings for a patient using patientID
 func (db *DBPool) FetchAllVisitorFaceEmbForPatient(
-	patientID int32,
+	profileID int32,
 ) ([]service.Faces, error) {
-	if patientID <= 0 {
-		return nil, errors.New("patientID must be positive")
+	if profileID <= 0 {
+		return nil, errors.New("profileID must be positive")
 	} 
 	ctx := context.Background()
 
 	rows, err := db.pool.Query(ctx, `
 		SELECT id, face_embedding
 		FROM visitor_face_embeddings
-		WHERE patient_id = $1
-	`, patientID)
+		WHERE profile_id = $1
+	`, profileID)
 
 	if err != nil {
-		return nil, fmt.Errorf("error fetching from db for patientID: %v", err)
+		return nil, fmt.Errorf("error fetching from db for profileID: %v", err)
 	}
 
 	return scanFaceEmbeddings(rows, "visitor")
 }
 
 // fetch briefing for the visitor for the patient
-func (db *DBPool) FetchVisitorBriefing(patientID, visitorID int32) (string, error) {
-	if patientID <= 0 {
-		return "", errors.New("patientID must be positive")
+func (db *DBPool) FetchVisitorBriefing(profileID, visitorID int32) (string, error) {
+	if profileID <= 0 {
+		return "", errors.New("profileID must be positive")
 	} 
 	if visitorID <= 0 {
 		return "", errors.New("visitorID must be positive")
@@ -59,11 +62,11 @@ func (db *DBPool) FetchVisitorBriefing(patientID, visitorID int32) (string, erro
 	query := `
 		SELECT briefing_text
 		FROM briefings
-		WHERE patient_id = $1
+		WHERE profile_id = $1
 		AND visitor_id = $2
 	`
 
-	err := db.pool.QueryRow(ctx, query, patientID, visitorID).Scan(&briefing)
+	err := db.pool.QueryRow(ctx, query, profileID, visitorID).Scan(&briefing)
 	if err != nil {
 		return "", fmt.Errorf("error fetching briefing: %w", err)
 	}
@@ -73,10 +76,10 @@ func (db *DBPool) FetchVisitorBriefing(patientID, visitorID int32) (string, erro
 
 // Add a new visitor for a patient with their name and face_embedding
 func (db *DBPool) AddNewFaceForVisitor(
-	patientID int32, name string, embedding face.Descriptor,
+	profileID int32, name string, embedding face.Descriptor,
 ) error {
-	if patientID <= 0 {
-		return errors.New("patientID must be positive")
+	if profileID <= 0 {
+		return errors.New("profileID must be positive")
 	} 
 	if name == "" {
 		return errors.New("name must be a non empty string")
@@ -93,14 +96,14 @@ func (db *DBPool) AddNewFaceForVisitor(
 
 	query := `
 		INSERT INTO visitor_face_embeddings
-		(patient_id, visitor_name, face_embedding)
+		(profile_id, visitor_name, face_embedding)
 		VALUES ($1, $2, $3)
-		ON CONFLICT (patient_id, visitor_name) DO UPDATE
+		ON CONFLICT (profile_id, visitor_name) DO UPDATE
 			SET visitor_name = EXCLUDED.visitor_name,
 				face_embedding = EXCLUDED.face_embedding
 	`
 
-	_, err = db.pool.Exec(ctx, query, patientID, name, embeddingVector)
+	_, err = db.pool.Exec(ctx, query, profileID, name, embeddingVector)
 	if err != nil {
 		return fmt.Errorf("error adding new visitor: %w", err)
 	}
@@ -109,24 +112,47 @@ func (db *DBPool) AddNewFaceForVisitor(
 }
 
 // Add a new visitor for a user with their name and face_embedding
-func (db *DBPool) AddNewFaceForUser(embedding face.Descriptor) (*int32, error) {
-	err := service.ValidateEmbedding(embedding)
+func (db *DBPool) AddNewFaceForUser(embeddings []face.Descriptor) (*int32, error) {
+	for _, emb := range embeddings {
+		err := service.ValidateEmbedding(emb)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	ctx := context.Background()
+
+	var profileID int32
+	
+
+	err := WithTransaction(ctx, db.pool, func(tx pgx.Tx) error {
+		newProfileQuery := `INSERT INTO profiles DEFAULT VALUES RETURNING id`
+
+		err := tx.QueryRow(ctx, newProfileQuery).Scan(&profileID)
+		if err != nil {
+			return fmt.Errorf("error adding new profile: %w", err)
+		}
+
+		insertEmbQuery := `
+			INSERT INTO profile_face_embeddings
+			(profile_id, face_embedding)
+			VALUES ($1, $2)
+		`
+
+		for _, emb := range embeddings {
+			embeddingVector := pgvector.NewVector(emb[:])
+			_, err = tx.Exec(ctx, insertEmbQuery, profileID, embeddingVector)
+			if err != nil {
+				return fmt.Errorf("error adding new embeddings: %w", err)
+			}
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
-	
-	ctx := context.Background()
 
-	var patientID int32
-
-	embeddingVector := pgvector.NewVector(embedding[:])
-
-	query := `INSERT INTO patient (face_embedding) VALUES ($1) RETURNING id`
-
-	err = db.pool.QueryRow(ctx, query, embeddingVector).Scan(&patientID)
-	if err != nil {
-		return nil, fmt.Errorf("error adding new user: %w", err)
-	}
-
-	return &patientID, nil
+	return &profileID, nil
 }

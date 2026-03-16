@@ -147,10 +147,11 @@ func CleanupTables(t *testing.T, pool *pgxpool.Pool) {
 
 	ctx := context.Background()
 	tables := []string{
-		"patient",
+		"profile_face_embeddings",
 		"visitor_face_embeddings",
 		"conversation_records",
 		"briefings",
+		"profiles",
 	}
 
 	for _, table := range tables {
