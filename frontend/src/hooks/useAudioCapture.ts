@@ -15,6 +15,12 @@ export function useAudioCapture({ enabled, onAudioData }: UseAudioCaptureProps) 
     const streamRef = useRef<MediaStream | null>(null)
     const audioContextRef = useRef<AudioContext | null>(null)
     const processorRef = useRef<ScriptProcessorNode | null>(null)
+    
+    function cleanup() {
+        processorRef.current?.disconnect()
+        audioContextRef.current?.close()
+        streamRef.current?.getTracks().forEach(t => t.stop())
+    }
 
     useEffect(() => {
         if (!enabled) return
@@ -23,12 +29,6 @@ export function useAudioCapture({ enabled, onAudioData }: UseAudioCaptureProps) 
         return cleanup
 
     }, [enabled, onAudioData])
-
-    function cleanup() {
-        processorRef.current?.disconnect()
-        audioContextRef.current?.close()
-        streamRef.current?.getTracks().forEach(t => t.stop())
-    }
 }
 
 /**

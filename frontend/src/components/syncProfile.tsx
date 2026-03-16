@@ -1,4 +1,6 @@
 import { Camera, RefreshCcw } from 'lucide-react';
+import { Dispatch, SetStateAction } from 'react';
+import { SyncState } from '../types/profle';
 
 /**
  * Component that displays the currently logged in profile status for the current user
@@ -45,9 +47,10 @@ export const ProfileStatus = ({ syncState }: { syncState: string }) => {
     )
 }
 
+
 type Props = {
   syncState: string;
-  setSyncState: any;
+  setSyncState: Dispatch<SetStateAction<SyncState>>;
   setIsCapturingFace: (value: boolean) => void;
 };
 

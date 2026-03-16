@@ -1,5 +1,21 @@
+import { Dispatch, SetStateAction } from "react"
 
-const NewFaceInput = ({ newFaceName, setNewFaceName, confirmNewFace }: any) => {
+
+type NewFaceInputProps = {
+    newFaceName: string
+    setNewFaceName: Dispatch<SetStateAction<string>>
+    confirmNewFace: any
+}
+
+/**
+ * Component that pops up when the application is recording the conversation and
+ * a new visitor face shows up that wasnt registered in the database
+ * allows users to enter a name and click save to register
+ * @param newFaceName - contains the new face name
+ * @param setNewFaceName - state setting to update newFaceName
+ * @param confirmNewFace - function passed in
+ */
+const NewFaceInput = ({ newFaceName, setNewFaceName, confirmNewFace }: NewFaceInputProps) => {
     function handleClick() {
         if (newFaceName.trim()) {
             confirmNewFace(newFaceName.trim())
