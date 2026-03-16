@@ -36,7 +36,7 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 		profileID := test.SeedProfile(t, pool, test.MakeEmbedding(0.1, 128))
 		_ = test.SeedVisitor(t, pool, profileID, "testvisitor", test.MakeEmbedding(0.1, 128))
 
-		visitorEmbList, err := dbPool.FetchAllVisitorFaceEmbForPatient(-1)
+		visitorEmbList, err := dbPool.FetchAllVisitorFaceEmbForProfile(-1)
 
 		assert.Nil(t, visitorEmbList, "emb list returns nil")
 		assert.Equal(t, "profileID must be positive", err.Error())
@@ -55,7 +55,7 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 			)
 		}
 
-		visitorEmbList, err := dbPool.FetchAllVisitorFaceEmbForPatient(profileID)
+		visitorEmbList, err := dbPool.FetchAllVisitorFaceEmbForProfile(profileID)
 
 		assert.Nil(t, err)
 		assert.Equal(t, 3, len(visitorEmbList), "should return 3 visitor embedding")
@@ -76,7 +76,7 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 		profileID := test.SeedProfile(t, pool, embedding)
 		_ = test.SeedVisitor(t, pool, profileID, "visitor", embedding)
 
-		visitorEmbList, err := dbPool.FetchAllVisitorFaceEmbForPatient(23)
+		visitorEmbList, err := dbPool.FetchAllVisitorFaceEmbForProfile(23)
 
 		assert.Nil(t, err)
 		assert.Equal(t, 0, len(visitorEmbList))
@@ -273,7 +273,7 @@ func TestAddNewFaceForUser(t *testing.T) {
 		assert.Nil(t, id)
 	})
 
-	t.Run("successfully adds multiple face embedding for patient", func(t *testing.T) {
+	t.Run("successfully adds multiple face embedding for profile and creates unknown user placehold", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
 		embeddings := make([]face.Descriptor, 3)
@@ -285,8 +285,14 @@ func TestAddNewFaceForUser(t *testing.T) {
 		assert.Nil(t, err)
 		assert.NotNil(t, id)
 
+		zerosEmbedding := test.MakeEmbedding(0, 128)
+		var unknownVisEmbedding face.Descriptor
+		copy(unknownVisEmbedding[:], zerosEmbedding)
+
 		embeddingFromDB := test.CheckProfileEmbeddings(t, pool, *id)
+		unknownVisEmbFromDB := test.CheckVisitorEmbeddings(t, pool, *id, "Unknown")
 
 		assert.EqualValues(t, embeddings[0], embeddingFromDB)
+		assert.EqualValues(t, unknownVisEmbFromDB, unknownVisEmbedding)
 	})
 }

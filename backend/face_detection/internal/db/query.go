@@ -25,8 +25,8 @@ func (db *DBPool) FetchAllProfileFaceEmb() ([]service.Faces, error) {
 	return scanFaceEmbeddings(rows, "profile")
 }
 
-// fetch all the visitor id embeddings for a patient using patientID
-func (db *DBPool) FetchAllVisitorFaceEmbForPatient(
+// fetch all the visitor id embeddings for a profile using profileID
+func (db *DBPool) FetchAllVisitorFaceEmbForProfile(
 	profileID int32,
 ) ([]service.Faces, error) {
 	if profileID <= 0 {
@@ -38,6 +38,7 @@ func (db *DBPool) FetchAllVisitorFaceEmbForPatient(
 		SELECT id, face_embedding
 		FROM visitor_face_embeddings
 		WHERE profile_id = $1
+		AND visitor_name != 'Unknown'
 	`, profileID)
 
 	if err != nil {
@@ -133,11 +134,25 @@ func (db *DBPool) AddNewFaceForUser(embeddings []face.Descriptor) (*int32, error
 			return fmt.Errorf("error adding new profile: %w", err)
 		}
 
+		// adding this to handle a edge case where the user never confirms
+		// visitor name for unknown faces and saves the conversation recording
+		addUnknownVisitorQuery := `
+			INSERT INTO visitor_face_embeddings 
+			(profile_id, visitor_name, face_embedding)
+			VALUES ($1, 'Unknown', $2)`
+
+		zeroEmbedding := make([]float32, 128) // zero-initialized by default
+ 		zeroVector := pgvector.NewVector(zeroEmbedding)
+
+		_, err = tx.Exec(ctx, addUnknownVisitorQuery, profileID, zeroVector)
+		if err != nil {
+			return fmt.Errorf("error adding unknown visitor for profile: %w", err)
+		}
+
 		insertEmbQuery := `
 			INSERT INTO profile_face_embeddings
 			(profile_id, face_embedding)
-			VALUES ($1, $2)
-		`
+			VALUES ($1, $2)`
 
 		for _, emb := range embeddings {
 			embeddingVector := pgvector.NewVector(emb[:])
