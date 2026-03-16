@@ -60,9 +60,12 @@ func CompareProfileFaces(
 	}
 
 	rec.SetSamples(knownEmbeddings, knownIDs)
-	matchedID := int32(rec.ClassifyThreshold(embedding[0], 0.6))
-	if matchedID == -1 {
-		return 0, false
+	for _, emb := range embedding {
+		matchedID := int32(rec.ClassifyThreshold(emb, 0.6))
+		if matchedID == -1 {
+			return 0, false
+		}
 	}
-	return matchedID, true
+	
+	return 0, true
 }
