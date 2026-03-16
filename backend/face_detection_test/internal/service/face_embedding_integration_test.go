@@ -7,16 +7,14 @@ import (
 	"path/filepath"
 	"testing"
 
+
 	"github.com/Kagami/go-face"
 	"github.com/stretchr/testify/assert"
 	"mosaic-face-detection.com/internal/service"
 )
 
 const testImagesDir = "../test/images"
-
-func init() {
-	service.ModelsDir = filepath.Join("../models")
-}
+const testModelsDir = "../models"
 
 func loadImage(t *testing.T, filename string) []byte {
 	t.Helper()
@@ -27,7 +25,7 @@ func loadImage(t *testing.T, filename string) []byte {
 
 func TestInitializeFaceDetector(t *testing.T) {
 	t.Run("returns non-nil recognizer with valid models", func(t *testing.T) {
-		rec, err := service.InitializeFaceDetector()
+		rec, err := service.InitializeFaceDetector(testModelsDir)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, rec)
@@ -35,7 +33,7 @@ func TestInitializeFaceDetector(t *testing.T) {
 }
 
 func TestGenerateFaceEmbeddings(t *testing.T) {
-	rec, err := service.InitializeFaceDetector()
+	rec, err := service.InitializeFaceDetector(testModelsDir)
 	assert.NoError(t, err)
 
 	t.Run("returns one embedding for single face image", func(t *testing.T) {
@@ -91,7 +89,7 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 
 // debug test code
 /*func TestFaceDistances(t *testing.T) {
-	rec, err := service.InitializeFaceDetector()
+	rec, err := service.InitializeFaceDetector(testModelsDir)
 	assert.NoError(t, err)
 
 	images := map[string]face.Descriptor{

@@ -11,7 +11,7 @@ import (
 )
 
 func TestCompareVisitorFaces(t *testing.T) {
-	rec, err := service.InitializeFaceDetector()
+	rec, err := service.InitializeFaceDetector(testModelsDir)
 	assert.NoError(t, err)
 
 	// Generate the embeddings for all photos upfront so i can pass them into my tests
@@ -92,7 +92,7 @@ func TestCompareVisitorFaces(t *testing.T) {
 }
 
 func TestCompareProfileFaces(t *testing.T) {
-	rec, err := service.InitializeFaceDetector()
+	rec, err := service.InitializeFaceDetector(testModelsDir)
 	assert.NoError(t, err)
 
 	bonaEmb := getEmbedding(t, rec, "bona.jpg")

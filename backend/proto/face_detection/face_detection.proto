@@ -63,6 +63,7 @@ message ProcessProfileFaceResponse {
     bool success = 2; // used for retry logic
     int32 patient_id = 3;
     bool new_face = 4;
+    repeated float face_embedding = 5;
 }
 
 // Request containing face image in bytes

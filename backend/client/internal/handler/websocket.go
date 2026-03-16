@@ -13,8 +13,12 @@ import (
 )
 
 type Message struct {
-	Type string `json:"type"` // either "frame" or "audio"
-	Data string `json:"data"` // base64 encoded
+	Type 			string `json:"type"`
+	FaceBytes 		string `json:"face_bytes,omitempty"` // base64 encoded
+	AudioData		string `json:"audio_data,omitempty"`
+	FaceEmbedding	string `json:"face_embedding,omitempty"`
+	PatientID		string `json:"patient_id,omitempty"`
+	VisitorName		string `json:"visitor_name,omitempty"`
 }
 
 type WebSocketHandler struct {
@@ -41,12 +45,13 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 
 	defer conn.Close()
 
-	patientID := r.URL.Query().Get("patient_id")
-	log.Printf("[WebSocket] Connected! Patient ID: %s", patientID)
+	safe := &service.SafeConn{Conn: conn}
+
+	log.Println("[WebSocket] Connected!")
+
+	var msg Message
 
 	for {
-		var msg Message
-
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err) {
@@ -56,21 +61,45 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 		}
 
 		switch msg.Type {
-		case "face_frame":
-			go service.ProcessImageFrame(msg.Data, patientID, conn, h.FaceClient)
+		case "profile_face":
+			go func(m Message) {
+				err := service.ProcessProfileImage(m.FaceBytes, safe, h.FaceClient)
+				if err != nil {
+					log.Printf("[profile_face] error: %v", err)
+				}
+			}(msg)
+		case "visitor_face":
+			go func(m Message) {
+				err = service.ProcessVisitorImage(m.FaceBytes, m.PatientID, safe, h.FaceClient)
+				if err != nil {
+					log.Printf("[visitor_face] error: %v", err)
+				}
+			}(msg)
+		case "new_visitor_face":
+			go func(m Message) {
+				err = service.RegisterNewVisitorFace(m.FaceEmbedding, m.PatientID, m.VisitorName, safe, h.FaceClient)
+				if err != nil {
+					log.Printf("[new_visitor_face] error: %v", err)
+				}
+			}(msg)
 		case "audio":
 			service.Wg.Add(1)
-			go func() {
+			go func(m Message) {
 				defer service.Wg.Done()
-				service.ProcessAudio(msg.Data, patientID, h.AudioClient)
-			}()
+				err = service.ProcessAudio(m.AudioData, m.PatientID, h.AudioClient)
+				if err != nil {
+					log.Printf("[audio] error: %v", err)
+				}
+			}(msg)
 		}
 	}
 
-	ctx := context.Background()
-	service.FlushAudio(ctx, patientID, h.AudioClient)
-	err = service.SaveTranscriptWithRetry(ctx, patientID, h.AudioClient)
-	if err != nil {
-		log.Printf("error saving transcript: %v", err)
+	if msg.PatientID != "" {
+		ctx := context.Background()
+		service.FlushAudio(ctx, msg.PatientID, h.AudioClient)
+		err = service.SaveTranscriptWithRetry(ctx, msg.PatientID, h.AudioClient)
+		if err != nil {
+			log.Printf("error saving transcript: %v", err)
+		}
 	}
 }

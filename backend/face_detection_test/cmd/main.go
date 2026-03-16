@@ -10,6 +10,7 @@ import (
 
 	"github.com/Kagami/go-face"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
 	fd "mosaic-face-detection.com/gen"
@@ -21,6 +22,7 @@ import (
 type Config struct {
 	ServerPort string `envconfig:"SERVER_PORT" default:"40040"`
 	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
+	ModelsDir string `envconfig:"MODELS_DIR" default:"models"`
 }
 
 // handles starting the gRPC server
@@ -42,7 +44,7 @@ func gRPCServer(
 	)
 
 	go func() {
-		log.Println("face detection gRPC server listening on :50051")
+		log.Printf("face detection gRPC server listening on: %s", cfg.ServerPort)
 		err = grpcServer.Serve(lis)
 		if err != nil {
 			log.Fatalf("failed to serve: %v", err)
@@ -63,7 +65,7 @@ func main() {
 
 	defer pool.Close()
 
-	rec, err := service.InitializeFaceDetector()
+	rec, err := service.InitializeFaceDetector(cfg.ModelsDir)
 	if err != nil {
 		log.Fatalf("failed to init face detector: %v", err)
 	}
@@ -92,6 +94,7 @@ func main() {
 
 // method to load config values
 func loadConfig() (*Config, error) {
+	godotenv.Load("../.env")
 	var cfg Config
 
 	err := envconfig.Process("", &cfg)

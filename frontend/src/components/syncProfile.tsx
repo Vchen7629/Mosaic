@@ -1,4 +1,4 @@
-import { Camera, RefreshCcw } from 'lucide-react';
+import { Camera, RefreshCcw, UserPlus } from 'lucide-react';
 
 /**
  * Component that displays the currently logged in profile status for the current user
@@ -31,13 +31,8 @@ export const ProfileStatus = ({ syncState }: { syncState: string }) => {
 
           {syncState === "confirming" && (
             <>
-              <div className="w-9 h-9 rounded-lg bg-zinc-800 border border-white/8 flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" className="text-zinc-500">
-                  <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </div>
-              <div className="flex flex-col gap-px flex-1 min-w-0">
+                <UserPlus size={20} color='green'/>
+              <div className="flex flex-col gap-px flex-1 min-w-0 ml-2">
                 <span className="text-[10px] font-medium text-zinc-500 leading-none tracking-wide uppercase">Face detected</span>
                 <span className="text-[12px] font-medium text-zinc-300 leading-none">Is this the patient?</span>
               </div>

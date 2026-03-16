@@ -362,6 +362,7 @@ type ProcessProfileFaceResponse struct {
 	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`                               // used for retry logic
 	PatientId     int32                  `protobuf:"varint,3,opt,name=patient_id,json=patientId,proto3" json:"patient_id,omitempty"`
 	NewFace       bool                   `protobuf:"varint,4,opt,name=new_face,json=newFace,proto3" json:"new_face,omitempty"`
+	FaceEmbedding []float32              `protobuf:"fixed32,5,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -422,6 +423,13 @@ func (x *ProcessProfileFaceResponse) GetNewFace() bool {
 		return x.NewFace
 	}
 	return false
+}
+
+func (x *ProcessProfileFaceResponse) GetFaceEmbedding() []float32 {
+	if x != nil {
+		return x.FaceEmbedding
+	}
+	return nil
 }
 
 // Request containing face image in bytes
@@ -550,13 +558,14 @@ const file_face_detection_proto_rawDesc = "" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\":\n" +
 	"\x19ProcessProfileFaceRequest\x12\x1d\n" +
 	"\n" +
-	"face_bytes\x18\x01 \x01(\fR\tfaceBytes\"\x95\x01\n" +
+	"face_bytes\x18\x01 \x01(\fR\tfaceBytes\"\xbc\x01\n" +
 	"\x1aProcessProfileFaceResponse\x12#\n" +
 	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x1d\n" +
 	"\n" +
 	"patient_id\x18\x03 \x01(\x05R\tpatientId\x12\x19\n" +
-	"\bnew_face\x18\x04 \x01(\bR\anewFace\"C\n" +
+	"\bnew_face\x18\x04 \x01(\bR\anewFace\x12%\n" +
+	"\x0eface_embedding\x18\x05 \x03(\x02R\rfaceEmbedding\"C\n" +
 	"\x1aRegisterProfileFaceRequest\x12%\n" +
 	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\"V\n" +
 	"\x1bRegisterProfileFaceResponse\x12\x18\n" +
