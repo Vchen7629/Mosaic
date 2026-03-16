@@ -23,9 +23,14 @@ export function useFaceCapture({ enabled, onFrame, fps = 2, testMode = false}: U
         if (!enabled) return
 
         let interval: number
+        let webCamMounted = true // flag to track if the webcam is opened
 
         navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480} })
             .then(stream => {
+                if (!webCamMounted) { // prevent webcam from opening if orphaned
+                    stream.getTracks().forEach(t => t.stop())
+                    return
+                }
                 streamRef.current = stream
                 videoRef.current.srcObject = stream
                 videoRef.current.play()
@@ -43,8 +48,10 @@ export function useFaceCapture({ enabled, onFrame, fps = 2, testMode = false}: U
             })
 
         return () => {
+            webCamMounted = false
             clearInterval(interval);
             streamRef.current?.getTracks().forEach(t => t.stop())
+            streamRef.current = null
             frameCountRef.current = 0
         }
     }, [enabled, fps, testMode, onFrame])
