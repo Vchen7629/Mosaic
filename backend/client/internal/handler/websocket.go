@@ -19,6 +19,7 @@ type Message struct {
 	FaceEmbedding	string `json:"face_embedding,omitempty"`
 	PatientID		string `json:"patient_id,omitempty"`
 	VisitorName		string `json:"visitor_name,omitempty"`
+	Frames		  []string `json:"frames,omitempty"`
 }
 
 type WebSocketHandler struct {
@@ -61,11 +62,11 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 		}
 
 		switch msg.Type {
-		case "profile_face":
+		case "sync_profile":
 			go func(m Message) {
-				err := service.ProcessProfileImage(m.FaceBytes, safe, h.FaceClient)
+				err := service.SyncProfile(m.Frames, safe, h.FaceClient)
 				if err != nil {
-					log.Printf("[profile_face] error: %v", err)
+					log.Printf("[sync_profile] error: %v", err)
 				}
 			}(msg)
 		case "visitor_face":
