@@ -1,7 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE IF NOT EXISTS profiles (
-    id SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY
 );
 
 CREATE TABLE IF NOT EXISTS profile_face_embeddings (
