@@ -68,7 +68,7 @@ func SeedVisitor(
 
 	err := pool.QueryRow(ctx,
 		`INSERT INTO visitor_face_embeddings 
-		(patient_id, visitor_name, face_embedding) 
+		(profile_id, visitor_name, face_embedding) 
 		VALUES ($1, $2, $3) 
 		RETURNING id`,
 		patientID, visitorName, pgvector.NewVector(faceEmbedding),
@@ -93,7 +93,7 @@ func SeedBriefing(
 
 	_, err := pool.Exec(ctx,
 		`INSERT INTO briefings
-		(patient_id, visitor_id, briefing_text)
+		(profile_id, visitor_id, briefing_text)
 		VALUES ($1, $2, $3)`,
 		patientID, visitorID, briefingText,
 	)
@@ -114,7 +114,7 @@ func CheckVisitorEmbeddings(
 	query := `
 		SELECT face_embedding
 		FROM visitor_face_embeddings
-		WHERE patient_id = $1
+		WHERE profile_id = $1
 		AND visitor_name = $2
 	`
 	var embeddingRes pgvector.Vector
