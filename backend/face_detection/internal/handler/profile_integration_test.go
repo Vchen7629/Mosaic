@@ -28,20 +28,16 @@ func TestMain(m *testing.M) {
 	testDB, cleanup = test.SetupTestDatabaseForTestMain()
 	defer cleanup()
 
-	var err error
-	testRec, err = service.InitializeFaceDetector(testModelsDir)
-	if err != nil {
-		panic(err)
-	}
-	defer testRec.Close()
-
 	m.Run()
 }
 
 func TestSyncProfile(t *testing.T) {
+	recPool, err := service.NewRecognizerPool(testModelsDir, 5)
+	assert.NoError(t, err)
+
 	pool := testDB.Pool
 	dbPool := db.NewDBPool(pool)
-	server := handler.NewFaceDetectionServer(testRec, dbPool)
+	server := handler.NewFaceDetectionServer(recPool, dbPool)
 
 	t.Run("No face bytes input should return face detected = false", func(t *testing.T) {
 		res, err := server.SyncProfile(context.Background(), &fd.SyncProfileRequest{
@@ -74,7 +70,7 @@ func TestSyncProfile(t *testing.T) {
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
 
-		expectedID := test.AddNewProfile(t, testRec, imgBytes, testDB)
+		expectedID := test.AddNewProfile(t, recPool, imgBytes, testDB)
 
 		res, err := server.SyncProfile(context.Background(), &fd.SyncProfileRequest{
 			FaceBytes: [][]byte{imgBytes},
@@ -94,7 +90,7 @@ func TestSyncProfile(t *testing.T) {
 		assert.NoError(t, err1)
 		assert.NoError(t, err2)
 
-		_ = test.AddNewProfile(t, testRec, noMatchImgBytes, testDB)
+		_ = test.AddNewProfile(t, recPool, noMatchImgBytes, testDB)
 
 		res, err := server.SyncProfile(context.Background(), &fd.SyncProfileRequest{
 			FaceBytes: [][]byte{imgBytes},
@@ -113,7 +109,7 @@ func TestSyncProfile(t *testing.T) {
 		assert.NoError(t, err1)
 		assert.NoError(t, err2)
 
-		expectedID := test.AddNewProfile(t, testRec, imgBytes1, testDB)
+		expectedID := test.AddNewProfile(t, recPool, imgBytes1, testDB)
 
 		// Pass two different images of the same person as separate frames to verify aggregation
 		res, err := server.SyncProfile(context.Background(), &fd.SyncProfileRequest{
@@ -128,9 +124,12 @@ func TestSyncProfile(t *testing.T) {
 }
 
 func TestRegisterProfileFace(t *testing.T) {
+	recPool, err := service.NewRecognizerPool(testModelsDir, 5)
+	assert.NoError(t, err)
+
 	pool := testDB.Pool
 	dbPool := db.NewDBPool(pool)
-	server := handler.NewFaceDetectionServer(testRec, dbPool)
+	server := handler.NewFaceDetectionServer(recPool, dbPool)
 
 	t.Run("One valid embedding should be saved to db properly", func(t *testing.T) {
 		test.CleanupTables(t, pool)

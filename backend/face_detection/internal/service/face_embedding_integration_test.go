@@ -23,20 +23,14 @@ func loadImage(t *testing.T, filename string) []byte {
 	return data
 }
 
-func TestInitializeFaceDetector(t *testing.T) {
-	t.Run("returns non-nil recognizer with valid models", func(t *testing.T) {
-		rec, err := service.InitializeFaceDetector(testModelsDir)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, rec)
-	})
-}
-
 func TestGenerateFaceEmbeddings(t *testing.T) {
-	rec, err := service.InitializeFaceDetector(testModelsDir)
+	recPool, err := service.NewRecognizerPool(testModelsDir, 5)
 	assert.NoError(t, err)
 
 	t.Run("returns one embedding for single face image", func(t *testing.T) {
+		rec := recPool.Acquire()
+		defer recPool.Release(rec)
+
 		embeddings, err := service.GenerateFaceEmbeddings(rec, loadImage(t, "bona.jpg"))
 
 		assert.NoError(t, err)
@@ -44,6 +38,10 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 	})
 
 	t.Run("returns multiple embeddings for group photo", func(t *testing.T) {
+		rec := recPool.Acquire()
+		defer recPool.Release(rec)
+
+
 		embeddings, err := service.GenerateFaceEmbeddings(rec, loadImage(t, "group.jpeg"))
 
 		assert.NoError(t, err)
@@ -51,6 +49,9 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 	})
 
 	t.Run("returns empty slice for image with no faces", func(t *testing.T) {
+		rec := recPool.Acquire()
+		defer recPool.Release(rec)
+
 		embeddings, err := service.GenerateFaceEmbeddings(rec, loadImage(t, "halfdome.jpg"))
 
 		assert.NoError(t, err)
@@ -58,6 +59,9 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 	})
 
 	t.Run("returns error for invalid image bytes", func(t *testing.T) {
+		rec := recPool.Acquire()
+		defer recPool.Release(rec)
+
 		invalidBytes := []byte("not an image")
 		embeddings, err := service.GenerateFaceEmbeddings(rec, invalidBytes)
 
@@ -67,6 +71,9 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 	})
 
 	t.Run("returns error for empty bytes", func(t *testing.T) {
+		rec := recPool.Acquire()
+		defer recPool.Release(rec)
+
 		embeddings, err := service.GenerateFaceEmbeddings(rec, []byte{})
 
 		assert.Error(t, err)
@@ -74,6 +81,9 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 	})
 
 	t.Run("returns same embeddings for same image called twice", func(t *testing.T) {
+		rec := recPool.Acquire()
+		defer recPool.Release(rec)
+
 		imgBytes := loadImage(t, "bona.jpg")
 
 		emb1, err1 := service.GenerateFaceEmbeddings(rec, imgBytes)

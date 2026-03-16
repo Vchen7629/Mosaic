@@ -13,10 +13,13 @@ import (
 
 func AddNewProfile(
 	t *testing.T, 
-	rec *face.Recognizer, 
+	recPool *service.RecognizerPool, 
 	imgBytes []byte,
 	testDB *TestDBContainer,
 ) int32 {
+	rec := recPool.Acquire()
+	defer recPool.Release(rec)
+
 	embeddings, err := service.GenerateFaceEmbeddings(rec, imgBytes)
 	assert.NoError(t, err)
 	assert.Len(t, embeddings, 1)
