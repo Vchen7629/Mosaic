@@ -117,8 +117,8 @@ export function SyncProfileProcess(
         
         if (framesRef.current.length >= frameCount) {
             wsRef.current.send(JSON.stringify({
-                type: "profile_face",
-                face_bytes: framesRef.current,
+                type: "sync_profile",
+                frames: framesRef.current,
             }))
             framesRef.current = []
         }
