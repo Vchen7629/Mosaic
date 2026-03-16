@@ -96,9 +96,7 @@ func RegisterNewVisitorFace(
 	if err != nil {
 		return err
 	}
-	// Todo: create db functions and handler function to save new visitor face embeddings to db
-	// on face_detection_test service
-	// Send to face detection service via gRPC
+	
 	resp, err := client.RegisterVisitorFace(ctx, &fd.RegisterVisitorFaceRequest{
 		FaceEmbedding: faceEmb,
 		PatientId: int32(id64),

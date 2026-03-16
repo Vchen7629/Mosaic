@@ -8,7 +8,34 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pgvector/pgvector-go"
 	"github.com/stretchr/testify/assert"
+	"mosaic-face-detection.com/internal/service"
 )
+
+// AddNewVisitor generates an embedding from imgBytes, seeds a profile and a visitor
+// under that profile, and returns (patientID, visitorID).
+func AddNewVisitor(
+	t *testing.T,
+	recPool *service.RecognizerPool,
+	imgBytes []byte,
+	testDB *TestDBContainer,
+) (int32, int32) {
+	t.Helper()
+
+	rec := recPool.Acquire()
+	defer recPool.Release(rec)
+
+	embeddings, err := service.GenerateFaceEmbeddings(rec, imgBytes)
+	assert.NoError(t, err)
+	assert.Len(t, embeddings, 1)
+
+	embFloat32 := make([]float32, len(embeddings[0]))
+	copy(embFloat32, embeddings[0][:])
+
+	patientID := SeedProfile(t, testDB.Pool, embFloat32)
+	visitorID := SeedVisitor(t, testDB.Pool, patientID, "test_visitor", embFloat32)
+
+	return patientID, visitorID
+}
 
 
 func CheckVisitorEmbeddings(
