@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
  * @param isActive 
  * @returns 
  */
-export function useWebSocketConnection(patientId: string | null, isActive: boolean) {
+export function useWebSocketConnection(isActive: boolean) {
     const wsRef = useRef<WebSocket | null>(null)
 
     useEffect(() => {
@@ -16,14 +16,12 @@ export function useWebSocketConnection(patientId: string | null, isActive: boole
             return
         }
 
-        const url = patientId
-            ? `ws://localhost:8000/api/v1/ws?patient_id=${patientId}`
-            : `ws://localhost:8000/api/v1/ws`
+        const url = `ws://localhost:8000/api/v1/ws`
             
         wsRef.current = new WebSocket(url)
         
         return () => wsRef.current?.close()
-    }, [isActive, patientId])
+    }, [isActive])
 
     return wsRef
 }
