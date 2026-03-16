@@ -104,7 +104,7 @@ export function SyncProfileProcess(
         // saves the patient_id to localstorage for later use
         const handleMessage = (event: MessageEvent) => {
             const data = JSON.parse(event.data)
-            if (data.type !== "profile_face_response" || !data.face_detected) return
+            if (data.type !== "profile_face_response" || data.type !== "profile_face_response") return
             localStorage.setItem("patient_id", String(data.patient_id))
             onPatientSynced(data.patient_id)
         }
