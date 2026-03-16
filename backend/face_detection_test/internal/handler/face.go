@@ -71,24 +71,29 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 }
 
 // Handler to process faces for syncing user profile
-func (s *FaceDetectionServer) ProcessProfileFace(
+func (s *FaceDetectionServer) SyncProfile(
 	ctx context.Context, 
-	req *fd.ProcessProfileFaceRequest,
-) (*fd.ProcessProfileFaceResponse, error) {	
-	embeddings, err := service.GenerateFaceEmbeddings(s.rec, req.FaceBytes)
-	log.Printf("GRPC generated embeddings!: %v", len(embeddings))
-	if err != nil {
-		return nil, err
+	req *fd.SyncProfileRequest,
+) (*fd.SyncProfileResponse, error) {	
+	var allEmbeddings []face.Descriptor
+	for _, frameBytes := range req.FaceBytes {
+		embeddings, err := service.GenerateFaceEmbeddings(s.rec, frameBytes)
+		if err != nil {
+			return nil, err
+		}	
+		allEmbeddings = append(allEmbeddings, embeddings...)
 	}
 
+	log.Printf("GRPC generated %d embeddings from %d frames!", len(allEmbeddings), len(req.FaceBytes))
+
 	// return early if no faces in frame
-	if len(embeddings) == 0 {
-		log.Println("GRPC profile no faces detected")
-		return &fd.ProcessProfileFaceResponse{FaceDetected: false}, nil
+	if len(allEmbeddings) == 0 {
+		log.Println("GRPC profile no faces detected in any frame")
+		return &fd.SyncProfileResponse{FaceDetected: false}, nil
 	}
 
 	var knownProfileFaceEmbs []service.Faces
-	err = db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
+	err := db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
 		var err error
 		knownProfileFaceEmbs, err = s.pool.FetchAllProfileFaceEmb()
 		log.Println("GRPC Called db once to fetch all embeddings")
@@ -96,22 +101,26 @@ func (s *FaceDetectionServer) ProcessProfileFace(
 	})
 	if err != nil {
 		log.Printf("GRPC user profile error fetching from db: %v", err)
-		return &fd.ProcessProfileFaceResponse{ Success: false }, err
+		return &fd.SyncProfileResponse{Success: false}, err
 	}
 
-	matchingProfileID, matched := service.CompareProfileFaces(s.rec, embeddings, knownProfileFaceEmbs)
+	matchingProfileID, matched := service.CompareProfileFaces(s.rec, allEmbeddings, knownProfileFaceEmbs)
 
 	if !matched {
-		log.Println("GRPC profile no faces matched!")
-		return &fd.ProcessProfileFaceResponse{
+		log.Println("GRPC profile no faces matched!, returning embeddings for registration")
+		faceEmbeddings := make([]*fd.FaceEmbedding, len(allEmbeddings))
+		for i, emb := range allEmbeddings {
+			faceEmbeddings[i] = &fd.FaceEmbedding{FaceEmbedding: emb[:]}
+		}
+		return &fd.SyncProfileResponse{
 			FaceDetected: true,
 			Success: true,
 			NewFace: true,
-			FaceEmbedding: embeddings[0][:],
+			FaceEmbedding: faceEmbeddings,
 		}, nil
 	}
 
-	return &fd.ProcessProfileFaceResponse{
+	return &fd.SyncProfileResponse{
 		FaceDetected: true,
 		PatientId: matchingProfileID,
 		Success: true,
