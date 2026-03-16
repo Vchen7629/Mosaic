@@ -75,7 +75,6 @@ func (s *FaceDetectionServer) ProcessProfileFace(
 	ctx context.Context, 
 	req *fd.ProcessProfileFaceRequest,
 ) (*fd.ProcessProfileFaceResponse, error) {	
-	log.Println("GRPC process user profile face called!")
 	embeddings, err := service.GenerateFaceEmbeddings(s.rec, req.FaceBytes)
 	log.Printf("GRPC generated embeddings!: %v", len(embeddings))
 	if err != nil {
@@ -151,23 +150,24 @@ func (s*FaceDetectionServer) RegisterProfileFace(
 	ctx context.Context,
 	req *fd.RegisterProfileFaceRequest,
 ) (*fd.RegisterProfileFaceResponse, error) {
-	err := service.ValidateEmbeddingSlice(req.FaceEmbedding)
-	if err != nil {
-		return nil, err
+	embeddings := make([]face.Descriptor, len(req.FaceEmbedding))
+	for i, e := range req.FaceEmbedding {
+		err := service.ValidateEmbeddingSlice(e.FaceEmbedding)
+		if err != nil {
+			return nil, err
+		}
+		copy(embeddings[i][:], e.FaceEmbedding)
 	}
 
-	// converting []float32 to face.Descriptor [128]float32
-	var embedding face.Descriptor
-	copy(embedding[:], req.FaceEmbedding)
-	var patientID *int32
-
-	err = db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
-		patientID, err = s.pool.AddNewFaceForUser(embedding)
+	var profileID *int32
+	err := db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
+		var err error
+		profileID, err = s.pool.AddNewFaceForUser(embeddings)
 		return err
 	})
 	if err != nil {
 		return &fd.RegisterProfileFaceResponse{Success: false}, nil
 	}
 
-	return &fd.RegisterProfileFaceResponse{PatientId: *patientID, Success: true}, nil
+	return &fd.RegisterProfileFaceResponse{PatientId: *profileID, Success: true}, nil
 }
