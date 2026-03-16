@@ -18,8 +18,7 @@ function App() {
   const [isFaceCapture, setIsFaceCapture] = useState<boolean>(false);
   const [isSyncProfile, setIsSyncProfile] = useState<boolean>(false);
   const patientId = localStorage.getItem("patient_id");
-  const patientName = localStorage.getItem("patient_name");
-  const [syncState, setSyncState] = useState<SyncState>(patientName ? "active" : "idle");
+  const [syncState, setSyncState] = useState<SyncState>(() => patientId ? "active" : "idle");
   const wsRef = useWebSocketConnection(isRecording || isSyncProfile)
   const [briefingList, setBriefingList] = useState<BriefingComponent[]>([])
   const [newFaceDetected, setNewFaceDetected] = useState<boolean>(false)
@@ -29,13 +28,13 @@ function App() {
   useBackendLifecycle()
   useBackendAudioProcess(wsRef, isRecording, patientId)
   VisitorFaceProcess(
-    wsRef, 
-    isFaceCapture, 
+    wsRef,
+    isFaceCapture,
     patientId,
     (_patientID, _faceEmbedding) => { setNewFaceDetected(true) },
     setBriefingList
   )
-  SyncProfileProcess(wsRef, isSyncProfile, (_patientId) => {
+  SyncProfileProcess(wsRef, syncState === "scanning", (_patientId) => {
     setSyncState("active")
     setIsSyncProfile(false)
   })
@@ -54,6 +53,7 @@ function App() {
           </span>
           <div className="flex items-center gap-2">
             <StartRecordingButton 
+              profileID={patientId}
               isRecording={isRecording} 
               setIsRecording={setIsRecording}
               isCapturingFace={isFaceCapture}
@@ -76,7 +76,11 @@ function App() {
         {/* Patient status */}
         <div className="relative z-10 flex items-center px-4 pt-2.5 pb-3 justify-between">
             <ProfileStatus syncState={syncState}/>
-            <SyncProfileButton syncState={syncState} setSyncState={setSyncState} setIsCapturingFace={setIsSyncProfile}/>
+            <SyncProfileButton
+              syncState={syncState}
+              setSyncState={setSyncState}
+              setIsCapturingFace={setIsSyncProfile}
+            />
         </div>
       </div>
 
