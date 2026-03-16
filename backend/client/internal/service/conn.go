@@ -13,7 +13,7 @@ type SafeConn struct {
 
 // thread safe write json to prevent issues with
 // multiple go routines writing
-func (s *SafeConn) writeJSON(v any) error {
+func (s *SafeConn) WriteJSON(v any) error {
 	s.Mu.Lock()
 	defer s.Mu.Unlock()
 	return s.Conn.WriteJSON(v)

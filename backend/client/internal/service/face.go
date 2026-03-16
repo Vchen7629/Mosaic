@@ -60,12 +60,12 @@ func ProcessVisitorImage(
 	if len(resp.Faces) > 0 {
 		for _, faceData := range resp.Faces {
 			if !faceData.IsKnown {
-				conn.writeJSON(UnknownVisitorResponse{
+				conn.WriteJSON(UnknownVisitorResponse{
 					Type: "new_visitor_register",
 					FaceEmbedding: faceData.FaceEmbedding,
 				})
 			} else {
-				conn.writeJSON(KnownVisitorResponse{
+				conn.WriteJSON(KnownVisitorResponse{
 					Type: "existing_visitor_response",
 					VisitorName: faceData.Name,
 					Briefing: faceData.Briefing,
@@ -146,7 +146,7 @@ func ProcessProfileImage(
 	}
 
 	if !resp.FaceDetected {
-		conn.writeJSON(ProfileFaceRes{Type: "profile_face_response", FaceDetected: false})
+		conn.WriteJSON(ProfileFaceRes{Type: "profile_face_response", FaceDetected: false})
 		return nil
 	}
 
@@ -159,7 +159,7 @@ func ProcessProfileImage(
 			return fmt.Errorf("RegisterProfileFace gRPC error: %w", err)
 		}
 		patientID = regResp.PatientId
-		conn.writeJSON(ProfileFaceRes{
+		conn.WriteJSON(ProfileFaceRes{
 			Type:			"profile_face_response",
 			FaceDetected: 	true,
 			Success: 		regResp.Success,
@@ -168,7 +168,7 @@ func ProcessProfileImage(
 		return nil
 	}
 
-	conn.writeJSON(ProfileFaceRes{
+	conn.WriteJSON(ProfileFaceRes{
 		Type:			"profile_face_response",
 		FaceDetected: 	true,
 		Success: 		resp.Success,
