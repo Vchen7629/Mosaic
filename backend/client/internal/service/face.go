@@ -77,6 +77,12 @@ func ProcessVisitorImage(
 	return nil
 }
 
+type RegisterVisitorRes struct {
+	Type 			string `json:"type"`
+	VisitorID		int32  `json:"visitor_id"`
+	Success			bool   `json:"success"`
+}
+
 // Register a new visitor face
 func RegisterNewVisitorFace(
 	faceEmbedding string, 
@@ -112,8 +118,7 @@ func RegisterNewVisitorFace(
 		return nil
 	}
 
-	// Could add a return value so frontend can display success
-	// banner?
+	conn.WriteJSON(RegisterVisitorRes{Type: "register_visitor_resp", VisitorID: resp.VisitorId, Success: resp.Success})
 	return nil
 }
 
