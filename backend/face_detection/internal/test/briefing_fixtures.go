@@ -10,7 +10,7 @@ import (
 func SeedBriefing(
 	t *testing.T, 
 	pool *pgxpool.Pool, 
-	patientID, visitorID int32,
+	profileID, visitorID int32,
 	briefingText string,
 ) {
 	t.Helper()
@@ -21,7 +21,7 @@ func SeedBriefing(
 		`INSERT INTO briefings
 		(profile_id, visitor_id, briefing_text)
 		VALUES ($1, $2, $3)`,
-		patientID, visitorID, briefingText,
+		profileID, visitorID, briefingText,
 	)
 
 	if err != nil {

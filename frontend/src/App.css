@@ -7,6 +7,7 @@
 
 body {
   background: transparent;
+  overflow: hidden;
 }
 
 @keyframes pulse-dot {
@@ -16,4 +17,37 @@ body {
 
 .recording-dot {
   animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@layer utilities {
+  .expand-wrap {
+    display: grid;
+    overflow: hidden;
+    transition-property: all;
+    transition-duration: 300ms;
+    transition-timing-function: ease-out;
+  }
+
+  .expand-open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  .expand-closed {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+
+  .expand-inner {
+    overflow: hidden;
+    min-height: 0;
+  }
+}
+
+.briefing-card {
+  background:
+    linear-gradient(rgba(39, 39, 42, 0.5), rgba(39, 39, 42, 0.5)) padding-box,
+    linear-gradient(135deg, transparent 0%, rgba(110, 231, 183, 0.3) 50%, transparent 100%) border-box;
+  border: 1px solid transparent;
+  box-shadow: inset 0 0 12px rgba(110, 231, 183, 0.15);
 }

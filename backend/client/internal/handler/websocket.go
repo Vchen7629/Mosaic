@@ -17,7 +17,7 @@ type Message struct {
 	FaceBytes 		string `json:"face_bytes,omitempty"` // base64 encoded
 	AudioData		string `json:"audio_data,omitempty"`
 	FaceEmbedding	string `json:"face_embedding,omitempty"`
-	PatientID		string `json:"patient_id,omitempty"`
+	ProfileID		string `json:"profile_id,omitempty"`
 	VisitorName		string `json:"visitor_name,omitempty"`
 	Frames		  []string `json:"frames,omitempty"`
 }
@@ -71,14 +71,14 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 			}(msg)
 		case "visitor_face":
 			go func(m Message) {
-				err = service.ProcessVisitorImage(m.FaceBytes, m.PatientID, safe, h.FaceClient)
+				err = service.ProcessVisitorImage(m.FaceBytes, m.ProfileID, safe, h.FaceClient)
 				if err != nil {
 					log.Printf("[visitor_face] error: %v", err)
 				}
 			}(msg)
 		case "new_visitor_face":
 			go func(m Message) {
-				err = service.RegisterNewVisitorFace(m.FaceEmbedding, m.PatientID, m.VisitorName, safe, h.FaceClient)
+				err = service.RegisterNewVisitorFace(m.FaceEmbedding, m.ProfileID, m.VisitorName, safe, h.FaceClient)
 				if err != nil {
 					log.Printf("[new_visitor_face] error: %v", err)
 				}
@@ -87,7 +87,7 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 			service.Wg.Add(1)
 			go func(m Message) {
 				defer service.Wg.Done()
-				err = service.ProcessAudio(m.AudioData, m.PatientID, h.AudioClient)
+				err = service.ProcessAudio(m.AudioData, m.ProfileID, h.AudioClient)
 				if err != nil {
 					log.Printf("[audio] error: %v", err)
 				}
@@ -95,10 +95,10 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	if msg.PatientID != "" {
+	if msg.ProfileID != "" {
 		ctx := context.Background()
-		service.FlushAudio(ctx, msg.PatientID, h.AudioClient)
-		err = service.SaveTranscriptWithRetry(ctx, msg.PatientID, h.AudioClient)
+		service.FlushAudio(ctx, msg.ProfileID, h.AudioClient)
+		err = service.SaveTranscriptWithRetry(ctx, msg.ProfileID, h.AudioClient)
 		if err != nil {
 			log.Printf("error saving transcript: %v", err)
 		}

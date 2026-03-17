@@ -35,7 +35,7 @@ type FaceDetectionServiceClient interface {
 	ProcessVisitorFaces(ctx context.Context, in *ProcessVisitorFacesRequest, opts ...grpc.CallOption) (*ProcessVisitorFacesResponse, error)
 	// Used to register a new face when a new face is detected while app is recording
 	RegisterVisitorFace(ctx context.Context, in *RegisterVisitorFaceRequest, opts ...grpc.CallOption) (*RegisterVisitorFaceResponse, error)
-	// Send face bytes for loading user profile, get back patientID if known or request to create new profile
+	// Send face bytes for loading user profile, get back profile_id if known or request to create new profile
 	SyncProfile(ctx context.Context, in *SyncProfileRequest, opts ...grpc.CallOption) (*SyncProfileResponse, error)
 	// Used to register a new face when a new face is detected while syncing profile
 	RegisterProfileFace(ctx context.Context, in *RegisterProfileFaceRequest, opts ...grpc.CallOption) (*RegisterProfileFaceResponse, error)
@@ -99,7 +99,7 @@ type FaceDetectionServiceServer interface {
 	ProcessVisitorFaces(context.Context, *ProcessVisitorFacesRequest) (*ProcessVisitorFacesResponse, error)
 	// Used to register a new face when a new face is detected while app is recording
 	RegisterVisitorFace(context.Context, *RegisterVisitorFaceRequest) (*RegisterVisitorFaceResponse, error)
-	// Send face bytes for loading user profile, get back patientID if known or request to create new profile
+	// Send face bytes for loading user profile, get back profile_id if known or request to create new profile
 	SyncProfile(context.Context, *SyncProfileRequest) (*SyncProfileResponse, error)
 	// Used to register a new face when a new face is detected while syncing profile
 	RegisterProfileFace(context.Context, *RegisterProfileFaceRequest) (*RegisterProfileFaceResponse, error)

@@ -24,4 +24,11 @@ class Settings(BaseSettings):
     # --- Audio Settings ---
     whisper_mode: str = "small"
 
+    # --- db connection cfg ---
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 5432
+    DB_NAME: str = "pg"
+    DB_USER: str = "user"
+    DB_PASS: str = "password"
+
 settings = Settings()

@@ -36,7 +36,7 @@ func TestVisitorFace_GoroutineCapture(t *testing.T) {
 		err := conn.WriteJSON(handler.Message{
 			Type:      "visitor_face",
 			FaceBytes: base64.StdEncoding.EncodeToString(p),
-			PatientID: "1",
+			ProfileID: "1",
 		})
 		assert.NoError(t, err)
 	}

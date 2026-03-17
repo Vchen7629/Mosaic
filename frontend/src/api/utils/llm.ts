@@ -22,7 +22,7 @@ export const SummarizeTranscript = () => {
 }
 
 interface BriefingPayload {
-    patient_id: string
+    profile_id: string
     name: string
 }
 

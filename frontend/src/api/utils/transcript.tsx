@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query"
 
 interface SaveConversationPayload {
-    patient_id: string
+    profile_id: string
     name: string
     timestamp: string
     conversation_summary: string
@@ -9,7 +9,7 @@ interface SaveConversationPayload {
 }
 interface FetchBriefingPayload {
 
-    patient_id: string
+    profile_id: string
     name: string
 
 }
