@@ -12,6 +12,8 @@ dependencies = [
     "pydantic-settings>=2.13.1",
     "numpy>=2.4.3",
     "grpcio>=1.78.0",
+    "psycopg-pool>=3.3.0",
+    "psycopg>=3.3.3",
 ]
 
 [[tool.uv.index]]
@@ -31,5 +33,19 @@ torchaudio = [
 venvPath = "."
 venv = ".venv"
 pythonVersion = "3.12"
-include = ["src"]
+include = ["src", "test"]
 extraPaths = ["."]
+
+[dependency-groups]
+dev = [
+    "pgvector>=0.4.2",
+    "psycopg[binary]>=3.3.3",
+    "pyrefly>=0.56.0",
+    "pytest>=9.0.2",
+    "ruff>=0.15.6",
+    "testcontainers[postgres]>=4.14.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+pythonpath = ["."]
