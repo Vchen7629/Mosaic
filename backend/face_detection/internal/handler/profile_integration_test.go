@@ -65,7 +65,7 @@ func TestSyncProfile(t *testing.T) {
 		assert.Len(t, res.FaceEmbedding[0].FaceEmbedding, 128, "should be a 128 dim emb")
 	})
 
-	t.Run("Face matching a profile in db should return the patientID", func(t *testing.T) {
+	t.Run("Face matching a profile in db should return the profileID", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)

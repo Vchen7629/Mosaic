@@ -12,7 +12,7 @@ import (
 )
 
 // AddNewVisitor generates an embedding from imgBytes, seeds a profile and a visitor
-// under that profile, and returns (patientID, visitorID).
+// under that profile, and returns (profileID, visitorID).
 func AddNewVisitor(
 	t *testing.T,
 	recPool *service.RecognizerPool,
@@ -31,17 +31,17 @@ func AddNewVisitor(
 	embFloat32 := make([]float32, len(embeddings[0]))
 	copy(embFloat32, embeddings[0][:])
 
-	patientID := SeedProfile(t, testDB.Pool, embFloat32)
-	visitorID := SeedVisitor(t, testDB.Pool, patientID, "test_visitor", embFloat32)
+	profileID := SeedProfile(t, testDB.Pool, embFloat32)
+	visitorID := SeedVisitor(t, testDB.Pool, profileID, "test_visitor", embFloat32)
 
-	return patientID, visitorID
+	return profileID, visitorID
 }
 
 
 func CheckVisitorEmbeddings(
 	t *testing.T, 
 	pool *pgxpool.Pool, 
-	patientID int32,
+	profileID int32,
 	visitor_name string,
 ) face.Descriptor {
 	ctx := context.Background()
@@ -53,7 +53,7 @@ func CheckVisitorEmbeddings(
 		AND visitor_name = $2
 	`
 	var embeddingRes pgvector.Vector
-	err := pool.QueryRow(ctx, query, patientID, visitor_name).Scan(&embeddingRes)
+	err := pool.QueryRow(ctx, query, profileID, visitor_name).Scan(&embeddingRes)
 
 	assert.Nil(t, err)
 
@@ -68,7 +68,7 @@ func CheckVisitorEmbeddings(
 func SeedVisitor(
 	t *testing.T, 
 	pool *pgxpool.Pool, 
-	patientID int32,
+	profileID int32,
 	visitorName string,
 	faceEmbedding []float32,
 ) int32 {
@@ -82,7 +82,7 @@ func SeedVisitor(
 		(profile_id, visitor_name, face_embedding) 
 		VALUES ($1, $2, $3) 
 		RETURNING id`,
-		patientID, visitorName, pgvector.NewVector(faceEmbedding),
+		profileID, visitorName, pgvector.NewVector(faceEmbedding),
 	).Scan(&visitorID)
 
 	if err != nil {
