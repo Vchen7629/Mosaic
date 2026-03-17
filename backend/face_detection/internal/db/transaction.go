@@ -20,7 +20,7 @@ func WithTransaction(ctx context.Context, pool *pgxpool.Pool, fn func(pgx.Tx) er
 
 	err = fn(tx)
 	if err != nil {
-		return err 
+		return err
 	}
 
 	return tx.Commit(ctx)

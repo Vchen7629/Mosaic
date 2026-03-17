@@ -9,14 +9,14 @@ import (
 // takes raw image bytes, runs face detection, and returns
 // the 128-d  descriptor for the first detected face
 func GenerateFaceEmbeddings(
-	rec *face.Recognizer, 
+	rec *face.Recognizer,
 	faceBytes []byte,
 ) ([]face.Descriptor, error) {
 	faces, err := rec.Recognize(faceBytes)
 	if err != nil {
 		return nil, fmt.Errorf("recognition failed: %w", err)
 	}
-	
+
 	embeddings := make([]face.Descriptor, len(faces))
 	for i, f := range faces {
 		embeddings[i] = f.Descriptor
@@ -26,6 +26,6 @@ func GenerateFaceEmbeddings(
 }
 
 type Faces struct {
-	ID			int32
-	Embedding 	face.Descriptor
+	ID        int32
+	Embedding face.Descriptor
 }

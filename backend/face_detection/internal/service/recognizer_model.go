@@ -25,8 +25,8 @@ func NewRecognizerPool(modelsDir string, size int) (*RecognizerPool, error) {
 	return &RecognizerPool{recPool: ch}, nil
 }
 
-func (p *RecognizerPool) Acquire() *face.Recognizer { return <-p.recPool }
-func (p *RecognizerPool) Release(rec *face.Recognizer) { p.recPool <- rec}
+func (p *RecognizerPool) Acquire() *face.Recognizer    { return <-p.recPool }
+func (p *RecognizerPool) Release(rec *face.Recognizer) { p.recPool <- rec }
 func (p *RecognizerPool) Close() {
 	close(p.recPool)
 	for rec := range p.recPool {

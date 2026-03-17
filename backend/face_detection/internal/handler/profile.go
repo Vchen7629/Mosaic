@@ -13,18 +13,18 @@ import (
 
 // Handler to process faces for syncing user profile
 func (s *FaceDetectionServer) SyncProfile(
-	ctx context.Context, 
+	ctx context.Context,
 	req *fd.SyncProfileRequest,
 ) (*fd.SyncProfileResponse, error) {
 	rec := s.recPool.Acquire() // acquiring one instance of the rec model from pool
 	defer s.recPool.Release(rec)
-	
+
 	var allEmbeddings []face.Descriptor
 	for _, frameBytes := range req.FaceBytes {
 		embeddings, err := service.GenerateFaceEmbeddings(rec, frameBytes)
 		if err != nil {
 			return nil, err
-		}	
+		}
 		allEmbeddings = append(allEmbeddings, embeddings...)
 	}
 
@@ -54,24 +54,23 @@ func (s *FaceDetectionServer) SyncProfile(
 			faceEmbeddings[i] = &fd.FaceEmbedding{FaceEmbedding: emb[:]}
 		}
 		return &fd.SyncProfileResponse{
-			FaceDetected: true,
-			Success: true,
-			NewFace: true,
+			FaceDetected:  true,
+			Success:       true,
+			NewFace:       true,
 			FaceEmbedding: faceEmbeddings,
 		}, nil
 	}
 
 	return &fd.SyncProfileResponse{
 		FaceDetected: true,
-		ProfileId: matchingProfileID,
-		Success: true,
+		ProfileId:    matchingProfileID,
+		Success:      true,
 	}, nil
 }
 
-
-// Handler for when the face embedding doesnt 
+// Handler for when the face embedding doesnt
 // match with an existing embedding for users
-func (s*FaceDetectionServer) RegisterProfileFace(
+func (s *FaceDetectionServer) RegisterProfileFace(
 	ctx context.Context,
 	req *fd.RegisterProfileFaceRequest,
 ) (*fd.RegisterProfileFaceResponse, error) {

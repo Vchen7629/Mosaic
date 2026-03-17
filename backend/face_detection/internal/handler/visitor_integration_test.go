@@ -99,6 +99,7 @@ func TestRegisterVisitorFace(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, res.Success)
 		assert.EqualValues(t, dbEmb, embedding)
+		assert.Equal(t, int32(1), res.VisitorId, "should also return the visitor id")
 	})
 
 	t.Run("Return error on invalid embedding length", func(t *testing.T) {

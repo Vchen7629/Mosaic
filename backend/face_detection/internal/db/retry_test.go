@@ -17,7 +17,7 @@ import (
 var fastConfig = db.RetryConfig{
 	MaxAttempts: 3,
 	InitialWait: 1 * time.Millisecond,
-	MaxWait: 	 4 * time.Millisecond,
+	MaxWait:     4 * time.Millisecond,
 }
 
 func TestRetryWithBackoff(t *testing.T) {
@@ -33,7 +33,7 @@ func TestRetryWithBackoff(t *testing.T) {
 		assert.Equal(t, permanent, err)
 		assert.Equal(t, 1, calls, "should bail immediately without retrying")
 	})
-	
+
 	t.Run("exhausts all attempts on persistent transient error", func(t *testing.T) {
 		calls := 0
 		transient := &pgconn.PgError{Code: "40P01"}
@@ -72,8 +72,8 @@ func TestRetryWithBackoff(t *testing.T) {
 		// use long backoff so context deadline fires before retry
 		slowConfig := db.RetryConfig{
 			MaxAttempts: 5,
-			InitialWait: 500 *time.Millisecond,
-			MaxWait:  	 2 *time.Second,	
+			InitialWait: 500 * time.Millisecond,
+			MaxWait:     2 * time.Second,
 		}
 		transient := &pgconn.PgError{Code: "40001"}
 
@@ -100,8 +100,8 @@ func TestRetryWithBackoff(t *testing.T) {
 	t.Run("MaxAttempts of 1 does not retry at all", func(t *testing.T) {
 		singleAttempt := db.RetryConfig{
 			MaxAttempts: 1,
-			InitialWait: 1 *time.Millisecond,
-			MaxWait:  	 4 *time.Millisecond,	
+			InitialWait: 1 * time.Millisecond,
+			MaxWait:     4 * time.Millisecond,
 		}
 		calls := 0
 		transient := &pgconn.PgError{Code: "40001"}

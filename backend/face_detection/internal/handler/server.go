@@ -9,15 +9,15 @@ import (
 type FaceDetectionServer struct {
 	fd.UnimplementedFaceDetectionServiceServer
 	recPool *service.RecognizerPool
-	pool   *db.DBPool
+	pool    *db.DBPool
 }
 
 func NewFaceDetectionServer(
-	recPool *service.RecognizerPool, 
+	recPool *service.RecognizerPool,
 	dbPool *db.DBPool,
 ) *FaceDetectionServer {
 	return &FaceDetectionServer{
 		recPool: recPool,
-		pool: dbPool,
+		pool:    dbPool,
 	}
 }

@@ -9,9 +9,9 @@ import (
 )
 
 // helper function that adds the face embeddings to a list
-func scanFaceEmbeddings(rows pgx.Rows, errContext string) ([]service.Faces, error) {                                                                                             
-	var result []service.Faces                                                                                                                                                   
-	for rows.Next() {                                                                                                                                                            
+func scanFaceEmbeddings(rows pgx.Rows, errContext string) ([]service.Faces, error) {
+	var result []service.Faces
+	for rows.Next() {
 		var f service.Faces
 		var embVector pgvector.Vector
 

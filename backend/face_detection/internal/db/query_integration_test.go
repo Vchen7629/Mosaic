@@ -145,7 +145,7 @@ func TestFetchVisitorBriefing(t *testing.T) {
 
 	t.Run("returns the briefing for the correct visitor", func(t *testing.T) {
 		test.CleanupTables(t, pool)
-		
+
 		testBriefing1 := "this is a test briefing 1"
 		testBriefing2 := "this is a test briefing 2"
 
@@ -168,7 +168,7 @@ func TestFetchVisitorBriefing(t *testing.T) {
 
 	t.Run("returns error when trying to fetch briefing for nonexistant user", func(t *testing.T) {
 		test.CleanupTables(t, pool)
-		
+
 		testBriefing := "this is a idk"
 
 		profileID := test.SeedProfile(t, pool, embedding)
@@ -196,18 +196,21 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 		var embedding face.Descriptor
 		copy(embedding[:], validEmbedding)
 
-		err := dbPool.AddNewFaceForVisitor(-1, "valid name", embedding)
+		visitorID, err := dbPool.AddNewFaceForVisitor(-1, "valid name", embedding)
 		assert.Equal(t, "profileID must be positive", err.Error())
+		assert.Nil(t, visitorID)
 
-		err = dbPool.AddNewFaceForVisitor(profileID, "", embedding)
+		visitorID, err = dbPool.AddNewFaceForVisitor(profileID, "", embedding)
 		assert.Equal(t, "name must be a non empty string", err.Error())
+		assert.Nil(t, visitorID)
 
 		zerosEmbedding := test.MakeEmbedding(0, 128)
 		var invalidEmbedding face.Descriptor
 		copy(invalidEmbedding[:], zerosEmbedding)
 
-		err = dbPool.AddNewFaceForVisitor(profileID, "valid name", invalidEmbedding)
+		visitorID, err = dbPool.AddNewFaceForVisitor(profileID, "valid name", invalidEmbedding)
 		assert.Equal(t, "embedding cannot be all zeros", err.Error())
+		assert.Nil(t, visitorID)
 	})
 
 	t.Run("successfully creates the new face embedding for visitor", func(t *testing.T) {
@@ -219,12 +222,13 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 		var embedding face.Descriptor
 		copy(embedding[:], validEmbedding)
 
-		err := dbPool.AddNewFaceForVisitor(profileID, "valid name", embedding)
+		visitorID, err := dbPool.AddNewFaceForVisitor(profileID, "valid name", embedding)
 		assert.Nil(t, err)
 
 		embeddingFromDB := test.CheckVisitorEmbeddings(t, pool, profileID, "valid name")
 
 		assert.EqualValues(t, embedding, embeddingFromDB)
+		assert.Equal(t, int32(1), *visitorID, "first visitorID should have id 1")
 	})
 
 	t.Run("duplicate visitor embedding call for same patient doesnt error", func(t *testing.T) {
@@ -236,8 +240,9 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 		var embedding1 face.Descriptor
 		copy(embedding1[:], validEmbedding1)
 
-		err := dbPool.AddNewFaceForVisitor(profileID, "valid name", embedding1)
+		visitorID, err := dbPool.AddNewFaceForVisitor(profileID, "valid name", embedding1)
 		assert.Nil(t, err)
+		assert.Equal(t, int32(1), *visitorID, "first visitorID should have id 1")
 
 		embeddingFromDB := test.CheckVisitorEmbeddings(t, pool, profileID, "valid name")
 
@@ -248,14 +253,15 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 		var embedding2 face.Descriptor
 		copy(embedding2[:], validEmbedding2)
 
-		err = dbPool.AddNewFaceForVisitor(profileID, "valid name", embedding2)
+		visitorID2, err := dbPool.AddNewFaceForVisitor(profileID, "valid name", embedding2)
 		assert.Nil(t, err)
 
 		upsertEmbedding := test.CheckVisitorEmbeddings(t, pool, profileID, "valid name")
 
 		assert.EqualValues(t, embedding2, upsertEmbedding, "should update the embedding to new one")
+		assert.EqualValues(t, visitorID2, visitorID, "Id should be the same in upsert")
 	})
-}	
+}
 
 func TestAddNewFaceForUser(t *testing.T) {
 	pool := testDB.Pool

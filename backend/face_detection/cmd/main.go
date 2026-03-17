@@ -19,16 +19,16 @@ import (
 )
 
 type Config struct {
-	ServerPort 	string 	`envconfig:"SERVER_PORT" default:"40040"`
-	DatabaseURL string 	`envconfig:"DATABASE_URL" default:""`
-	ModelsDir 	string 	`envconfig:"MODELS_DIR" default:"models"`
-	RecPoolSize int		`envconfig:"REC_POOL_SIZE" default:"5"`	
+	ServerPort  string `envconfig:"SERVER_PORT" default:"40040"`
+	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
+	ModelsDir   string `envconfig:"MODELS_DIR" default:"models"`
+	RecPoolSize int    `envconfig:"REC_POOL_SIZE" default:"5"`
 }
 
 // handles starting the gRPC server
 func gRPCServer(
 	cfg *Config,
-	recPool *service.RecognizerPool, 
+	recPool *service.RecognizerPool,
 	pool *pgxpool.Pool,
 ) (*grpc.Server, error) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", cfg.ServerPort))
@@ -69,7 +69,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to init recognizer pool: %v", err)
 	}
-	
+
 	defer recPool.Close()
 
 	grpcServer, err := gRPCServer(cfg, recPool, pool)

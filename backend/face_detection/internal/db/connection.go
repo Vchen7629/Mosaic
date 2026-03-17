@@ -2,11 +2,10 @@ package db
 
 import (
 	"context"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"time"
-	"github.com/jackc/pgx/v4/pgxpool"
 )
-
 
 type DBPool struct {
 	pool *pgxpool.Pool
@@ -30,7 +29,7 @@ func ConnectionPool(database_url string) *pgxpool.Pool {
 }
 
 // Pgxpool postgres connection pool config values
-func databaseConfig(database_url string) *pgxpool.Config { 
+func databaseConfig(database_url string) *pgxpool.Config {
 	config, err := pgxpool.ParseConfig(database_url)
 	if err != nil {
 		log.Fatalf("Unable to parse DATABASE_URL %v\n", err)

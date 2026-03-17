@@ -31,7 +31,7 @@ func (db *DBPool) FetchAllVisitorFaceEmbForProfile(
 ) ([]service.Faces, error) {
 	if profileID <= 0 {
 		return nil, errors.New("profileID must be positive")
-	} 
+	}
 	ctx := context.Background()
 
 	rows, err := db.pool.Query(ctx, `
@@ -52,7 +52,7 @@ func (db *DBPool) FetchAllVisitorFaceEmbForProfile(
 func (db *DBPool) FetchVisitorBriefing(profileID, visitorID int32) (string, error) {
 	if profileID <= 0 {
 		return "", errors.New("profileID must be positive")
-	} 
+	}
 	if visitorID <= 0 {
 		return "", errors.New("visitorID must be positive")
 	}
@@ -76,24 +76,27 @@ func (db *DBPool) FetchVisitorBriefing(profileID, visitorID int32) (string, erro
 }
 
 // Add a new visitor for a patient with their name and face_embedding
+// and returns the id (visitor_id) of the newly created row
 func (db *DBPool) AddNewFaceForVisitor(
 	profileID int32, name string, embedding face.Descriptor,
-) error {
+) (*int32, error) {
 	if profileID <= 0 {
-		return errors.New("profileID must be positive")
-	} 
+		return nil, errors.New("profileID must be positive")
+	}
 	if name == "" {
-		return errors.New("name must be a non empty string")
+		return nil, errors.New("name must be a non empty string")
 	}
 
 	err := service.ValidateEmbedding(embedding)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	
+
 	ctx := context.Background()
 
 	embeddingVector := pgvector.NewVector(embedding[:])
+
+	var visitor_id int32
 
 	query := `
 		INSERT INTO visitor_face_embeddings
@@ -102,14 +105,15 @@ func (db *DBPool) AddNewFaceForVisitor(
 		ON CONFLICT (profile_id, visitor_name) DO UPDATE
 			SET visitor_name = EXCLUDED.visitor_name,
 				face_embedding = EXCLUDED.face_embedding
+		RETURNING id
 	`
 
-	_, err = db.pool.Exec(ctx, query, profileID, name, embeddingVector)
+	err = db.pool.QueryRow(ctx, query, profileID, name, embeddingVector).Scan(&visitor_id)
 	if err != nil {
-		return fmt.Errorf("error adding new visitor: %w", err)
+		return nil, fmt.Errorf("error adding new visitor: %w", err)
 	}
 
-	return nil
+	return &visitor_id, nil
 }
 
 // Add a new visitor for a user with their name and face_embedding
@@ -124,7 +128,6 @@ func (db *DBPool) AddNewFaceForUser(embeddings []face.Descriptor) (*int32, error
 	ctx := context.Background()
 
 	var profileID int32
-	
 
 	err := WithTransaction(ctx, db.pool, func(tx pgx.Tx) error {
 		newProfileQuery := `INSERT INTO profiles DEFAULT VALUES RETURNING id`
@@ -142,7 +145,7 @@ func (db *DBPool) AddNewFaceForUser(embeddings []face.Descriptor) (*int32, error
 			VALUES ($1, 'Unknown', $2)`
 
 		zeroEmbedding := make([]float32, 128) // zero-initialized by default
- 		zeroVector := pgvector.NewVector(zeroEmbedding)
+		zeroVector := pgvector.NewVector(zeroEmbedding)
 
 		_, err = tx.Exec(ctx, addUnknownVisitorQuery, profileID, zeroVector)
 		if err != nil {

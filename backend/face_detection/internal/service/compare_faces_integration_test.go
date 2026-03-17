@@ -102,7 +102,7 @@ func TestCompareProfileFaces(t *testing.T) {
 
 	rec := recPool.Acquire()
 	defer recPool.Release(rec)
-	
+
 	bonaEmb := getEmbedding(t, rec, "bona.jpg")
 	bona2Emb := getEmbedding(t, rec, "bona2.jpg")
 	bona3Emb := getEmbedding(t, rec, "bona3.jpg")

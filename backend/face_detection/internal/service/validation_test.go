@@ -40,7 +40,7 @@ func TestValidateEmbedding(t *testing.T) {
 		err := service.ValidateEmbedding(embedding)
 		assert.Error(t, err)
 	})
-	
+
 	t.Run("Errors if its Zeros", func(t *testing.T) {
 		rawEmbedding := test.MakeEmbedding(0, 128)
 		var embedding face.Descriptor
