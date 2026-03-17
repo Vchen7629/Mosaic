@@ -62,7 +62,7 @@ type Props = {
  * @returns
  */
 export const SyncProfileButton = ({ ws, syncState, setSyncState, setIsCapturingFace }: Props) => {
-  SyncProfileProcess(ws, syncState === "scanning", (_patientId) => {
+  SyncProfileProcess(ws, syncState === "scanning", (_profileId) => {
     setSyncState("active")
     setIsCapturingFace(false)
   })

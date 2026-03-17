@@ -17,8 +17,8 @@ function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [isFaceCapture, setIsFaceCapture] = useState<boolean>(false);
   const [isSyncProfile, setIsSyncProfile] = useState<boolean>(false);
-  const patientId = localStorage.getItem("patient_id");
-  const [syncState, setSyncState] = useState<SyncState>(() => patientId ? "active" : "idle");
+  const profileId = localStorage.getItem("profile_id");
+  const [syncState, setSyncState] = useState<SyncState>(() => profileId ? "active" : "idle");
   const ws = useWebSocketConnection(isRecording || isSyncProfile)
   const [briefingList, setBriefingList] = useState<BriefingComponent[]>([])
   const [newFaceDetected, setNewFaceDetected] = useState<boolean>(false)
@@ -26,12 +26,12 @@ function App() {
   SetWindowPosition()
   AutoResizeWindow()
   useBackendLifecycle()
-  useBackendAudioProcess(ws, isRecording, patientId)
+  useBackendAudioProcess(ws, isRecording, profileId)
   VisitorFaceProcess(
     ws,
     isFaceCapture,
-    patientId,
-    (_patientID, _faceEmbedding) => { setNewFaceDetected(true) },
+    profileId,
+    (_profileId, _faceEmbedding) => { setNewFaceDetected(true) },
     setBriefingList
   )
 
@@ -49,7 +49,7 @@ function App() {
           </span>
           <div className="flex items-center gap-2">
             <StartRecordingButton 
-              profileID={patientId}
+              profileID={profileId}
               isRecording={isRecording} 
               setIsRecording={setIsRecording}
               isCapturingFace={isFaceCapture}
