@@ -18,6 +18,7 @@ type KnownVisitorResponse struct {
 	Type			string `json:"type"`
 	VisitorName 	string `json:"visitor_name"`
 	Briefing		string `json:"briefing"`
+	VisitorID		string `json:"visitor_id"`
 }
 
 // Process images for potential visitor
@@ -69,6 +70,7 @@ func ProcessVisitorImage(
 					Type: "existing_visitor_response",
 					VisitorName: faceData.Name,
 					Briefing: faceData.Briefing,
+					VisitorID: fmt.Sprintf("%d", faceData.VisitorId),
 				})
 			}
 		}
