@@ -25,8 +25,16 @@ export function useAudioCapture({ enabled, onAudioData }: UseAudioCaptureProps) 
     useEffect(() => {
         if (!enabled) return
 
-        initAudioCapture(streamRef, audioContextRef, onAudioData, processorRef)
-        return cleanup
+        let aborted = false
+
+        initAudioCapture(streamRef, audioContextRef, onAudioData, processorRef).then(() => {
+            if (aborted) cleanup()
+        })
+
+        return () => {
+            aborted = true
+            cleanup()
+        }
 
     }, [enabled, onAudioData])
 }
