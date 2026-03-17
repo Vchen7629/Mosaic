@@ -59,6 +59,7 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 			faceResults[i] = &fd.FaceResult{
 				IsKnown:  true,
 				Briefing: briefing,
+				VisitorId: visitorID,
 			}
 		}
 	}
