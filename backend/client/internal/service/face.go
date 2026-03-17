@@ -23,7 +23,7 @@ type KnownVisitorResponse struct {
 // Process images for potential visitor
 func ProcessVisitorImage(
 	frameData string, 
-	patientID string, 
+	profileID string, 
 	conn *SafeConn,
 	client fd.FaceDetectionServiceClient,
 ) error {
@@ -34,7 +34,7 @@ func ProcessVisitorImage(
 		return fmt.Errorf("Frame decode error: %w", err)
 	}
 
-	id64, err := strconv.ParseInt(patientID, 10, 32)
+	id64, err := strconv.ParseInt(profileID, 10, 32)
 	if err != nil {
 		return fmt.Errorf("Error converting string to int64: %w", err)
 	}
@@ -46,7 +46,7 @@ func ProcessVisitorImage(
 	// Send to face detection service via gRPC
 	resp, err := client.ProcessVisitorFaces(ctx, &fd.ProcessVisitorFacesRequest{
 		FaceBytes: faceBytes,
-		PatientId: int32(id64),
+		ProfileId: int32(id64),
 	})
 	if err != nil {
 		return fmt.Errorf("ProcessVisitorFace gRPC error: %w", err)
@@ -80,14 +80,14 @@ func ProcessVisitorImage(
 // Register a new visitor face
 func RegisterNewVisitorFace(
 	faceEmbedding string, 
-	patientID string, 
+	profileID string, 
 	visitorName string,
 	conn *SafeConn,
 	client fd.FaceDetectionServiceClient,
 ) error {
 	ctx := context.Background()
 
-	id64, err := strconv.ParseInt(patientID, 10, 32)
+	id64, err := strconv.ParseInt(profileID, 10, 32)
 	if err != nil {
 		return fmt.Errorf("Error converting string to int64: %w", err)
 	}
@@ -99,7 +99,7 @@ func RegisterNewVisitorFace(
 	
 	resp, err := client.RegisterVisitorFace(ctx, &fd.RegisterVisitorFaceRequest{
 		FaceEmbedding: faceEmb,
-		PatientId: int32(id64),
+		ProfileId: int32(id64),
 		VisitorName: visitorName,
 	})
 
@@ -119,7 +119,7 @@ func RegisterNewVisitorFace(
 
 type ProfileSyncRes struct {
 	Type 			string `json:"type"`
-	PatientID		int32 `json:"patient_id"`
+	ProfileId		int32 `json:"profile_id"`
 }
 
 // Process an array of face frames for profile sync
@@ -152,7 +152,7 @@ func SyncProfile(
 	}
 
 	if !resp.NewFace {
-		conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", PatientID: resp.PatientId})
+		conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", ProfileId: resp.ProfileId})
 		return nil
 	}
 
@@ -163,6 +163,6 @@ func SyncProfile(
 		return fmt.Errorf("RegisterProfileFace gRPC error: %w", err)
 	}
 
-	conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", PatientID: regResp.PatientId})
+	conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", ProfileId: regResp.ProfileId})
 	return nil
 }

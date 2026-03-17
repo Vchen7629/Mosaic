@@ -31,11 +31,11 @@ const (
 
 func ProcessAudio(
 	audioData string, 
-	patientID string,
+	profileID string,
 	client at.AudioTranscriptionServiceClient,
 ) error {
 	ctx := context.Background()
-	id64, err := strconv.ParseInt(patientID, 10, 32)
+	id64, err := strconv.ParseInt(profileID, 10, 32)
 
 	// Decode base64
 	audioBytes, err := base64.StdEncoding.DecodeString(audioData)
@@ -80,10 +80,10 @@ func ProcessAudio(
 // user clicks stop recording
 func FlushAudio(
 	ctx context.Context,
-	patientID string, 
+	profileID string, 
 	client at.AudioTranscriptionServiceClient,
 ) {
-	id64, err := strconv.ParseInt(patientID, 10, 32)
+	id64, err := strconv.ParseInt(profileID, 10, 32)
 
 	Wg.Wait()
 
@@ -104,19 +104,19 @@ func FlushAudio(
 }
 
 // Method for sending gRPC request to save the transcript for the
-// patientID to the database, handles retries with exp backoff
+// profileID to the database, handles retries with exp backoff
 func SaveTranscriptWithRetry(
 	ctx context.Context,
-	patientID string,
+	profileID string,
 	client at.AudioTranscriptionServiceClient,
 ) error {
-	id64, err := strconv.ParseInt(patientID, 10, 32)
+	id64, err := strconv.ParseInt(profileID, 10, 32)
 	if err != nil {
 		return fmt.Errorf("Error converting string to int64: %w", err)
 	}
 
 	for attempt := range 3 {
-		resp, rpcErr := client.SaveTranscript(ctx, &at.SaveTranscriptRequest{ PatientId: int32(id64) })
+		resp, rpcErr := client.SaveTranscript(ctx, &at.SaveTranscriptRequest{ ProfileId: int32(id64) })
 		if rpcErr == nil && resp.Success {
 			return nil
 		}
@@ -134,14 +134,14 @@ func transcribeWithRetry(
 	ctx context.Context, 
 	client at.AudioTranscriptionServiceClient,
 	batch []float32,
-	patientID int32,
+	profileID int32,
 ) error {
 	var err error
 
 	for attempt := range 3 {
 		resp, rpcErr := client.TranscribeAudio(ctx, &at.TranscribeAudioRequest{
 			AudioBytes: batch,
-			PatientId: patientID,
+			ProfileId: profileID,
 		})
 		if rpcErr == nil && resp.Success {
 			return nil
