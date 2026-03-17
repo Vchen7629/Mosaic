@@ -85,13 +85,14 @@ func (s*FaceDetectionServer) RegisterVisitorFace(
 	var embedding face.Descriptor
 	copy(embedding[:], req.FaceEmbedding)
 
+	var visitorID *int32
 	err = db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
-		err := s.pool.AddNewFaceForVisitor(req.ProfileId, req.VisitorName, embedding)
+		visitorID, err = s.pool.AddNewFaceForVisitor(req.ProfileId, req.VisitorName, embedding)
 		return err
 	})
 	if err != nil {
 		return &fd.RegisterVisitorFaceResponse{Success: false}, nil
 	}
 
-	return &fd.RegisterVisitorFaceResponse{Success: true}, nil
+	return &fd.RegisterVisitorFaceResponse{Success: true, VisitorId: *visitorID}, nil
 }
