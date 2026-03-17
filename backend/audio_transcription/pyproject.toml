@@ -38,6 +38,7 @@ extraPaths = ["."]
 
 [dependency-groups]
 dev = [
+    "grpc-stubs>=1.53.0.6",
     "pgvector>=0.4.2",
     "psycopg[binary]>=3.3.3",
     "pyrefly>=0.56.0",

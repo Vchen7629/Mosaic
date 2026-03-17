@@ -57,6 +57,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "grpc-stubs" },
     { name = "pgvector" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pyrefly" },
@@ -82,6 +83,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "grpc-stubs", specifier = ">=1.53.0.6" },
     { name = "pgvector", specifier = ">=0.4.2" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.3" },
     { name = "pyrefly", specifier = ">=0.56.0" },
@@ -334,6 +336,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/51/7c/f60c259dcbf4f0c47cc4ddb8f7720d2dcdc8888c8e5ad84c73ea4531cc5b/fsspec-2026.2.0.tar.gz", hash = "sha256:6544e34b16869f5aacd5b90bdf1a71acb37792ea3ddf6125ee69a22a53fb8bff", size = 313441, upload-time = "2026-02-05T21:50:53.743Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e6/ab/fb21f4c939bb440104cc2b396d3be1d9b7a9fd3c6c2a53d98c45b3d7c954/fsspec-2026.2.0-py3-none-any.whl", hash = "sha256:98de475b5cb3bd66bedd5c4679e87b4fdfe1a3bf4d707b151b3c07e58c9a2437", size = 202505, upload-time = "2026-02-05T21:50:51.819Z" },
+]
+
+[[package]]
+name = "grpc-stubs"
+version = "1.53.0.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "grpcio" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/16/8d/718393d12346c6ab842a1ad2b1a761c175e919ddce4a28c5dc63e4a5538c/grpc_stubs-1.53.0.6.tar.gz", hash = "sha256:70a0840747bd73c2c82fe819699bbf4fcf6d59bd0ed27a4713a240e0c697e1ff", size = 12954, upload-time = "2025-04-28T11:12:55.407Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/c6/c64257331aa4b7a049bd70124d97278071e78b5d5de09df6a5eae4610bbe/grpc_stubs-1.53.0.6-py3-none-any.whl", hash = "sha256:3ffc5a6b5bd84ac46f3d84e2434e97936c1262b47b71b462bdedc43caaf227e1", size = 15842, upload-time = "2025-04-28T11:12:53.982Z" },
 ]
 
 [[package]]

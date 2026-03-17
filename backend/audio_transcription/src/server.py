@@ -2,7 +2,7 @@ from .db.connection_pool import create_connection_pool
 from concurrent.futures import ThreadPoolExecutor
 from .grpc.servicer import AudioTranscriptionServicer
 from .core.settings import settings
-from gen import audio_transcription_pb2_grpc
+from .gen import audio_transcription_pb2_grpc
 import grpc
 import signal
 
