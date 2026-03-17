@@ -28,16 +28,21 @@ class AudioTranscriptionServicer(
     def SaveTranscript(self, request, _context):
         """gRPC handler that saves the current transcript to db"""
         try:
-            convo_text = self._convo_loggers[request.profile_id].read()
+            logger = self._convo_loggers.get(request.profile_id)
+            if logger is None:
+                return audio_transcription_pb2.SaveTranscriptResponse(success=False)
+            
+            logger.close()
+            convo_text = logger.read()
 
             with self._db_pool.connection() as conn:
                 save_conversation(conn, request.profile_id, convo_text, request.visitor_id)
         except Exception:
             return audio_transcription_pb2.SaveTranscriptResponse(success=False)
 
-        self._convo_loggers[request.profile_id].delete()
+        logger.delete()
+        del self._convo_loggers[request.profile_id]
 
-        print("Invoked Save!")
         return audio_transcription_pb2.SaveTranscriptResponse(success=True)
 
     def _get_log_writer(self, profile_id: str) -> ConvoLogHandler:
