@@ -27,9 +27,9 @@ class AudioTranscriptionServicer(
 
     def SaveTranscript(self, request, _context):
         """gRPC handler that saves the current transcript to db"""
-        convo_text = self._convo_loggers[request.profile_id].read()
-
         try:
+            convo_text = self._convo_loggers[request.profile_id].read()
+
             with self._db_pool.connection() as conn:
                 save_conversation(conn, request.profile_id, convo_text, request.visitor_id)
         except Exception:
