@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/Kagami/go-face"
 	"github.com/jackc/pgx/v4"
@@ -12,7 +13,7 @@ import (
 )
 
 // fetch all user profile embeddings saved in the database
-func (db *DBPool) FetchAllProfileFaceEmb() ([]service.Faces, error) {
+func (db *DBPool) FetchAllProfileFaceEmb() ([]service.ProfileFaces, error) {
 	ctx := context.Background()
 
 	rows, err := db.pool.Query(ctx, `
@@ -22,20 +23,30 @@ func (db *DBPool) FetchAllProfileFaceEmb() ([]service.Faces, error) {
 		return nil, fmt.Errorf("error fetching profile face embeddings from db: %v", err)
 	}
 
-	return scanFaceEmbeddings(rows, "profile")
+	var result []service.ProfileFaces
+	for rows.Next() {
+		var f service.ProfileFaces
+		var embVector pgvector.Vector
+
+		if err := rows.Scan(&f.ID, &embVector); err != nil {
+			return nil, fmt.Errorf("error fetching profile emb: %v", err)
+		}
+
+		copy(f.Embedding[:], embVector.Slice())
+		result = append(result, f)
+	}
+	return result, nil
 }
 
-// fetch all the visitor id embeddings for a profile using profileID
-func (db *DBPool) FetchAllVisitorFaceEmbForProfile(
-	profileID int32,
-) ([]service.Faces, error) {
+// fetch all the visitor data like id, name, and  embeddings for a profile using profileID
+func (db *DBPool) FetchAllVisitorData(profileID int32,) ([]service.VisitorFaces, error) {
 	if profileID <= 0 {
 		return nil, errors.New("profileID must be positive")
 	}
 	ctx := context.Background()
 
 	rows, err := db.pool.Query(ctx, `
-		SELECT id, face_embedding
+		SELECT id, visitor_name, face_embedding
 		FROM visitor_face_embeddings
 		WHERE profile_id = $1
 		AND visitor_name != 'Unknown'
@@ -45,7 +56,21 @@ func (db *DBPool) FetchAllVisitorFaceEmbForProfile(
 		return nil, fmt.Errorf("error fetching from db for profileID: %v", err)
 	}
 
-	return scanFaceEmbeddings(rows, "visitor")
+	var visitorFaces []service.VisitorFaces
+
+	for rows.Next() {
+		var visitor service.VisitorFaces
+		var embVector pgvector.Vector
+
+		if err := rows.Scan(&visitor.ID, &visitor.Name, &embVector); err != nil {
+			return nil, fmt.Errorf("error fetching visitor emb: %v", err)
+		}
+
+		copy(visitor.Embedding[:], embVector.Slice())
+		visitorFaces = append(visitorFaces, visitor)
+	}
+
+	return visitorFaces, nil
 }
 
 // fetch briefing for the visitor for the patient
@@ -68,6 +93,10 @@ func (db *DBPool) FetchVisitorBriefing(profileID, visitorID int32) (string, erro
 	`
 
 	err := db.pool.QueryRow(ctx, query, profileID, visitorID).Scan(&briefing)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", nil
+	}
+
 	if err != nil {
 		return "", fmt.Errorf("error fetching briefing: %w", err)
 	}
@@ -112,6 +141,8 @@ func (db *DBPool) AddNewFaceForVisitor(
 	if err != nil {
 		return nil, fmt.Errorf("error adding new visitor: %w", err)
 	}
+
+	log.Printf("db, created new row with id %d", visitor_id)
 
 	return &visitor_id, nil
 }

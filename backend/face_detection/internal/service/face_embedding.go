@@ -25,7 +25,13 @@ func GenerateFaceEmbeddings(
 	return embeddings, nil
 }
 
-type Faces struct {
+type ProfileFaces struct {
 	ID        int32
 	Embedding face.Descriptor
+}
+
+type VisitorFaces struct {
+	ID     	    int32
+	Name		string	
+	Embedding 	face.Descriptor
 }
