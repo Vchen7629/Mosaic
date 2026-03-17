@@ -149,6 +149,7 @@ func TestRegisterProfileFace(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, res.Success)
 		assert.EqualValues(t, dbEmb, embedding)
+		assert.Equal(t, int32(1), res.ProfileId, "should also return the profile id")
 	})
 
 	t.Run("Multiple valid embedding should be saved to db properly", func(t *testing.T) {
