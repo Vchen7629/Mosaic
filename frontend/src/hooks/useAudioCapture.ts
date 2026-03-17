@@ -18,8 +18,13 @@ export function useAudioCapture({ enabled, onAudioData }: UseAudioCaptureProps) 
     
     function cleanup() {
         processorRef.current?.disconnect()
-        audioContextRef.current?.close()
+        processorRef.current = null
+        if (audioContextRef.current?.state !== "closed") {
+            audioContextRef.current?.close()
+        }
+        audioContextRef.current = null
         streamRef.current?.getTracks().forEach(t => t.stop())
+        streamRef.current = null
     }
 
     useEffect(() => {
