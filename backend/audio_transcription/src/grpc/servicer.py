@@ -1,17 +1,19 @@
-from .transcribe_handler import transcribe_handler
+from psycopg_pool import ConnectionPool
+from ..transcription.handler import transcribe_handler
 from ..core.settings import _LOGS_DIR
 from .. import audio_transcription_pb2
 from .. import audio_transcription_pb2_grpc
-from .transcription_log import LogWriter
+from ..transcription.log import LogWriter
 import threading
 import numpy as np
 
 class AudioTranscriptionServicer(
     audio_transcription_pb2_grpc.AudioTranscriptionServiceServicer
 ):
-    def __init__(self) -> None:
+    def __init__(self, db_pool: ConnectionPool) -> None:
         self._log_writers: dict[str, LogWriter] = {}
         self._lock = threading.Lock()
+        self._db_pool = db_pool
 
     def TranscribeAudio(self, request, _context):
         chunk = np.array(request.audio_bytes, dtype=np.float32)

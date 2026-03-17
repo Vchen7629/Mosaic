@@ -1,4 +1,4 @@
-from .audio_model import get_model
+from .model import get_model
 from typing import Optional
 import logging
 import numpy as np
