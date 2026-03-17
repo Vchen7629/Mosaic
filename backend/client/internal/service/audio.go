@@ -108,24 +108,38 @@ func FlushAudio(
 func SaveTranscriptWithRetry(
 	ctx context.Context,
 	profileID string,
+	visitorID string,
 	client at.AudioTranscriptionServiceClient,
 ) error {
-	id64, err := strconv.ParseInt(profileID, 10, 32)
+	profileID64, err := strconv.ParseInt(profileID, 10, 32)
 	if err != nil {
-		return fmt.Errorf("Error converting string to int64: %w", err)
+		return fmt.Errorf("Error converting profileID string to int64: %w", err)
 	}
-
+	visitorID64, err := strconv.ParseInt(visitorID, 10, 32)
+	if err != nil {
+		return fmt.Errorf("Error converting visitorID string to int64: %w", err)
+	}
+	
+	var lastErr error
 	for attempt := range 3 {
-		resp, rpcErr := client.SaveTranscript(ctx, &at.SaveTranscriptRequest{ ProfileId: int32(id64) })
+		resp, rpcErr := client.SaveTranscript(ctx, &at.SaveTranscriptRequest{ 
+			ProfileId: int32(profileID64), 
+			VisitorId: int32(visitorID64),
+		})
 		if rpcErr == nil && resp.Success {
 			return nil
 		}
-		err = rpcErr
+		if rpcErr != nil {
+			lastErr = rpcErr
+		} else {
+			lastErr = fmt.Errorf("save transcript returned success=false")
+		}
+
 		wait := time.Duration(1<<attempt) * time.Second // 1s, 2s, 4s
 		time.Sleep(wait)
 	}
 
-	return fmt.Errorf("save transcript failed after 3 attempts: %w", err)
+	return fmt.Errorf("save transcript failed after 3 attempts: %w", lastErr)
 }
 
 // Helper function that sends the audio batch to whisper service for transcription
