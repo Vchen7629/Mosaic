@@ -34,7 +34,7 @@ func (s *FaceDetectionServer) SyncProfile(
 		return &fd.SyncProfileResponse{FaceDetected: false}, nil
 	}
 
-	var knownProfileFaceEmbs []service.Faces
+	var knownProfileFaceEmbs []service.ProfileFaces
 	err := db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
 		var err error
 		knownProfileFaceEmbs, err = s.pool.FetchAllProfileFaceEmb()
