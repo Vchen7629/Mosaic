@@ -21,5 +21,7 @@ audio_transcription_gen:
 			--go_opt=paths=source_relative \
 			--go-grpc_opt=paths=source_relative
 	uv run python -m grpc_tools.protoc -I audio_transcription audio_transcription/audio_transcription.proto \
-			--python_out=../audio_transcription/gen \
-			--grpc_python_out=../audio_transcription/gen
+			--python_out=../audio_transcription/src/gen \
+			--grpc_python_out=../audio_transcription/src/gen \
+			--mypy_out=../audio_transcription/src/gen \
+          	--mypy_grpc_out=../audio_transcription/src/gen
