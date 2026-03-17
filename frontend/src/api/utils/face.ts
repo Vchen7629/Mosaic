@@ -13,7 +13,7 @@ export function VisitorFaceProcess(
     profileID: string | null,
     onNewFaceDetected: (
         profileID: number,
-        faceEmbedding: number,
+        faceEmbedding: string,
     ) => void,
     setBriefingList: Dispatch<SetStateAction<BriefingComponent[]>>
 ) {
@@ -34,7 +34,7 @@ export function VisitorFaceProcess(
             if (data.type !== "new_visitor_register" && data.type !== "existing_visitor_response") return
 
             if (data.type == "new_visitor_register") {
-                onNewFaceDetectedRef.current(data.profile_id, data.face_embedding)
+                onNewFaceDetectedRef.current(data.profile_id, JSON.stringify(data.face_embedding))
             }
             if (data.type == "existing_visitor_response") {
                 setBriefingListRef.current((prev: BriefingComponent[]) => [...prev, {
@@ -62,19 +62,39 @@ export function VisitorFaceProcess(
 }
 
 export function NewVisitorFaceRegister(
-    wsRef: RefObject<WebSocket | null>, 
+    ws: WebSocket | null, 
+    shouldRegister: boolean,
     faceEmbedding: string,
-    profileId: string,
+    profileId: string | null,
     visitorName: string,
+    onSuccess: (visitorId: string) => void
 ) {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
+    const onSuccessRef = useRef(onSuccess)
+    onSuccessRef.current = onSuccess
+
+    useEffect(() => {
+        if (!shouldRegister || !ws || ws.readyState !== WebSocket.OPEN) return
+
+        ws.send(JSON.stringify({
             type: "new_visitor_face",
             face_embedding: faceEmbedding,
             profile_id: profileId,
             visitor_name: visitorName
         }))
-    }
+    }, [shouldRegister, ws, faceEmbedding, profileId, visitorName])
+
+    useEffect(() => {
+        if (!ws) return
+        const handleMessage = (event: MessageEvent) => {
+            const data = JSON.parse(event.data)
+            if (data.type !== "register_visitor_resp") return
+
+            onSuccessRef.current(String(data.visitor_id))
+        }
+
+        ws.addEventListener("message", handleMessage)
+        return () => ws.removeEventListener("message", handleMessage)
+    }, [ws])
 }
 
 
