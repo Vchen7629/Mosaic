@@ -12,14 +12,14 @@ service FaceDetectionService {
     // Used to register a new face when a new face is detected while app is recording
     rpc RegisterVisitorFace (RegisterVisitorFaceRequest) returns (RegisterVisitorFaceResponse) {}
 
-    // Send face bytes for loading user profile, get back patientID if known or request to create new profile
+    // Send face bytes for loading user profile, get back profile_id if known or request to create new profile
     rpc SyncProfile (SyncProfileRequest) returns (SyncProfileResponse) {}
     
     // Used to register a new face when a new face is detected while syncing profile
     rpc RegisterProfileFace (RegisterProfileFaceRequest) returns (RegisterProfileFaceResponse) {}
 }
 
-// The request containing the face image in bytes and patient id
+// The request containing the face image in bytes and profile_id
 message ProcessVisitorFacesRequest {
     bytes face_bytes = 1;
     int32 profile_id = 2;

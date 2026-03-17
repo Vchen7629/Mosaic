@@ -21,7 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// The request containing the face image in bytes and patient id
+// The request containing the face image in bytes and profile_id
 type ProcessVisitorFacesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FaceBytes     []byte                 `protobuf:"bytes,1,opt,name=face_bytes,json=faceBytes,proto3" json:"face_bytes,omitempty"`

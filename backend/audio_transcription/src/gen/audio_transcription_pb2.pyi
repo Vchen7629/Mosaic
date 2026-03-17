@@ -60,7 +60,7 @@ Global___TranscribeAudioResponse: _TypeAlias = TranscribeAudioResponse  # noqa: 
 
 @_typing.final
 class SaveTranscriptRequest(_message.Message):
-    """Request containing patient id to save transcript for"""
+    """Request containing profile_id to save transcript for"""
 
     DESCRIPTOR: _descriptor.Descriptor
 

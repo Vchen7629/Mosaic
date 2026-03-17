@@ -119,7 +119,7 @@ func (x *TranscribeAudioResponse) GetSuccess() bool {
 	return false
 }
 
-// Request containing patient id to save transcript for
+// Request containing profile_id to save transcript for
 type SaveTranscriptRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProfileId     int32                  `protobuf:"varint,1,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
