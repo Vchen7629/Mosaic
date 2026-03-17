@@ -29,10 +29,7 @@ const NewFaceInput = ({ newFaceName, setNewFaceName, confirmNewFace }: NewFaceIn
 
     return (
         <div className="relative z-10 flex items-center gap-3 px-4 py-2.5 border-b border-zinc-800 bg-transparent">
-            <div className="flex items-center gap-1.5 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
-                <span className="text-[11px] font-medium text-zinc-400 tracking-tight">New face</span>
-            </div>
+            <span className="text-[11px] font-medium text-zinc-400 tracking-tight">New face</span>
             <input
                 type="text"
                 value={newFaceName}
