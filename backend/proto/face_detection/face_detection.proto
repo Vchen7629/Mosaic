@@ -31,6 +31,7 @@ message FaceResult {
     string name = 2;                                                                                                                
     string briefing = 3;                                                                                                              
     repeated float face_embedding = 4; // 128 dim embedding
+    int32 visitor_id = 5;
 }  
 
 // The response containing briefing if face matches an existing face

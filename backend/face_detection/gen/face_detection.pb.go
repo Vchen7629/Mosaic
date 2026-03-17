@@ -81,6 +81,7 @@ type FaceResult struct {
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Briefing      string                 `protobuf:"bytes,3,opt,name=briefing,proto3" json:"briefing,omitempty"`
 	FaceEmbedding []float32              `protobuf:"fixed32,4,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // 128 dim embedding
+	VisitorId     int32                  `protobuf:"varint,5,opt,name=visitor_id,json=visitorId,proto3" json:"visitor_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -141,6 +142,13 @@ func (x *FaceResult) GetFaceEmbedding() []float32 {
 		return x.FaceEmbedding
 	}
 	return nil
+}
+
+func (x *FaceResult) GetVisitorId() int32 {
+	if x != nil {
+		return x.VisitorId
+	}
+	return 0
 }
 
 // The response containing briefing if face matches an existing face
@@ -593,13 +601,15 @@ const file_face_detection_proto_rawDesc = "" +
 	"\n" +
 	"face_bytes\x18\x01 \x01(\fR\tfaceBytes\x12\x1d\n" +
 	"\n" +
-	"profile_id\x18\x02 \x01(\x05R\tprofileId\"~\n" +
+	"profile_id\x18\x02 \x01(\x05R\tprofileId\"\x9d\x01\n" +
 	"\n" +
 	"FaceResult\x12\x19\n" +
 	"\bis_known\x18\x01 \x01(\bR\aisKnown\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
 	"\bbriefing\x18\x03 \x01(\tR\bbriefing\x12%\n" +
-	"\x0eface_embedding\x18\x04 \x03(\x02R\rfaceEmbedding\"\x94\x01\n" +
+	"\x0eface_embedding\x18\x04 \x03(\x02R\rfaceEmbedding\x12\x1d\n" +
+	"\n" +
+	"visitor_id\x18\x05 \x01(\x05R\tvisitorId\"\x94\x01\n" +
 	"\x1bProcessVisitorFacesResponse\x12#\n" +
 	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x126\n" +
 	"\x05faces\x18\x02 \x03(\v2 .proto.face_detection.FaceResultR\x05faces\x12\x18\n" +
