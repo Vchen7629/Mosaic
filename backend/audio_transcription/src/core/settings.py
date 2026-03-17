@@ -27,8 +27,8 @@ class Settings(BaseSettings):
     # --- db connection cfg ---
     DB_HOST: str = "localhost"
     DB_PORT: int = 5432
-    DB_NAME: str = "cyphria"
-    DB_USER: str = "postgres"
-    DB_PASS: str = ""
+    DB_NAME: str = "pg"
+    DB_USER: str = "user"
+    DB_PASS: str = "password"
 
 settings = Settings()
