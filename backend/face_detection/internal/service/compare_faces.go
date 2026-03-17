@@ -15,7 +15,7 @@ func CompareVisitorFaces(
 	knownEmbeddings := make([]face.Descriptor, len(knownVisitors))
 	knownIDs := make([]int32, len(knownVisitors))
 
- 	for i, v := range knownVisitors {
+	for i, v := range knownVisitors {
 		knownEmbeddings[i] = v.Embedding
 		knownIDs[i] = v.ID
 	}
@@ -41,7 +41,7 @@ func CompareVisitorFaces(
 	return results
 }
 
-// Compares the client embedding against embeddings of all 
+// Compares the client embedding against embeddings of all
 // profiles fetched from the database
 func CompareProfileFaces(
 	rec *face.Recognizer,

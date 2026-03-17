@@ -145,7 +145,7 @@ func TestFetchVisitorBriefing(t *testing.T) {
 
 	t.Run("returns the briefing for the correct visitor", func(t *testing.T) {
 		test.CleanupTables(t, pool)
-		
+
 		testBriefing1 := "this is a test briefing 1"
 		testBriefing2 := "this is a test briefing 2"
 
@@ -168,7 +168,7 @@ func TestFetchVisitorBriefing(t *testing.T) {
 
 	t.Run("returns error when trying to fetch briefing for nonexistant user", func(t *testing.T) {
 		test.CleanupTables(t, pool)
-		
+
 		testBriefing := "this is a idk"
 
 		profileID := test.SeedProfile(t, pool, embedding)
@@ -261,7 +261,7 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 		assert.EqualValues(t, embedding2, upsertEmbedding, "should update the embedding to new one")
 		assert.EqualValues(t, visitorID2, visitorID, "Id should be the same in upsert")
 	})
-}	
+}
 
 func TestAddNewFaceForUser(t *testing.T) {
 	pool := testDB.Pool

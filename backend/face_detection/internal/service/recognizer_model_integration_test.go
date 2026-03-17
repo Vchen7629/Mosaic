@@ -45,7 +45,7 @@ func TestRecognizerPoolAcquireRelease(t *testing.T) {
 		pool, err := service.NewRecognizerPool(testModelsDir, 1)
 		assert.NoError(t, err)
 		defer pool.Close()
-		
+
 		rec1 := pool.Acquire()
 		pool.Release(rec1)
 

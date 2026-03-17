@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"testing"
 
-
 	"github.com/Kagami/go-face"
 	"github.com/stretchr/testify/assert"
 	"mosaic-face-detection.com/internal/service"
@@ -40,7 +39,6 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 	t.Run("returns multiple embeddings for group photo", func(t *testing.T) {
 		rec := recPool.Acquire()
 		defer recPool.Release(rec)
-
 
 		embeddings, err := service.GenerateFaceEmbeddings(rec, loadImage(t, "group.jpeg"))
 
@@ -94,8 +92,6 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 		assert.Equal(t, emb1, emb2, "same image should produce identical embeddings")
 	})
 }
-
-
 
 // debug test code
 /*func TestFaceDistances(t *testing.T) {

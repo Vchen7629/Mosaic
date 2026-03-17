@@ -7,7 +7,6 @@ import (
 	"github.com/Kagami/go-face"
 )
 
-
 // validation for embeddings parameter
 func ValidateEmbedding(embedding face.Descriptor) error {
 	// Check if embedding is all zeros

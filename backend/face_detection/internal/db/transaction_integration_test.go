@@ -26,7 +26,7 @@ func TestWithTransaction(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			
+
 			// failing db operation
 			_, err = tx.Exec(ctx, `INSERT INTO nonexistent_table (col) VALUES ($1)`, capturedProfileID)
 			return err

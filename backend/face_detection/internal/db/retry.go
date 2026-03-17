@@ -13,7 +13,7 @@ import (
 type RetryConfig struct {
 	MaxAttempts int
 	InitialWait time.Duration
-	MaxWait		time.Duration
+	MaxWait     time.Duration
 }
 
 // PostgreSQL transient error codes for lookup
@@ -26,13 +26,13 @@ var transientErrorCodes = map[string]bool{
 }
 
 var transientErrorPatterns = map[string]bool{
-	"connection refused":         true,
-	"connection reset":           true,
-	"i/o timeout":               true,
+	"connection refused":            true,
+	"connection reset":              true,
+	"i/o timeout":                   true,
 	"no more connections available": true,
-	"pool exhausted":            true,
-	"connection closed":         true,
-	"broken pipe":               true,
+	"pool exhausted":                true,
+	"connection closed":             true,
+	"broken pipe":                   true,
 }
 
 // retries a function with exponential backoff for transient errors
@@ -64,8 +64,8 @@ func RetryWithBackoff(ctx context.Context, config RetryConfig, fn func() error) 
 		)
 
 		select {
-		case <- time.After(wait):
-		case <- ctx.Done():
+		case <-time.After(wait):
+		case <-ctx.Done():
 			return ctx.Err()
 		}
 
@@ -78,13 +78,13 @@ func RetryWithBackoff(ctx context.Context, config RetryConfig, fn func() error) 
 	return lastErr
 }
 
-// Sets and returns sensible defaults for transient 
+// Sets and returns sensible defaults for transient
 // db error retries
 func DefaultRetryConfig() RetryConfig {
 	return RetryConfig{
 		MaxAttempts: 3,
 		InitialWait: 100 * time.Millisecond,
-		MaxWait: 	 2 * time.Second,	
+		MaxWait:     2 * time.Second,
 	}
 }
 

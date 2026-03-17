@@ -12,9 +12,9 @@ import (
 
 // Handler to process faces for visitors
 func (s *FaceDetectionServer) ProcessVisitorFaces(
-	ctx context.Context, 
+	ctx context.Context,
 	req *fd.ProcessVisitorFacesRequest,
-) (*fd.ProcessVisitorFacesResponse, error) {	
+) (*fd.ProcessVisitorFacesResponse, error) {
 	rec := s.recPool.Acquire() // acquiring one instance of the rec model from pool
 	defer s.recPool.Release(rec)
 
@@ -31,7 +31,7 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 			return err
 		})
 		if err != nil {
-			return &fd.ProcessVisitorFacesResponse{ Success: false }, err
+			return &fd.ProcessVisitorFacesResponse{Success: false}, err
 		}
 	}
 
@@ -41,7 +41,7 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 	for i, visitorID := range matchingFaceRes {
 		if visitorID == -1 { // non matching face case
 			faceResults[i] = &fd.FaceResult{
-				IsKnown: false,
+				IsKnown:       false,
 				FaceEmbedding: embeddings[i][:], // [128]float32 to []float32
 			}
 		} else {
@@ -55,9 +55,9 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 				log.Printf("Failed to fetch briefing for visitor %d: %v", visitorID, err)
 				briefing = "" // continuing with empty briefing instead of failing entire req
 			}
-			
+
 			faceResults[i] = &fd.FaceResult{
-				IsKnown: true,
+				IsKnown:  true,
 				Briefing: briefing,
 			}
 		}
@@ -65,14 +65,14 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 
 	return &fd.ProcessVisitorFacesResponse{
 		FaceDetected: true,
-		Faces: faceResults,
-		Success: true,
+		Faces:        faceResults,
+		Success:      true,
 	}, nil
 }
 
-// Handler for when the face embedding doesnt 
+// Handler for when the face embedding doesnt
 // match with an existing embedding for a visitor
-func (s*FaceDetectionServer) RegisterVisitorFace(
+func (s *FaceDetectionServer) RegisterVisitorFace(
 	ctx context.Context,
 	req *fd.RegisterVisitorFaceRequest,
 ) (*fd.RegisterVisitorFaceResponse, error) {
