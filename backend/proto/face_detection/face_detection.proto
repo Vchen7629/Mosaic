@@ -51,6 +51,7 @@ message RegisterVisitorFaceRequest {
 // Response containing data about if request succeeded and visitor id
 message RegisterVisitorFaceResponse {
     bool success = 1;
+    int32 visitor_id = 2;
 }
 
 // The request containing the array of face image in bytes

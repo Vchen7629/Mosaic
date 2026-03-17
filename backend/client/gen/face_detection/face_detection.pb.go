@@ -270,6 +270,7 @@ func (x *RegisterVisitorFaceRequest) GetVisitorName() string {
 type RegisterVisitorFaceResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	VisitorId     int32                  `protobuf:"varint,2,opt,name=visitor_id,json=visitorId,proto3" json:"visitor_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -309,6 +310,13 @@ func (x *RegisterVisitorFaceResponse) GetSuccess() bool {
 		return x.Success
 	}
 	return false
+}
+
+func (x *RegisterVisitorFaceResponse) GetVisitorId() int32 {
+	if x != nil {
+		return x.VisitorId
+	}
+	return 0
 }
 
 // The request containing the array of face image in bytes
@@ -600,9 +608,11 @@ const file_face_detection_proto_rawDesc = "" +
 	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\x12\x1d\n" +
 	"\n" +
 	"profile_id\x18\x02 \x01(\x05R\tprofileId\x12!\n" +
-	"\fvisitor_name\x18\x03 \x01(\tR\vvisitorName\"7\n" +
+	"\fvisitor_name\x18\x03 \x01(\tR\vvisitorName\"V\n" +
 	"\x1bRegisterVisitorFaceResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"3\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
+	"\n" +
+	"visitor_id\x18\x02 \x01(\x05R\tvisitorId\"3\n" +
 	"\x12SyncProfileRequest\x12\x1d\n" +
 	"\n" +
 	"face_bytes\x18\x01 \x03(\fR\tfaceBytes\"6\n" +
