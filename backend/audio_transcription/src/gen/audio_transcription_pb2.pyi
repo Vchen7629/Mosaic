@@ -65,13 +65,16 @@ class SaveTranscriptRequest(_message.Message):
     DESCRIPTOR: _descriptor.Descriptor
 
     PROFILE_ID_FIELD_NUMBER: _builtins.int
+    VISITOR_ID_FIELD_NUMBER: _builtins.int
     profile_id: _builtins.int
+    visitor_id: _builtins.int
     def __init__(
         self,
         *,
         profile_id: _builtins.int = ...,
+        visitor_id: _builtins.int = ...,
     ) -> None: ...
-    _ClearFieldArgType: _TypeAlias = _typing.Literal["profile_id", b"profile_id"]  # noqa: Y015
+    _ClearFieldArgType: _TypeAlias = _typing.Literal["profile_id", b"profile_id", "visitor_id", b"visitor_id"]  # noqa: Y015
     def ClearField(self, field_name: _ClearFieldArgType) -> None: ...
 
 Global___SaveTranscriptRequest: _TypeAlias = SaveTranscriptRequest  # noqa: Y015
