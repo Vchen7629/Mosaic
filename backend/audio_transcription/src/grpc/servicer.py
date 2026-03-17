@@ -27,7 +27,7 @@ class AudioTranscriptionServicer(
 
     def SaveTranscript(self, request, _context):
         """gRPC handler that saves the current transcript to db"""
-        convo_text = self._convo_loggers[request.patient_id].read()
+        convo_text = self._convo_loggers[request.profile_id].read()
 
         try:
             with self._db_pool.connection() as conn:
@@ -35,19 +35,19 @@ class AudioTranscriptionServicer(
         except Exception:
             return audio_transcription_pb2.SaveTranscriptResponse(success=False)
 
-        self._convo_loggers[request.patient_id].delete()
+        self._convo_loggers[request.profile_id].delete()
 
         print("Invoked Save!")
         return audio_transcription_pb2.SaveTranscriptResponse(success=True)
 
-    def _get_log_writer(self, patient_id: str) -> ConvoLogHandler:
+    def _get_log_writer(self, profile_id: str) -> ConvoLogHandler:
         """
-        Creates the log file with patient_id specific name
+        Creates the log file with profile_id specific name
         and registers the log writer for the patient to dict
         """
         with self._lock:
-            if patient_id not in self._convo_loggers.keys():
+            if profile_id not in self._convo_loggers.keys():
                 _LOGS_DIR.mkdir(parents=True, exist_ok=True)
-                path = _LOGS_DIR / f"recording_{patient_id}.txt"
-                self._convo_loggers[patient_id] = ConvoLogHandler(path)
-            return self._convo_loggers[patient_id]
+                path = _LOGS_DIR / f"recording_{profile_id}.txt"
+                self._convo_loggers[profile_id] = ConvoLogHandler(path)
+            return self._convo_loggers[profile_id]
