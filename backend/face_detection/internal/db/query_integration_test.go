@@ -36,13 +36,13 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 		profileID := test.SeedProfile(t, pool, test.MakeEmbedding(0.1, 128))
 		_ = test.SeedVisitor(t, pool, profileID, "testvisitor", test.MakeEmbedding(0.1, 128))
 
-		visitorEmbList, err := dbPool.FetchAllVisitorFaceEmbForProfile(-1)
+		visitorEmbList, err := dbPool.FetchAllVisitorData(-1)
 
 		assert.Nil(t, visitorEmbList, "emb list returns nil")
 		assert.Equal(t, "profileID must be positive", err.Error())
 	})
 
-	t.Run("returns list of visitor embeddings", func(t *testing.T) {
+	t.Run("returns list of visitor data", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
 		profileID := test.SeedProfile(t, pool, test.MakeEmbedding(0.1, 128))
@@ -55,17 +55,18 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 			)
 		}
 
-		visitorEmbList, err := dbPool.FetchAllVisitorFaceEmbForProfile(profileID)
+		visitorData, err := dbPool.FetchAllVisitorData(profileID)
 
 		assert.Nil(t, err)
-		assert.Equal(t, 3, len(visitorEmbList), "should return 3 visitor embedding")
+		assert.Equal(t, 3, len(visitorData), "should return 3 visitor embedding")
 		for i, expected := range visitorEmbs {
-			assert.Equal(t, visitorIDs[i], visitorEmbList[i].ID)
+			assert.Equal(t, visitorIDs[i], visitorData[i].ID)
+			assert.Equal(t, fmt.Sprintf("visitor%d", i+1), visitorData[i].Name)
 			expectedEmb := [128]float32{}
 			for j := range expectedEmb {
 				expectedEmb[j] = expected
 			}
-			assert.EqualValues(t, expectedEmb, visitorEmbList[i].Embedding)
+			assert.EqualValues(t, expectedEmb, visitorData[i].Embedding)
 		}
 	})
 
@@ -76,7 +77,7 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 		profileID := test.SeedProfile(t, pool, embedding)
 		_ = test.SeedVisitor(t, pool, profileID, "visitor", embedding)
 
-		visitorEmbList, err := dbPool.FetchAllVisitorFaceEmbForProfile(23)
+		visitorEmbList, err := dbPool.FetchAllVisitorData(23)
 
 		assert.Nil(t, err)
 		assert.Equal(t, 0, len(visitorEmbList))
@@ -166,7 +167,7 @@ func TestFetchVisitorBriefing(t *testing.T) {
 		assert.Nil(t, err2)
 	})
 
-	t.Run("returns error when trying to fetch briefing for nonexistant user", func(t *testing.T) {
+	t.Run("returns empty string when trying to fetch briefing for nonexistant user", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
 		testBriefing := "this is a idk"
@@ -179,8 +180,8 @@ func TestFetchVisitorBriefing(t *testing.T) {
 		briefing, err2 := dbPool.FetchVisitorBriefing(69, visitorID)
 
 		assert.Equal(t, "", briefing, "briefing returns empty str")
-		assert.Equal(t, "error fetching briefing: no rows in result set", err1.Error())
-		assert.Equal(t, "error fetching briefing: no rows in result set", err2.Error())
+		assert.Nil(t, err1)
+		assert.Nil(t, err2)
 	})
 }
 
