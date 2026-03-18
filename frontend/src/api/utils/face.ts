@@ -15,13 +15,25 @@ export function VisitorFaceProcess(
         profileID: number,
         faceEmbedding: string,
     ) => void,
+    onExistingVisitorDetected: (visitorID: string) => void,
     setBriefingList: Dispatch<SetStateAction<BriefingComponent[]>>
 ) {
     const onNewFaceDetectedRef = useRef(onNewFaceDetected)
-    useEffect(() => { onNewFaceDetectedRef.current = onNewFaceDetected })
+    onNewFaceDetectedRef.current = onNewFaceDetected
+
+    const onExistingVisitorDetectedRef = useRef(onExistingVisitorDetected)
+    onExistingVisitorDetectedRef.current = onExistingVisitorDetected
 
     const setBriefingListRef = useRef(setBriefingList)
-    useEffect(() => { setBriefingListRef.current = setBriefingList })
+    setBriefingListRef.current = setBriefingList
+
+    const isCapturingFaceRef = useRef(isCapturingFace)
+    isCapturingFaceRef.current = isCapturingFace
+
+    const seenVisitorIdsRef = useRef<Set<string>>(new Set())
+    useEffect(() => {
+        if (isCapturingFace) seenVisitorIdsRef.current = new Set()
+    }, [isCapturingFace])
 
     // reacts to the ws messages sent from backend to frontend
     useEffect(() => {
@@ -30,6 +42,7 @@ export function VisitorFaceProcess(
         if (!ws) return
 
         const handleMessage = (event: MessageEvent) => {
+            if (!isCapturingFaceRef.current) return
             const data = JSON.parse(event.data)
             if (data.type !== "new_visitor_register" && data.type !== "existing_visitor_response") return
 
@@ -37,6 +50,11 @@ export function VisitorFaceProcess(
                 onNewFaceDetectedRef.current(data.profile_id, JSON.stringify(data.face_embedding))
             }
             if (data.type == "existing_visitor_response") {
+                const visitorId = String(data.visitor_id)
+                if (seenVisitorIdsRef.current.has(visitorId)) return
+                seenVisitorIdsRef.current.add(visitorId)
+                console.log("existing visitor response received", data)
+                onExistingVisitorDetectedRef.current(visitorId)
                 setBriefingListRef.current((prev: BriefingComponent[]) => [...prev, {
                     visitorName: data.visitor_name,
                     briefingText: data.briefing
