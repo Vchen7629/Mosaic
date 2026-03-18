@@ -58,6 +58,11 @@ func ProcessVisitorImage(
 		return nil
 	}
 
+	if resp.NonVisitorFace {
+		log.Println("Current visitor face to process is same as the currently synced profile's face, skipping")
+		return nil
+	}
+
 	if len(resp.Faces) > 0 {
 		for _, faceData := range resp.Faces {
 			if !faceData.IsKnown {
