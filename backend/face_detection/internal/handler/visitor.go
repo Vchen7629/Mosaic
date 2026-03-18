@@ -32,7 +32,7 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 
 	_, matched := service.CompareProfileFaces(rec, []face.Descriptor{embeddings[0]}, currentProfileEmbs)
 	if matched {
-		return &fd.ProcessVisitorFacesResponse{NonVisitorFace: true}, nil
+		return &fd.ProcessVisitorFacesResponse{FaceDetected: true, NonVisitorFace: true}, nil
 	}
 
 	var knownVisitors []service.VisitorFaces
