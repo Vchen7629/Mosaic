@@ -11,7 +11,7 @@ def handle_shutdown(server, _sig, _frame):
 
 def serve():
     server = grpc.server(ThreadPoolExecutor(max_workers=settings.max_workers))
-    db_pool = create_connection_pool(settings.DB_HOST, settings.DB_PORT, settings.DB_NAME, settings.DB_USER, settings.DB_PASS)
+    db_pool = create_connection_pool()
 
     audio_transcription_pb2_grpc.add_AudioTranscriptionServiceServicer_to_server(
         AudioTranscriptionServicer(db_pool), server

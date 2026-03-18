@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { SetWindowPosition } from "./utils/setWindowPosition";
-import { useBackendLifecycle } from "./utils/handleBackendLifecycle";
-import { AutoResizeWindow } from "./utils/autoResizeWindow";
+import { useBackendLifecycle } from "./hooks/useBackendLifecycle";
+import { useAutoResizeWindow } from "./hooks/useAutoResizeWindow";
 import ConvoBriefingDisplay from "./components/convoBriefing";
 import { useBackendAudioProcess } from "./api/hooks/audio";
-import { VisitorFaceProcess } from "./api/utils/face";
 import { useWebSocketConnection } from "./api/hooks/useWebSocket";
 import { ProfileStatus } from "./components/profileStatus";
 import { BriefingComponent } from "./types/briefing";
 import { SyncState } from "./types/profle";
 import { RecordButton } from "./components/recordButton";
-import { X } from "lucide-react";
+import { LoaderCircle, X } from "lucide-react";
 import NewFaceInput from "./components/newFaceInput";
 import "./App.css";
+import { useVisitorFace } from "./api/hooks/face";
+import { useSetWindowPosition } from "./hooks/useSetWindowPosition";
 
 function App() {
   const [isRecording, setIsRecording] = useState(false);
@@ -24,27 +24,22 @@ function App() {
   /*const decoder = false
   const ws = useWebSocketConnection(decoder || isSyncProfile)*/
   const ws = useWebSocketConnection(isRecording || isSyncProfile)
-  const [briefingList1, setBriefingList] = useState<BriefingComponent[]>([
-    {
-      "visitorName": "Sam", 
-      "briefingText": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
-    },
-    {"visitorName": "Max", "briefingText": "lorem ipsum"}
-  ])
-  const [briefingList2, setBriefingList2] = useState<BriefingComponent[]>([])
+  const [briefingList1, setBriefingList] = useState<BriefingComponent[]>([])
   const [newFaceDetected, setNewFaceDetected] = useState<boolean>(false)
-  const [newFaceName, setNewFaceName] = useState<string>("")
+  const [pendingFaceEmbedding, setPendingFaceEmbedding] = useState<string>("")
+  const [visitorIds, setVisitorIds] = useState<string[]>([])
 
-  SetWindowPosition()
-  AutoResizeWindow()
+  useSetWindowPosition()
+  useAutoResizeWindow()
   useBackendLifecycle()
   useBackendAudioProcess(ws, isRecording, profileId)
-  VisitorFaceProcess(
+  useVisitorFace(
     ws,
     isFaceCapture,
     profileId,
-    (_profileId, _faceEmbedding) => { setNewFaceDetected(true) },
-    setBriefingList
+    (_profileId, faceEmbedding) => { setNewFaceDetected(true); setPendingFaceEmbedding(faceEmbedding) },
+    (visitorId) => { setVisitorIds(prev => [...prev, visitorId]) },
+    (briefing) => setBriefingList(prev => [...prev, briefing])
   )
 
   return (
@@ -66,11 +61,14 @@ function App() {
         <RecordButton
           ws={ws}
           syncState={syncState}
-          setSyncState={setSyncState}
           isRecording={isRecording}
-          setIsRecording={setIsRecording}
-          setIsSyncCapture={setIsSyncProfile}
-          setIsFaceCapture={setIsFaceCapture}
+          profileId={profileId ?? ""}
+          visitorIds={visitorIds}
+          onSyncStart={() => { setSyncState("scanning"); setIsSyncProfile(true); }}
+          onSyncCancel={() => { setSyncState("idle"); setIsSyncProfile(false); }}
+          onSyncComplete={() => { setSyncState("active"); setIsSyncProfile(false); }}
+          onRecordingStart={() => { setIsRecording(true); setIsFaceCapture(true); }}
+          onRecordingStop={() => { setIsRecording(false); setIsFaceCapture(false); setVisitorIds([]); setBriefingList([]); }}
         />
       </section>
       <hr className={`border-zinc-700 ${isRecording ? 'opacity-100' : 'opacity-0'}`}/>
@@ -79,7 +77,15 @@ function App() {
           <div className="w-full h-fit min-h-20 max-h-120">
             <div className={`expand-wrap ${newFaceDetected ? 'expand-open' : 'expand-closed'}`}>
               <div className="expand-inner">
-                <NewFaceInput newFaceName={newFaceName} setNewFaceName={setNewFaceName} confirmNewFace={confirm}/>
+                <NewFaceInput 
+                  ws={ws} 
+                  faceEmbedding={pendingFaceEmbedding} 
+                  profileId={profileId ?? ""}
+                  onVisitorRegistered={(visitorId => {
+                    setVisitorIds(prev => [...prev, visitorId])
+                    setNewFaceDetected(false)
+                  })}
+                />
               </div>
             </div>
             {briefingList1.length > 0 ? (
@@ -89,8 +95,9 @@ function App() {
                 </div>
               ))
             ) : (
-              <div className="flex rounded-lg px-3 py-2.5 overflow-hidden text-center items-center justify-center">
-                <span className="mt-4 text-sm text-zinc-400">No Briefings</span>
+              <div className="flex rounded-lg h-20 px-3 py-2.5 space-x-2 overflow-hidden text-center items-center justify-center">
+                <LoaderCircle className="animate-spin text-emerald-500"/>
+                <span className="text-sm text-zinc-400">Loading Briefings...</span>
               </div>
             )}
           </div>

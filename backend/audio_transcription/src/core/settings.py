@@ -30,5 +30,11 @@ class Settings(BaseSettings):
     DB_NAME: str = "pg"
     DB_USER: str = "user"
     DB_PASS: str = "password"
+    POOL_MIN_SIZE: int = 1
+    POOL_MAX_SIZE: int = 10
+    KEEP_ALIVES_COUNT: int = 1
+    KEEP_ALIVES_IDLE_S: int = 30
+    KEEP_ALIVES_RETRY_INTERVAL_S: int = 10
+    KEEP_ALIVES_RETRY_COUNT: int = 5
 
 settings = Settings()

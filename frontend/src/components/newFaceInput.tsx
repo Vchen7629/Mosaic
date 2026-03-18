@@ -1,30 +1,36 @@
-import { Dispatch, SetStateAction } from "react"
+import { useState } from "react"
+import { useNewVisitorFaceRegister } from "../api/hooks/face"
 
 
 type NewFaceInputProps = {
-    newFaceName: string
-    setNewFaceName: Dispatch<SetStateAction<string>>
-    confirmNewFace: any
+    ws: WebSocket | null
+    faceEmbedding: string
+    profileId: string
+    onVisitorRegistered: (visitorId: string) => void
 }
 
 /**
  * Component that pops up when the application is recording the conversation and
  * a new visitor face shows up that wasnt registered in the database
  * allows users to enter a name and click save to register
- * @param newFaceName - contains the new face name
- * @param setNewFaceName - state setting to update newFaceName
- * @param confirmNewFace - function passed in
+ * @param ws -
+ * @param faceEmbedding - 
+ * @param profileId - 
  */
-const NewFaceInput = ({ newFaceName, setNewFaceName, confirmNewFace }: NewFaceInputProps) => {
-    function handleClick() {
-        if (newFaceName.trim()) {
-            confirmNewFace(newFaceName.trim())
-            setNewFaceName("")
-        }
-    }
+const NewFaceInput = ({ ws, faceEmbedding, profileId, onVisitorRegistered }: NewFaceInputProps) => {
+    const [newFaceName, setNewFaceName] = useState<string>("")
+    const [shouldRegister, setShouldRegister] = useState<boolean>(false)
+
+    useNewVisitorFaceRegister(ws, shouldRegister, faceEmbedding, profileId, newFaceName, (visitorId) => {
+        onVisitorRegistered(visitorId)
+        setShouldRegister(false)
+        setNewFaceName("")
+    })
 
     function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-        if (e.key === "Enter") handleClick()
+        if (e.key === "Enter" && newFaceName.trim()) {
+            setShouldRegister(true)
+        }
     }
 
     return (
@@ -40,8 +46,11 @@ const NewFaceInput = ({ newFaceName, setNewFaceName, confirmNewFace }: NewFaceIn
                 className="flex-1 bg-zinc-800 rounded-md px-2.5 py-1 text-[12px] text-zinc-100 placeholder-zinc-600 outline-none ring-1 ring-zinc-700 focus:ring-emerald-500/50 transition-all"
             />
             <button
-                onClick={handleClick}
-                className="shrink-0 text-[11px] font-medium px-3 py-1 rounded-md bg-emerald-500 text-zinc-950 hover:bg-emerald-400 active:bg-emerald-600 transition-colors"
+                onClick={() => setShouldRegister(true)}
+                disabled={!newFaceName.trim()}
+                className="bg-emerald-500 text-zinc-950 hover:bg-emerald-400 active:bg-emerald-600 transition-colors 
+                            disabled:bg-emerald-600 disabled:text-zinc-900 disabled:cursor-not-allowed
+                            shrink-0 text-[11px] font-medium px-3 py-1 rounded-md "
             >
                 Save
             </button>

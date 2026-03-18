@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import type { UserConfig } from "vitest/config";
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
@@ -8,6 +9,22 @@ const host = process.env.TAURI_DEV_HOST;
 // https://vite.dev/config/
 export default defineConfig(async () => ({
   plugins: [react(), tailwindcss()],
+  test: {
+    environment: "jsdom",
+    globals: true,
+    coverage: {
+      exclude: [
+        "src/App.tsx",
+        "src/main.tsx",
+        "src/types/**",
+        "src/api/lib/**",
+        "src-tauri/**",
+        "tests/**",
+        "eslint.config.js",
+        "vite.config.ts",
+      ],
+    },
+  } satisfies UserConfig["test"],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

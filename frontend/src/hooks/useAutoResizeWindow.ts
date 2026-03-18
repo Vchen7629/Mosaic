@@ -1,7 +1,10 @@
 import { useEffect } from "react";
 import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
 
-export function AutoResizeWindow() {
+/**
+ * Custom hook to auto resize window width and height based on the component size
+ */
+export function useAutoResizeWindow() {
     useEffect(() => {
         const resize = () => {
             const height = document.body.scrollHeight;

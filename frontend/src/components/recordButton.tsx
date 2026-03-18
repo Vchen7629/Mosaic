@@ -1,72 +1,101 @@
 import { Camera } from "lucide-react";
-import { SyncProfileProcess } from "../api/utils/face";
 import { SyncState } from "../types/profle";
-import { Dispatch, SetStateAction } from "react";
+import { useSyncProfileProcess } from "../api/hooks/face";
 
 type RecordButtonProps = {
   ws: WebSocket | null;
   syncState: SyncState;
-  setSyncState: Dispatch<SetStateAction<SyncState>>;
   isRecording: boolean;
-  setIsRecording: (val: boolean) => void;
-  setIsSyncCapture: (val: boolean) => void;
-  setIsFaceCapture: (val: boolean) => void;
+  profileId: string;
+  visitorIds: string[];
+  onSyncStart: () => void;
+  onSyncCancel: () => void;
+  onSyncComplete: () => void;
+  onRecordingStart: () => void;
+  onRecordingStop: () => void
 };
 
 /**
- * Unified button that handles the full flow: sync profile → start/stop recording.
- * Has possible states states: idle → scanning → active/start → active/stop
- * @param ws
+ * Public exposed button that displays the different buttons depending on state
+ * @param ws - the websocket connection
+ * @param syncState -
+ * @param isRecording -
+ * @param profileID - currently synced profile id
+ * @param visitorIds - array of visitorIds strings to save transcripts with
+ * @param onSyncStart -
+ * @param onSyncCancel - 
+ * @param onSyncComplete -
+ * @param onRecordingStart -
+ * @param onRecordingStop
  */
-export const RecordButton = ({ ws, syncState, setSyncState, isRecording, setIsRecording, setIsSyncCapture, setIsFaceCapture }: RecordButtonProps) => {
-  SyncProfileProcess(ws, syncState === "scanning", (_profileId) => {
-    setSyncState("active");
-    setIsSyncCapture(false);
-  });
+export const RecordButton = ({ 
+  ws, syncState, isRecording, profileId, visitorIds, 
+  onSyncStart, onSyncCancel, onSyncComplete, onRecordingStart, onRecordingStop
+}: RecordButtonProps) => {
+  useSyncProfileProcess(ws, syncState === "scanning", (_profileId) => { onSyncComplete() });
 
-  function handleSyncStart() {
-    setSyncState("scanning");
-    setIsSyncCapture(true);
+  function handleStopRecording() {
+    if (ws?.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: "save_audio_transcript",
+        profile_id: profileId,
+        visitor_id: visitorIds[0] ?? "0",
+      }))
+    }
+    onRecordingStop()
   }
 
-  function handleCancel() {
-    setSyncState("idle");
-    setIsSyncCapture(false);
-  }
+  if (syncState === "idle") return <SyncIdleButton onSyncStart={onSyncStart}/>
+  if (syncState === "scanning") return <SyncCancelButton onSyncCancel={onSyncCancel}/>
+  return <ActiveRecordButton isRecording={isRecording} onStart={onRecordingStart} onStop={handleStopRecording}/>
+};
 
-  function handleRecordToggle() {
-    setIsRecording(!isRecording);
-    setIsFaceCapture(!isRecording);
-  }
-
-  if (syncState === "idle") {
-    return (
+/**
+ * Button component that appears when the user hasn't synced their profile yet
+ * @param onSyncStart - passed in function that updates state
+ */
+const SyncIdleButton = ({ onSyncStart }: { onSyncStart: () => void }) => {
+  return (
       <button
-        onClick={handleSyncStart}
-        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-zinc-800 border border-white/8 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/80 hover:border-white/[0.14] transition-all duration-150 cursor-pointer"
+        onClick={onSyncStart}
+        className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-zinc-800 border border-white/8 text-zinc-400
+           hover:text-zinc-200 hover:bg-zinc-700/80 hover:border-white/[0.14] transition-all duration-150 cursor-pointer"
       >
         <Camera size={15} />
         Sync Profile
       </button>
-    );
-  }
+  );
+}
 
-  if (syncState === "scanning") {
-    return (
+/**
+ * Button component that appears when its syncing and the user wants to cancel
+ * @param onSyncCancel - passed in function that updates state
+ */
+const SyncCancelButton = ({ onSyncCancel }: { onSyncCancel: () => void }) => {
+  return (
       <button
-        onClick={handleCancel}
-        className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-800 border border-white/6 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 transition-all duration-150 cursor-pointer"
+        onClick={onSyncCancel}
+        className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-800 border border-white/6 text-zinc-400
+           hover:text-zinc-200 hover:bg-zinc-700 transition-all duration-150 cursor-pointer"
       >
         Cancel
       </button>
-    );
-  }
+  );
+}
 
-  // active state
+/**
+ * Button that controls starting and stopping recording conversation. Only appears if the profile is synced
+ * @param isRecording - boolean representing whether the application is recording or not
+ * @param onStart - passed in function that updates state to make the recording start
+ * @param onStop - passed in function that updates state to make recording stop and save to db
+ */
+const ActiveRecordButton = (
+  { isRecording, onStart, onStop }: { isRecording: boolean; onStart: () => void; onStop: () => void}
+) => {
   return (
     <div className="flex items-center gap-1.5">
       <button
-        onClick={handleRecordToggle}
+        onClick={isRecording ? onStop : onStart}
         className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold transition-all duration-200 border ${
           isRecording
             ? "bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30 cursor-pointer"
@@ -82,5 +111,4 @@ export const RecordButton = ({ ws, syncState, setSyncState, isRecording, setIsRe
       </button>
     </div>
   );
-};
-
+}
