@@ -7,7 +7,6 @@ import (
 
 	"github.com/Kagami/go-face"
 	fd "mosaic-face-detection.com/gen"
-	"mosaic-face-detection.com/internal/db"
 	"mosaic-face-detection.com/internal/service"
 )
 
@@ -34,11 +33,8 @@ func (s *FaceDetectionServer) SyncProfile(
 		return &fd.SyncProfileResponse{FaceDetected: false}, nil
 	}
 
-	var knownProfileFaceEmbs []service.ProfileFaces
-	err := db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
-		var err error
-		knownProfileFaceEmbs, err = s.pool.FetchAllProfileFaceEmb()
-		return err
+	knownProfileFaceEmbs, err := retryDB(ctx, func() ([]service.ProfileFaces, error) {
+		return s.pool.FetchAllProfileFaceEmb()
 	})
 	if err != nil {
 		log.Printf("GRPC user profile error fetching from db: %v", err)
@@ -87,11 +83,8 @@ func (s *FaceDetectionServer) RegisterProfileFace(
 		copy(embeddings[i][:], e.FaceEmbedding)
 	}
 
-	var profileID *int32
-	err := db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
-		var err error
-		profileID, err = s.pool.AddNewFaceForUser(embeddings)
-		return err
+	profileID, err := retryDB(ctx, func() (*int32, error) {
+		return s.pool.AddNewFaceForUser(embeddings)
 	})
 	if err != nil {
 		return &fd.RegisterProfileFaceResponse{Success: false}, nil
