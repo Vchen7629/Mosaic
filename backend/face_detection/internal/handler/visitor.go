@@ -9,7 +9,6 @@ import (
 	"mosaic-face-detection.com/internal/service"
 )
 
-
 // Handler to process faces for visitors
 func (s *FaceDetectionServer) ProcessVisitorFaces(
 	ctx context.Context,
@@ -65,10 +64,10 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 			}
 
 			faceResults[i] = &fd.FaceResult{
-				IsKnown:  	true,
-				Briefing: 	briefing,
-				VisitorId: 	match.ID,
-				Name: 		match.Name,
+				IsKnown:   true,
+				Briefing:  briefing,
+				VisitorId: match.ID,
+				Name:      match.Name,
 			}
 		}
 	}
@@ -92,13 +91,12 @@ func (s *FaceDetectionServer) RegisterVisitorFace(
 	}
 
 	log.Printf(
-		"Recieved one face embedding of size %d with name %s patientID %d", 
+		"Recieved one face embedding of size %d with name %s patientID %d",
 		len(req.FaceEmbedding), req.VisitorName, req.ProfileId)
 	// converting []float32 to face.Descriptor [128]float32
 	var embedding face.Descriptor
 	copy(embedding[:], req.FaceEmbedding)
 
-	
 	visitorID, err := retryDB(ctx, func() (*int32, error) {
 		return s.pool.AddNewFaceForVisitor(req.ProfileId, req.VisitorName, embedding)
 	})

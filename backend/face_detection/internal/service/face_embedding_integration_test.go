@@ -3,24 +3,14 @@
 package service_test
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
-	"github.com/Kagami/go-face"
 	"github.com/stretchr/testify/assert"
 	"mosaic-face-detection.com/internal/service"
+	"mosaic-face-detection.com/internal/test"
 )
 
-const testImagesDir = "../test/images"
 const testModelsDir = "../models"
-
-func loadImage(t *testing.T, filename string) []byte {
-	t.Helper()
-	data, err := os.ReadFile(filepath.Join(testImagesDir, filename))
-	assert.Nil(t, err)
-	return data
-}
 
 func TestGenerateFaceEmbeddings(t *testing.T) {
 	recPool, err := service.NewRecognizerPool(testModelsDir, 5)
@@ -30,7 +20,7 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 		rec := recPool.Acquire()
 		defer recPool.Release(rec)
 
-		embeddings, err := service.GenerateFaceEmbeddings(rec, loadImage(t, "bona.jpg"))
+		embeddings, err := service.GenerateFaceEmbeddings(rec, test.LoadImage(t, "bona.jpg"))
 
 		assert.NoError(t, err)
 		assert.Len(t, embeddings, 1)
@@ -40,7 +30,7 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 		rec := recPool.Acquire()
 		defer recPool.Release(rec)
 
-		embeddings, err := service.GenerateFaceEmbeddings(rec, loadImage(t, "group.jpeg"))
+		embeddings, err := service.GenerateFaceEmbeddings(rec, test.LoadImage(t, "group.jpeg"))
 
 		assert.NoError(t, err)
 		assert.Greater(t, len(embeddings), 1)
@@ -50,7 +40,7 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 		rec := recPool.Acquire()
 		defer recPool.Release(rec)
 
-		embeddings, err := service.GenerateFaceEmbeddings(rec, loadImage(t, "halfdome.jpg"))
+		embeddings, err := service.GenerateFaceEmbeddings(rec, test.LoadImage(t, "halfdome.jpg"))
 
 		assert.NoError(t, err)
 		assert.Empty(t, embeddings)
@@ -82,7 +72,7 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 		rec := recPool.Acquire()
 		defer recPool.Release(rec)
 
-		imgBytes := loadImage(t, "bona.jpg")
+		imgBytes := test.LoadImage(t, "bona.jpg")
 
 		emb1, err1 := service.GenerateFaceEmbeddings(rec, imgBytes)
 		emb2, err2 := service.GenerateFaceEmbeddings(rec, imgBytes)
@@ -123,12 +113,3 @@ func euclideanDistance(a, b face.Descriptor) float64 {
 	}
 	return sum
 }*/
-
-// helper to load an image and extract first face embedding
-func getEmbedding(t *testing.T, rec *face.Recognizer, filename string) face.Descriptor {
-	t.Helper()
-	embeddings, err := service.GenerateFaceEmbeddings(rec, loadImage(t, filename))
-	assert.NoError(t, err)
-	assert.Len(t, embeddings, 1)
-	return embeddings[0]
-}
