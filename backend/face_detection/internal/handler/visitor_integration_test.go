@@ -83,7 +83,7 @@ func TestProcessVisitorFaces(t *testing.T) {
 		assert.Equal(t, "", res.Faces[0].Briefing, "briefing should be just empty since the visitor was just created")
 	})
 
-	t.Run("Visitor Face matching currently synced profile face should return the NonVisitorFace = true", func(t *testing.T) {
+	t.Run("Visitor Face matching currently synced profile face should return the NonVisitorFace = true and face_detected = true", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
@@ -97,6 +97,7 @@ func TestProcessVisitorFaces(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.True(t, res.NonVisitorFace)
+		assert.True(t, res.FaceDetected)
 	})
 }
 
