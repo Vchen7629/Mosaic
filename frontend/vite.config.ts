@@ -12,6 +12,18 @@ export default defineConfig(async () => ({
   test: {
     environment: "jsdom",
     globals: true,
+    coverage: {
+      exclude: [
+        "src/App.tsx",
+        "src/main.tsx",
+        "src/types/**",
+        "src/api/lib/**",
+        "src-tauri/**",
+        "tests/**",
+        "eslint.config.js",
+        "vite.config.ts",
+      ],
+    },
   } satisfies UserConfig["test"],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`

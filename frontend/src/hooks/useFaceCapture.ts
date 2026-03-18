@@ -13,7 +13,7 @@ interface UseFaceCaptureProps {
  * @param onFrame
  * @param fps
  */
-export function useFaceCapture({ enabled, onFrame, fps = 2, testMode = false}: UseFaceCaptureProps) {
+export function useFaceCapture({ enabled, onFrame, fps = 2}: UseFaceCaptureProps) {
     const videoRef = useRef<HTMLVideoElement>(document.createElement("video"))
     const canvasRef = useRef<HTMLCanvasElement>(document.createElement("canvas"))
     const streamRef = useRef<MediaStream | null>(null)
@@ -38,12 +38,6 @@ export function useFaceCapture({ enabled, onFrame, fps = 2, testMode = false}: U
                 interval = setInterval(() => {
                     const frame = CaptureFrame(videoRef.current, canvasRef.current)
                     onFrame(frame)
-
-                    // Save to downloads if in test mode
-                    if (testMode) {
-                        saveFrameToFile(frame, frameCountRef.current)
-                        frameCountRef.current++
-                    }
                 }, 1000 / fps)
             })
 
@@ -54,7 +48,7 @@ export function useFaceCapture({ enabled, onFrame, fps = 2, testMode = false}: U
             streamRef.current = null
             frameCountRef.current = 0
         }
-    }, [enabled, fps, testMode, onFrame])
+    }, [enabled, fps, onFrame])
 }
 
 /**
@@ -79,19 +73,4 @@ export function CaptureFrame(
 
     // base64 JPEG without data URL prefix
     return canvas.toDataURL("image/jpeg", quality).split(",")[1]
-}
-
-/**
- * helper function to save frame as JPEG file to downloads
- * @param base64Data
- * @param frameNumber
- */
-function saveFrameToFile(base64Data: string, frameNumber: number): void {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-    const link = document.createElement('a')
-    link.href = `data:image/jpeg;base64,${base64Data}`
-    link.download = `face_capture_${timestamp}_frame${frameNumber}.jpg`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
 }
