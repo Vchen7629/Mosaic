@@ -69,6 +69,22 @@ func TestProcessVisitorFaces(t *testing.T) {
 		assert.NotEmpty(t, res.Faces)
 		assert.True(t, res.Faces[0].IsKnown)
 	})
+
+	t.Run("Visitor Face matching currently synced profile face should return the NonVisitorFace = true", func(t *testing.T) {
+		test.CleanupTables(t, pool)
+		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
+		assert.NoError(t, err)
+
+		profileID := test.AddNewProfile(t, recPool, imgBytes, testDB)
+
+		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
+			FaceBytes: imgBytes,
+			ProfileId: profileID,
+		})
+
+		assert.NoError(t, err)
+		assert.True(t, res.NonVisitorFace)
+	})
 }
 
 func TestRegisterVisitorFace(t *testing.T) {
