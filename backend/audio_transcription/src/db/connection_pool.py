@@ -1,21 +1,10 @@
 from psycopg_pool import ConnectionPool
+from ..core.settings import settings
 
-def create_connection_pool(
-    db_host: str,
-    db_port: int,
-    db_name: str,
-    db_user: str,
-    db_password: str,
-    min_size: int = 1, 
-    max_size: int = 10
-) -> ConnectionPool:
+def create_connection_pool() -> ConnectionPool:
     """
     Create a PG connection pool using env variables and 
     verifies its available
-
-    Args:
-        min_size: Minimum connections in pool
-        max_size: Maximum connections in pool
 
     Returns:
         ConnectionPool instance
@@ -25,14 +14,25 @@ def create_connection_pool(
     """
     
     conninfo = (
-        f"host={db_host} "
-        f"port={db_port} "
-        f"dbname={db_name} "
-        f"user={db_user} "
-        f"password={db_password} "
+        f"host={settings.DB_HOST} "
+        f"port={settings.DB_PORT} "
+        f"dbname={settings.DB_NAME} "
+        f"user={settings.DB_USER} "
+        f"password={settings.DB_PASS} "
     )
     
-    db_pool = ConnectionPool(conninfo=conninfo, min_size=min_size, max_size=max_size, open=True)
+    db_pool = ConnectionPool(
+        conninfo=conninfo,
+        min_size=settings.POOL_MIN_SIZE,
+        max_size=settings.POOL_MAX_SIZE,
+        open=True,
+        kwargs={
+            "keepalives": settings.KEEP_ALIVES_COUNT, 
+            "keepalives_idle": settings.KEEP_ALIVES_IDLE_S,
+            "keepalives_interval": settings.KEEP_ALIVES_RETRY_INTERVAL_S,
+            "keepalives_count": settings.KEEP_ALIVES_RETRY_COUNT
+        },
+    )
 
     try:
         with db_pool.connection() as conn:
