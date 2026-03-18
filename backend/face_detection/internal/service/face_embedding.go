@@ -31,7 +31,7 @@ type ProfileFaces struct {
 }
 
 type VisitorFaces struct {
-	ID     	    int32
-	Name		string	
-	Embedding 	face.Descriptor
+	ID        int32
+	Name      string
+	Embedding face.Descriptor
 }

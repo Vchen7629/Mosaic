@@ -8,6 +8,7 @@ import (
 	"github.com/Kagami/go-face"
 	"github.com/stretchr/testify/assert"
 	"mosaic-face-detection.com/internal/service"
+	"mosaic-face-detection.com/internal/test"
 )
 
 func TestCompareVisitorFaces(t *testing.T) {
@@ -19,11 +20,11 @@ func TestCompareVisitorFaces(t *testing.T) {
 	defer recPool.Release(rec)
 
 	// Generate the embeddings for all photos upfront so i can pass them into my tests
-	bonaEmb := getEmbedding(t, rec, "bona.jpg")
-	bona2Emb := getEmbedding(t, rec, "bona2.jpg")
-	bona3Emb := getEmbedding(t, rec, "bona3.jpg")
-	man1Emb := getEmbedding(t, rec, "man1.jpg")
-	eunseo1 := getEmbedding(t, rec, "eunseo1.jpg")
+	bonaEmb := test.GetEmbedding(t, rec, "bona.jpg")
+	bona2Emb := test.GetEmbedding(t, rec, "bona2.jpg")
+	bona3Emb := test.GetEmbedding(t, rec, "bona3.jpg")
+	man1Emb := test.GetEmbedding(t, rec, "man1.jpg")
+	eunseo1 := test.GetEmbedding(t, rec, "eunseo1.jpg")
 
 	t.Run("matches same person across diff photos", func(t *testing.T) {
 		knownVisitors := []service.VisitorFaces{
@@ -90,7 +91,7 @@ func TestCompareVisitorFaces(t *testing.T) {
 	})
 
 	t.Run("map keys are face indicies", func(t *testing.T) {
-		knownVisitors := []service.VisitorFaces{{ID: 1, Name:"Bona", Embedding: bonaEmb}}
+		knownVisitors := []service.VisitorFaces{{ID: 1, Name: "Bona", Embedding: bonaEmb}}
 		embeddings := []face.Descriptor{bonaEmb, man1Emb, eunseo1}
 
 		res := service.CompareVisitorFaces(rec, embeddings, knownVisitors)
@@ -111,11 +112,11 @@ func TestCompareProfileFaces(t *testing.T) {
 	rec := recPool.Acquire()
 	defer recPool.Release(rec)
 
-	bonaEmb := getEmbedding(t, rec, "bona.jpg")
-	bona2Emb := getEmbedding(t, rec, "bona2.jpg")
-	bona3Emb := getEmbedding(t, rec, "bona3.jpg")
-	man1Emb := getEmbedding(t, rec, "man1.jpg")
-	eunseo1 := getEmbedding(t, rec, "eunseo1.jpg")
+	bonaEmb := test.GetEmbedding(t, rec, "bona.jpg")
+	bona2Emb := test.GetEmbedding(t, rec, "bona2.jpg")
+	bona3Emb := test.GetEmbedding(t, rec, "bona3.jpg")
+	man1Emb := test.GetEmbedding(t, rec, "man1.jpg")
+	eunseo1 := test.GetEmbedding(t, rec, "eunseo1.jpg")
 
 	t.Run("matches same person across diff photos", func(t *testing.T) {
 		profiles := []service.ProfileFaces{

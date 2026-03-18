@@ -5,7 +5,7 @@ import (
 )
 
 type VisitorMatch struct {
-	ID int32
+	ID   int32
 	Name string
 }
 
@@ -44,7 +44,7 @@ func CompareVisitorFaces(
 	}
 
 	// returns dict with key: index of detected face in frame (0, 1, 2,..)
-	// and value: VisitorMatch with visitor_id and name from db if matched, 
+	// and value: VisitorMatch with visitor_id and name from db if matched,
 	// or ID = -1 if unknown
 	// example: face 0 and 2 are known: {0: 5, 1: -1, 2: 3}
 	return results

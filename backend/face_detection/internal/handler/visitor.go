@@ -6,10 +6,8 @@ import (
 
 	"github.com/Kagami/go-face"
 	fd "mosaic-face-detection.com/gen"
-	"mosaic-face-detection.com/internal/db"
 	"mosaic-face-detection.com/internal/service"
 )
-
 
 // Handler to process faces for visitors
 func (s *FaceDetectionServer) ProcessVisitorFaces(
@@ -24,12 +22,23 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 		return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, nil
 	}
 
+	currentProfileEmbs, err := retryDB(ctx, func() ([]service.ProfileFaces, error) {
+		return s.pool.FetchProfileFaceEmbForID(req.ProfileId)
+	})
+	if err != nil {
+		log.Printf("GRPC user profile error fetching from db: %v", err)
+		return &fd.ProcessVisitorFacesResponse{Success: false}, err
+	}
+
+	_, matched := service.CompareProfileFaces(rec, []face.Descriptor{embeddings[0]}, currentProfileEmbs)
+	if matched {
+		return &fd.ProcessVisitorFacesResponse{NonVisitorFace: true}, nil
+	}
+
 	var knownVisitors []service.VisitorFaces
 	if req.ProfileId > 0 {
-		err = db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
-			var err error
-			knownVisitors, err = s.pool.FetchAllVisitorData(req.ProfileId)
-			return err
+		knownVisitors, err = retryDB(ctx, func() ([]service.VisitorFaces, error) {
+			return s.pool.FetchAllVisitorData(req.ProfileId)
 		})
 		if err != nil {
 			return &fd.ProcessVisitorFacesResponse{Success: false}, err
@@ -46,11 +55,8 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 				FaceEmbedding: embeddings[i][:], // [128]float32 to []float32
 			}
 		} else {
-			var briefing string
-			err := db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
-				var err error
-				briefing, err = s.pool.FetchVisitorBriefing(req.ProfileId, match.ID)
-				return err
+			briefing, err := retryDB(ctx, func() (string, error) {
+				return s.pool.FetchVisitorBriefing(req.ProfileId, match.ID)
 			})
 			if err != nil {
 				log.Printf("Failed to fetch briefing for visitor %d: %v", match.ID, err)
@@ -58,10 +64,10 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 			}
 
 			faceResults[i] = &fd.FaceResult{
-				IsKnown:  	true,
-				Briefing: 	briefing,
-				VisitorId: 	match.ID,
-				Name: 		match.Name,
+				IsKnown:   true,
+				Briefing:  briefing,
+				VisitorId: match.ID,
+				Name:      match.Name,
 			}
 		}
 	}
@@ -85,16 +91,14 @@ func (s *FaceDetectionServer) RegisterVisitorFace(
 	}
 
 	log.Printf(
-		"Recieved one face embedding of size %d with name %s patientID %d", 
+		"Recieved one face embedding of size %d with name %s patientID %d",
 		len(req.FaceEmbedding), req.VisitorName, req.ProfileId)
 	// converting []float32 to face.Descriptor [128]float32
 	var embedding face.Descriptor
 	copy(embedding[:], req.FaceEmbedding)
 
-	var visitorID *int32
-	err = db.RetryWithBackoff(ctx, db.DefaultRetryConfig(), func() error {
-		visitorID, err = s.pool.AddNewFaceForVisitor(req.ProfileId, req.VisitorName, embedding)
-		return err
+	visitorID, err := retryDB(ctx, func() (*int32, error) {
+		return s.pool.AddNewFaceForVisitor(req.ProfileId, req.VisitorName, embedding)
 	})
 	if err != nil {
 		return &fd.RegisterVisitorFaceResponse{Success: false}, nil

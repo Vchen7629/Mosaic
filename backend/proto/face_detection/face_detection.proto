@@ -40,6 +40,7 @@ message ProcessVisitorFacesResponse {
     bool face_detected = 1; // used so if no face is detected it doesnt send a req
     repeated FaceResult faces = 2;
     bool success = 3; // boolean to see if the process succeeded for handling retry
+    bool non_visitor_face = 4; // boolean to return true if the face sent is the current profile's face
 }
 
 // Response containing data to register a new unknown visitor face

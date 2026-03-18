@@ -13,6 +13,36 @@ import (
 )
 
 // fetch all user profile embeddings saved in the database
+func (db *DBPool) FetchProfileFaceEmbForID(profileID int32) ([]service.ProfileFaces, error) {
+	if profileID <= 0 {
+		return nil, errors.New("profileID must be positive")
+	}
+	ctx := context.Background()
+
+	rows, err := db.pool.Query(ctx, `
+		SELECT profile_id, face_embedding FROM profile_face_embeddings
+		WHERE profile_id = $1
+	`, profileID)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching profile face embeddings from db: %v", err)
+	}
+
+	var result []service.ProfileFaces
+	for rows.Next() {
+		var f service.ProfileFaces
+		var embVector pgvector.Vector
+
+		if err := rows.Scan(&f.ID, &embVector); err != nil {
+			return nil, fmt.Errorf("error fetching profile emb: %v", err)
+		}
+
+		copy(f.Embedding[:], embVector.Slice())
+		result = append(result, f)
+	}
+	return result, nil
+}
+
+// fetch all user profile embeddings saved in the database
 func (db *DBPool) FetchAllProfileFaceEmb() ([]service.ProfileFaces, error) {
 	ctx := context.Background()
 
@@ -39,7 +69,7 @@ func (db *DBPool) FetchAllProfileFaceEmb() ([]service.ProfileFaces, error) {
 }
 
 // fetch all the visitor data like id, name, and  embeddings for a profile using profileID
-func (db *DBPool) FetchAllVisitorData(profileID int32,) ([]service.VisitorFaces, error) {
+func (db *DBPool) FetchAllVisitorData(profileID int32) ([]service.VisitorFaces, error) {
 	if profileID <= 0 {
 		return nil, errors.New("profileID must be positive")
 	}
