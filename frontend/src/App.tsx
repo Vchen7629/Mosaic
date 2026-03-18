@@ -11,7 +11,7 @@ import { ProfileStatus } from "./components/profileStatus";
 import { BriefingComponent } from "./types/briefing";
 import { SyncState } from "./types/profle";
 import { RecordButton } from "./components/recordButton";
-import { X } from "lucide-react";
+import { LoaderCircle, X } from "lucide-react";
 import NewFaceInput from "./components/newFaceInput";
 import "./App.css";
 
@@ -24,16 +24,10 @@ function App() {
   /*const decoder = false
   const ws = useWebSocketConnection(decoder || isSyncProfile)*/
   const ws = useWebSocketConnection(isRecording || isSyncProfile)
-  const [briefingList1, setBriefingList] = useState<BriefingComponent[]>([
-    {
-      "visitorName": "Sam", 
-      "briefingText": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
-    },
-    {"visitorName": "Max", "briefingText": "lorem ipsum"}
-  ])
-  const [briefingList2, setBriefingList2] = useState<BriefingComponent[]>([])
+  const [briefingList1, setBriefingList] = useState<BriefingComponent[]>([])
   const [newFaceDetected, setNewFaceDetected] = useState<boolean>(false)
-  const [newFaceName, setNewFaceName] = useState<string>("")
+  const [pendingFaceEmbedding, setPendingFaceEmbedding] = useState<string>("")
+  const [visitorIds, setVisitorIds] = useState<string[]>([])
 
   SetWindowPosition()
   AutoResizeWindow()
@@ -43,7 +37,8 @@ function App() {
     ws,
     isFaceCapture,
     profileId,
-    (_profileId, _faceEmbedding) => { setNewFaceDetected(true) },
+    (_profileId, faceEmbedding) => { setNewFaceDetected(true); setPendingFaceEmbedding(faceEmbedding) },
+    (visitorId) => { setVisitorIds(prev => [...prev, visitorId]) },
     setBriefingList
   )
 
@@ -68,9 +63,13 @@ function App() {
           syncState={syncState}
           setSyncState={setSyncState}
           isRecording={isRecording}
+          profileId={profileId ?? ""}
+          visitorIds={visitorIds}
           setIsRecording={setIsRecording}
           setIsSyncCapture={setIsSyncProfile}
           setIsFaceCapture={setIsFaceCapture}
+          setVisitorIds={setVisitorIds}
+          setBriefingList={setBriefingList}
         />
       </section>
       <hr className={`border-zinc-700 ${isRecording ? 'opacity-100' : 'opacity-0'}`}/>
@@ -79,7 +78,15 @@ function App() {
           <div className="w-full h-fit min-h-20 max-h-120">
             <div className={`expand-wrap ${newFaceDetected ? 'expand-open' : 'expand-closed'}`}>
               <div className="expand-inner">
-                <NewFaceInput newFaceName={newFaceName} setNewFaceName={setNewFaceName} confirmNewFace={confirm}/>
+                <NewFaceInput 
+                  ws={ws} 
+                  faceEmbedding={pendingFaceEmbedding} 
+                  profileId={profileId ?? ""}
+                  onVisitorRegistered={(visitorId => {
+                    setVisitorIds(prev => [...prev, visitorId])
+                    setNewFaceDetected(false)
+                  })}
+                />
               </div>
             </div>
             {briefingList1.length > 0 ? (
@@ -89,8 +96,9 @@ function App() {
                 </div>
               ))
             ) : (
-              <div className="flex rounded-lg px-3 py-2.5 overflow-hidden text-center items-center justify-center">
-                <span className="mt-4 text-sm text-zinc-400">No Briefings</span>
+              <div className="flex rounded-lg h-20 px-3 py-2.5 space-x-2 overflow-hidden text-center items-center justify-center">
+                <LoaderCircle className="animate-spin text-emerald-500"/>
+                <span className="text-sm text-zinc-400">Loading Briefings...</span>
               </div>
             )}
           </div>
