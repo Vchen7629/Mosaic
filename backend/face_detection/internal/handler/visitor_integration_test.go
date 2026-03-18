@@ -20,6 +20,10 @@ import (
 func TestProcessVisitorFaces(t *testing.T) {
 	recPool, err := service.NewRecognizerPool(testModelsDir, 5)
 	assert.NoError(t, err)
+	defer recPool.Close()
+
+	rec := recPool.Acquire()
+	defer recPool.Release(rec)
 
 	pool := testDB.Pool
 	dbPool := db.NewDBPool(pool)
@@ -34,29 +38,14 @@ func TestProcessVisitorFaces(t *testing.T) {
 		assert.False(t, res.FaceDetected)
 	})
 
-	t.Run("Face detected but no faces matching in db should return isKnown false and face embedding", func(t *testing.T) {
+	t.Run("Trying to process a face that matches no visitors in the db should return isKnown false and face embedding", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
 
-		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
-			FaceBytes: imgBytes,
-		})
-
-		assert.NoError(t, err)
-		assert.True(t, res.FaceDetected)
-		assert.True(t, res.Success)
-		assert.NotEmpty(t, res.Faces)
-		assert.False(t, res.Faces[0].IsKnown)
-		assert.Len(t, res.Faces[0].FaceEmbedding, 128, "should be a 128 dim emb")
-	})
-
-	t.Run("Face matching a visitor in db should return isKnown true with briefing", func(t *testing.T) {
-		test.CleanupTables(t, pool)
-		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
-		assert.NoError(t, err)
-
-		profileID, _ := test.AddNewVisitor(t, recPool, imgBytes, testDB)
+		profileFaceEmb := test.GetEmbedding(t, rec, "man1.jpg")
+		profileID := test.SeedProfile(t, pool, profileFaceEmb[:])
 
 		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
 			FaceBytes: imgBytes,
@@ -67,7 +56,31 @@ func TestProcessVisitorFaces(t *testing.T) {
 		assert.True(t, res.FaceDetected)
 		assert.True(t, res.Success)
 		assert.NotEmpty(t, res.Faces)
-		assert.True(t, res.Faces[0].IsKnown)
+		assert.False(t, res.Faces[0].IsKnown)
+		assert.Len(t, res.Faces[0].FaceEmbedding, 128, "should be a 128 dim emb")
+	})
+
+	t.Run("Face matching a visitor in db and not the current profile should return isKnown true with briefing", func(t *testing.T) {
+		test.CleanupTables(t, pool)
+		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
+		assert.NoError(t, err)
+
+		matchingFaceEmb := test.GetEmbedding(t, rec, "bona2.jpg")
+		nonMatchingFaceEmb := test.GetEmbedding(t, rec, "man1.jpg")
+		reqProfileID := test.SeedProfile(t, pool, nonMatchingFaceEmb[:])
+		visitorID := test.SeedVisitor(t, pool, reqProfileID, "visitor1", matchingFaceEmb[:])
+
+		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
+			FaceBytes: imgBytes,
+			ProfileId: reqProfileID,
+		})
+
+		assert.NoError(t, err)
+		assert.True(t, res.FaceDetected)
+		assert.True(t, res.Success)
+		assert.Equal(t, visitorID, res.Faces[0].VisitorId, "the visitor id for the matching face in db and the req should match")
+		assert.Equal(t, "visitor1", res.Faces[0].Name, "the name should match")
+		assert.Equal(t, "", res.Faces[0].Briefing, "briefing should be just empty since the visitor was just created")
 	})
 
 	t.Run("Visitor Face matching currently synced profile face should return the NonVisitorFace = true", func(t *testing.T) {
