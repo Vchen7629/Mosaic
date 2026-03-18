@@ -61,15 +61,14 @@ function App() {
         <RecordButton
           ws={ws}
           syncState={syncState}
-          setSyncState={setSyncState}
           isRecording={isRecording}
           profileId={profileId ?? ""}
           visitorIds={visitorIds}
-          setIsRecording={setIsRecording}
-          setIsSyncCapture={setIsSyncProfile}
-          setIsFaceCapture={setIsFaceCapture}
-          setVisitorIds={setVisitorIds}
-          setBriefingList={setBriefingList}
+          onSyncStart={() => { setSyncState("scanning"); setIsSyncProfile(true); }}
+          onSyncCancel={() => { setSyncState("idle"); setIsSyncProfile(false); }}
+          onSyncComplete={() => { setSyncState("active"); setIsSyncProfile(false); }}
+          onRecordingStart={() => { setIsRecording(true); setIsFaceCapture(true); }}
+          onRecordingStop={() => { setIsRecording(false); setIsFaceCapture(false); setVisitorIds([]); setBriefingList([]); }}
         />
       </section>
       <hr className={`border-zinc-700 ${isRecording ? 'opacity-100' : 'opacity-0'}`}/>
