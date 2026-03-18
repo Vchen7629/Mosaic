@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { SetWindowPosition } from "./utils/setWindowPosition";
-import { useBackendLifecycle } from "./utils/handleBackendLifecycle";
-import { AutoResizeWindow } from "./utils/autoResizeWindow";
+import { useBackendLifecycle } from "./hooks/useBackendLifecycle";
+import { useAutoResizeWindow } from "./hooks/useAutoResizeWindow";
 import ConvoBriefingDisplay from "./components/convoBriefing";
 import { useBackendAudioProcess } from "./api/hooks/audio";
 import { useWebSocketConnection } from "./api/hooks/useWebSocket";
@@ -14,6 +13,7 @@ import { LoaderCircle, X } from "lucide-react";
 import NewFaceInput from "./components/newFaceInput";
 import "./App.css";
 import { useVisitorFace } from "./api/hooks/face";
+import { useSetWindowPosition } from "./hooks/useSetWindowPosition";
 
 function App() {
   const [isRecording, setIsRecording] = useState(false);
@@ -29,8 +29,8 @@ function App() {
   const [pendingFaceEmbedding, setPendingFaceEmbedding] = useState<string>("")
   const [visitorIds, setVisitorIds] = useState<string[]>([])
 
-  SetWindowPosition()
-  AutoResizeWindow()
+  useSetWindowPosition()
+  useAutoResizeWindow()
   useBackendLifecycle()
   useBackendAudioProcess(ws, isRecording, profileId)
   useVisitorFace(

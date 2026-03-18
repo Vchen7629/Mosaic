@@ -36,7 +36,7 @@ export function useFaceCapture({ enabled, onFrame, fps = 2, testMode = false}: U
                 videoRef.current.play()
 
                 interval = setInterval(() => {
-                    const frame = captureFrame(videoRef.current, canvasRef.current)
+                    const frame = CaptureFrame(videoRef.current, canvasRef.current)
                     onFrame(frame)
 
                     // Save to downloads if in test mode
@@ -64,7 +64,7 @@ export function useFaceCapture({ enabled, onFrame, fps = 2, testMode = false}: U
  * @param quality
  * @returns base64 JPEG without data URL prefix
  */
-function captureFrame(
+export function CaptureFrame(
     video: HTMLVideoElement,
     canvas: HTMLCanvasElement,
     quality: number = 0.8
