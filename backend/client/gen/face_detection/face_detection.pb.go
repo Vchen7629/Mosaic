@@ -154,12 +154,13 @@ func (x *FaceResult) GetVisitorId() int32 {
 // The response containing briefing if face matches an existing face
 // or is_known false if face doesnt match
 type ProcessVisitorFacesResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FaceDetected  bool                   `protobuf:"varint,1,opt,name=face_detected,json=faceDetected,proto3" json:"face_detected,omitempty"` // used so if no face is detected it doesnt send a req
-	Faces         []*FaceResult          `protobuf:"bytes,2,rep,name=faces,proto3" json:"faces,omitempty"`
-	Success       bool                   `protobuf:"varint,3,opt,name=success,proto3" json:"success,omitempty"` // boolean to see if the process succeeded for handling retry
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	FaceDetected   bool                   `protobuf:"varint,1,opt,name=face_detected,json=faceDetected,proto3" json:"face_detected,omitempty"` // used so if no face is detected it doesnt send a req
+	Faces          []*FaceResult          `protobuf:"bytes,2,rep,name=faces,proto3" json:"faces,omitempty"`
+	Success        bool                   `protobuf:"varint,3,opt,name=success,proto3" json:"success,omitempty"`                                       // boolean to see if the process succeeded for handling retry
+	NonVisitorFace bool                   `protobuf:"varint,4,opt,name=non_visitor_face,json=nonVisitorFace,proto3" json:"non_visitor_face,omitempty"` // boolean to return true if the face sent is the current profile's face
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ProcessVisitorFacesResponse) Reset() {
@@ -209,6 +210,13 @@ func (x *ProcessVisitorFacesResponse) GetFaces() []*FaceResult {
 func (x *ProcessVisitorFacesResponse) GetSuccess() bool {
 	if x != nil {
 		return x.Success
+	}
+	return false
+}
+
+func (x *ProcessVisitorFacesResponse) GetNonVisitorFace() bool {
+	if x != nil {
+		return x.NonVisitorFace
 	}
 	return false
 }
@@ -609,11 +617,12 @@ const file_face_detection_proto_rawDesc = "" +
 	"\bbriefing\x18\x03 \x01(\tR\bbriefing\x12%\n" +
 	"\x0eface_embedding\x18\x04 \x03(\x02R\rfaceEmbedding\x12\x1d\n" +
 	"\n" +
-	"visitor_id\x18\x05 \x01(\x05R\tvisitorId\"\x94\x01\n" +
+	"visitor_id\x18\x05 \x01(\x05R\tvisitorId\"\xbe\x01\n" +
 	"\x1bProcessVisitorFacesResponse\x12#\n" +
 	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x126\n" +
 	"\x05faces\x18\x02 \x03(\v2 .proto.face_detection.FaceResultR\x05faces\x12\x18\n" +
-	"\asuccess\x18\x03 \x01(\bR\asuccess\"\x85\x01\n" +
+	"\asuccess\x18\x03 \x01(\bR\asuccess\x12(\n" +
+	"\x10non_visitor_face\x18\x04 \x01(\bR\x0enonVisitorFace\"\x85\x01\n" +
 	"\x1aRegisterVisitorFaceRequest\x12%\n" +
 	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\x12\x1d\n" +
 	"\n" +
