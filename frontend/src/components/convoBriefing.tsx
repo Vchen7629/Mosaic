@@ -31,7 +31,9 @@ const ConvoBriefingDisplay = ({ VisitorName, Briefing }: ConvoBriefingProps) => 
 
         {/* Briefing text */}
         <p className="relative z-10 text-[13px] text-zinc-400 leading-relaxed">
-          {Briefing}
+          {Briefing ? Briefing : <span className="px-2">
+            No briefing generated yet, stop the recording to generate a briefing based on the current conversation
+          </span>}
         </p>
       </div>
     </div>
