@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { NewVisitorFaceRegister } from "../api/utils/face"
+import { useNewVisitorFaceRegister } from "../api/hooks/face"
 
 
 type NewFaceInputProps = {
@@ -21,7 +21,7 @@ const NewFaceInput = ({ ws, faceEmbedding, profileId, onVisitorRegistered }: New
     const [newFaceName, setNewFaceName] = useState<string>("")
     const [shouldRegister, setShouldRegister] = useState<boolean>(false)
 
-    NewVisitorFaceRegister(ws, shouldRegister, faceEmbedding, profileId, newFaceName, (visitorId) => {
+    useNewVisitorFaceRegister(ws, shouldRegister, faceEmbedding, profileId, newFaceName, (visitorId) => {
         onVisitorRegistered(visitorId)
         setShouldRegister(false)
         setNewFaceName("")
@@ -29,7 +29,7 @@ const NewFaceInput = ({ ws, faceEmbedding, profileId, onVisitorRegistered }: New
 
     function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
         if (e.key === "Enter" && newFaceName.trim()) {
-            setShouldRegister
+            setShouldRegister(true)
         }
     }
 
