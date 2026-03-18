@@ -42,7 +42,6 @@ func (db *DBPool) FetchProfileFaceEmbForID(profileID int32) ([]service.ProfileFa
 	return result, nil
 }
 
-
 // fetch all user profile embeddings saved in the database
 func (db *DBPool) FetchAllProfileFaceEmb() ([]service.ProfileFaces, error) {
 	ctx := context.Background()
@@ -70,7 +69,7 @@ func (db *DBPool) FetchAllProfileFaceEmb() ([]service.ProfileFaces, error) {
 }
 
 // fetch all the visitor data like id, name, and  embeddings for a profile using profileID
-func (db *DBPool) FetchAllVisitorData(profileID int32,) ([]service.VisitorFaces, error) {
+func (db *DBPool) FetchAllVisitorData(profileID int32) ([]service.VisitorFaces, error) {
 	if profileID <= 0 {
 		return nil, errors.New("profileID must be positive")
 	}

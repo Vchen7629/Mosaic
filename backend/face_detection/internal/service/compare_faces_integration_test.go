@@ -91,7 +91,7 @@ func TestCompareVisitorFaces(t *testing.T) {
 	})
 
 	t.Run("map keys are face indicies", func(t *testing.T) {
-		knownVisitors := []service.VisitorFaces{{ID: 1, Name:"Bona", Embedding: bonaEmb}}
+		knownVisitors := []service.VisitorFaces{{ID: 1, Name: "Bona", Embedding: bonaEmb}}
 		embeddings := []face.Descriptor{bonaEmb, man1Emb, eunseo1}
 
 		res := service.CompareVisitorFaces(rec, embeddings, knownVisitors)
