@@ -26,32 +26,35 @@ func TestCompareVisitorFaces(t *testing.T) {
 	eunseo1 := getEmbedding(t, rec, "eunseo1.jpg")
 
 	t.Run("matches same person across diff photos", func(t *testing.T) {
-		knownVisitors := []service.Faces{
-			{ID: 1, Embedding: bonaEmb},
+		knownVisitors := []service.VisitorFaces{
+			{ID: 1, Name: "Bona", Embedding: bonaEmb},
 		}
 
 		res2 := service.CompareVisitorFaces(rec, []face.Descriptor{bona2Emb}, knownVisitors)
 		res3 := service.CompareVisitorFaces(rec, []face.Descriptor{bona3Emb}, knownVisitors)
 
-		assert.Equal(t, int32(1), res2[0], "bona2 should match bona's visitorID")
-		assert.Equal(t, int32(1), res3[0], "bona3 should match bona's visitorID")
+		assert.Equal(t, int32(1), res2[0].ID, "bona2 should match bona's visitorID")
+		assert.Equal(t, "Bona", res2[0].Name, "name should match")
+		assert.Equal(t, int32(1), res3[0].ID, "bona3 should match bona's visitorID")
+		assert.Equal(t, "Bona", res3[0].Name, "name should match")
 	})
 
 	t.Run("shouldnt match different people", func(t *testing.T) {
-		knownVisitors := []service.Faces{
-			{ID: 1, Embedding: bonaEmb},
+		knownVisitors := []service.VisitorFaces{
+			{ID: 1, Name: "Bona", Embedding: bonaEmb},
 		}
 
 		man1Res := service.CompareVisitorFaces(rec, []face.Descriptor{man1Emb}, knownVisitors)
 
-		assert.Equal(t, int32(-1), man1Res[0], "man1 shouldn't match bona")
+		assert.Equal(t, int32(-1), man1Res[0].ID, "man1 shouldn't match bona")
+		assert.Equal(t, "", man1Res[0].Name, "unknown faces should have empty face")
 	})
 
 	t.Run("identifies correct visitor among multiple known visitors", func(t *testing.T) {
-		knownVisitor := []service.Faces{
-			{ID: 1, Embedding: bonaEmb},
-			{ID: 2, Embedding: man1Emb},
-			{ID: 3, Embedding: eunseo1},
+		knownVisitor := []service.VisitorFaces{
+			{ID: 1, Name: "Bona", Embedding: bonaEmb},
+			{ID: 2, Name: "Man1", Embedding: man1Emb},
+			{ID: 3, Name: "Eunseo", Embedding: eunseo1},
 		}
 
 		// check if each person gets their own id back
@@ -59,22 +62,27 @@ func TestCompareVisitorFaces(t *testing.T) {
 		man1Res := service.CompareVisitorFaces(rec, []face.Descriptor{man1Emb}, knownVisitor)
 		eunseoRes := service.CompareVisitorFaces(rec, []face.Descriptor{eunseo1}, knownVisitor)
 
-		assert.Equal(t, int32(1), bonaRes[0])
-		assert.Equal(t, int32(2), man1Res[0])
-		assert.Equal(t, int32(3), eunseoRes[0])
+		assert.Equal(t, int32(1), bonaRes[0].ID)
+		assert.Equal(t, "Bona", bonaRes[0].Name, "name should match")
+		assert.Equal(t, int32(2), man1Res[0].ID)
+		assert.Equal(t, "Man1", man1Res[0].Name, "name should match")
+		assert.Equal(t, int32(3), eunseoRes[0].ID)
+		assert.Equal(t, "Eunseo", eunseoRes[0].Name, "name should match")
 	})
 
 	t.Run("returns -1 for all faces when no known visitors", func(t *testing.T) {
 		res := service.CompareVisitorFaces(
-			rec, []face.Descriptor{bonaEmb, man1Emb}, []service.Faces{},
+			rec, []face.Descriptor{bonaEmb, man1Emb}, []service.VisitorFaces{},
 		)
 
-		assert.Equal(t, int32(-1), res[0])
-		assert.Equal(t, int32(-1), res[1])
+		assert.Equal(t, int32(-1), res[0].ID)
+		assert.Equal(t, "", res[0].Name)
+		assert.Equal(t, int32(-1), res[1].ID)
+		assert.Equal(t, "", res[1].Name)
 	})
 
 	t.Run("returns empty map when no embeddings passed", func(t *testing.T) {
-		knownVisitors := []service.Faces{{ID: 1, Embedding: bonaEmb}}
+		knownVisitors := []service.VisitorFaces{{ID: 1, Name: "Bona", Embedding: bonaEmb}}
 
 		res := service.CompareVisitorFaces(rec, []face.Descriptor{}, knownVisitors)
 
@@ -82,7 +90,7 @@ func TestCompareVisitorFaces(t *testing.T) {
 	})
 
 	t.Run("map keys are face indicies", func(t *testing.T) {
-		knownVisitors := []service.Faces{{ID: 1, Embedding: bonaEmb}}
+		knownVisitors := []service.VisitorFaces{{ID: 1, Name:"Bona", Embedding: bonaEmb}}
 		embeddings := []face.Descriptor{bonaEmb, man1Emb, eunseo1}
 
 		res := service.CompareVisitorFaces(rec, embeddings, knownVisitors)
@@ -110,7 +118,7 @@ func TestCompareProfileFaces(t *testing.T) {
 	eunseo1 := getEmbedding(t, rec, "eunseo1.jpg")
 
 	t.Run("matches same person across diff photos", func(t *testing.T) {
-		profiles := []service.Faces{
+		profiles := []service.ProfileFaces{
 			{ID: 1, Embedding: bonaEmb},
 		}
 
@@ -124,7 +132,7 @@ func TestCompareProfileFaces(t *testing.T) {
 	})
 
 	t.Run("returns false when face doesnt match any profile", func(t *testing.T) {
-		profiles := []service.Faces{
+		profiles := []service.ProfileFaces{
 			{ID: 1, Embedding: bonaEmb},
 		}
 
@@ -135,14 +143,14 @@ func TestCompareProfileFaces(t *testing.T) {
 	})
 
 	t.Run("returns false when profile embeddings list is empty", func(t *testing.T) {
-		id, matched := service.CompareProfileFaces(rec, []face.Descriptor{bonaEmb}, []service.Faces{})
+		id, matched := service.CompareProfileFaces(rec, []face.Descriptor{bonaEmb}, []service.ProfileFaces{})
 
 		assert.False(t, matched)
 		assert.Equal(t, int32(0), id)
 	})
 
 	t.Run("returns false when embedding list is empty", func(t *testing.T) {
-		profiles := []service.Faces{
+		profiles := []service.ProfileFaces{
 			{ID: 1, Embedding: bonaEmb},
 		}
 
@@ -153,7 +161,7 @@ func TestCompareProfileFaces(t *testing.T) {
 	})
 
 	t.Run("only uses first embedding when multiple are passed", func(t *testing.T) {
-		profiles := []service.Faces{
+		profiles := []service.ProfileFaces{
 			{ID: 1, Embedding: bonaEmb},
 		}
 
@@ -165,7 +173,7 @@ func TestCompareProfileFaces(t *testing.T) {
 	})
 
 	t.Run("identifies correct profile among multiple profiles", func(t *testing.T) {
-		profiles := []service.Faces{
+		profiles := []service.ProfileFaces{
 			{ID: 1, Embedding: bonaEmb},
 			{ID: 2, Embedding: man1Emb},
 			{ID: 3, Embedding: eunseo1},
@@ -184,7 +192,7 @@ func TestCompareProfileFaces(t *testing.T) {
 	})
 
 	t.Run("does not match wrong profile among multiple profiles", func(t *testing.T) {
-		profiles := []service.Faces{
+		profiles := []service.ProfileFaces{
 			{ID: 1, Embedding: bonaEmb},
 			{ID: 2, Embedding: eunseo1},
 		}
@@ -196,7 +204,7 @@ func TestCompareProfileFaces(t *testing.T) {
 	})
 
 	t.Run("matches same person with only one profile registered", func(t *testing.T) {
-		profiles := []service.Faces{
+		profiles := []service.ProfileFaces{
 			{ID: 42, Embedding: bona3Emb},
 		}
 

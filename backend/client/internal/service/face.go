@@ -18,6 +18,7 @@ type KnownVisitorResponse struct {
 	Type			string `json:"type"`
 	VisitorName 	string `json:"visitor_name"`
 	Briefing		string `json:"briefing"`
+	VisitorID		string `json:"visitor_id"`
 }
 
 // Process images for potential visitor
@@ -69,12 +70,19 @@ func ProcessVisitorImage(
 					Type: "existing_visitor_response",
 					VisitorName: faceData.Name,
 					Briefing: faceData.Briefing,
+					VisitorID: fmt.Sprintf("%d", faceData.VisitorId),
 				})
 			}
 		}
 	}
 
 	return nil
+}
+
+type RegisterVisitorRes struct {
+	Type 			string `json:"type"`
+	VisitorID		int32  `json:"visitor_id"`
+	Success			bool   `json:"success"`
 }
 
 // Register a new visitor face
@@ -112,8 +120,7 @@ func RegisterNewVisitorFace(
 		return nil
 	}
 
-	// Could add a return value so frontend can display success
-	// banner?
+	conn.WriteJSON(RegisterVisitorRes{Type: "register_visitor_resp", VisitorID: resp.VisitorId, Success: resp.Success})
 	return nil
 }
 
