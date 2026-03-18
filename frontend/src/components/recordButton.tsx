@@ -1,6 +1,6 @@
 import { Camera } from "lucide-react";
-import { SyncProfileProcess } from "../api/utils/face";
 import { SyncState } from "../types/profle";
+import { useSyncProfileProcess } from "../api/hooks/face";
 
 type RecordButtonProps = {
   ws: WebSocket | null;
@@ -32,7 +32,7 @@ export const RecordButton = ({
   ws, syncState, isRecording, profileId, visitorIds, 
   onSyncStart, onSyncCancel, onSyncComplete, onRecordingStart, onRecordingStop
 }: RecordButtonProps) => {
-  SyncProfileProcess(ws, syncState === "scanning", (_profileId) => { onSyncComplete() });
+  useSyncProfileProcess(ws, syncState === "scanning", (_profileId) => { onSyncComplete() });
 
   function handleStopRecording() {
     if (ws?.readyState === WebSocket.OPEN) {

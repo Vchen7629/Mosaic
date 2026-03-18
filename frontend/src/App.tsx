@@ -5,7 +5,6 @@ import { useBackendLifecycle } from "./utils/handleBackendLifecycle";
 import { AutoResizeWindow } from "./utils/autoResizeWindow";
 import ConvoBriefingDisplay from "./components/convoBriefing";
 import { useBackendAudioProcess } from "./api/hooks/audio";
-import { VisitorFaceProcess } from "./api/utils/face";
 import { useWebSocketConnection } from "./api/hooks/useWebSocket";
 import { ProfileStatus } from "./components/profileStatus";
 import { BriefingComponent } from "./types/briefing";
@@ -14,6 +13,7 @@ import { RecordButton } from "./components/recordButton";
 import { LoaderCircle, X } from "lucide-react";
 import NewFaceInput from "./components/newFaceInput";
 import "./App.css";
+import { useVisitorFace } from "./api/hooks/face";
 
 function App() {
   const [isRecording, setIsRecording] = useState(false);
@@ -33,13 +33,13 @@ function App() {
   AutoResizeWindow()
   useBackendLifecycle()
   useBackendAudioProcess(ws, isRecording, profileId)
-  VisitorFaceProcess(
+  useVisitorFace(
     ws,
     isFaceCapture,
     profileId,
     (_profileId, faceEmbedding) => { setNewFaceDetected(true); setPendingFaceEmbedding(faceEmbedding) },
     (visitorId) => { setVisitorIds(prev => [...prev, visitorId]) },
-    setBriefingList
+    (briefing) => setBriefingList(prev => [...prev, briefing])
   )
 
   return (

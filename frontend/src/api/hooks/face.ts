@@ -1,13 +1,13 @@
-import { Dispatch, RefObject, SetStateAction, useCallback, useEffect, useRef } from "react";
-import { useFaceCapture } from "../../hooks/useFaceCapture";
-import { BriefingComponent } from "../../types/briefing";
-
+import { useCallback, useEffect, useRef } from "react"
+import { useFaceCapture } from "../../hooks/useFaceCapture"
+import { BriefingComponent } from "../../types/briefing"
+import { useStableRef } from "../../hooks/useStableRef"
 
 /**
  * @description send to images to backend to process faces to detect new visitors
  * @param isCapturingFace boolean to control whether to start the webcam
  */
-export function VisitorFaceProcess(
+export function useVisitorFace(
     ws: WebSocket | null,
     isCapturingFace: boolean,
     profileID: string | null,
@@ -16,19 +16,12 @@ export function VisitorFaceProcess(
         faceEmbedding: string,
     ) => void,
     onExistingVisitorDetected: (visitorID: string) => void,
-    setBriefingList: Dispatch<SetStateAction<BriefingComponent[]>>
+    onBriefingRecieved: (briefing: BriefingComponent) => void
 ) {
-    const onNewFaceDetectedRef = useRef(onNewFaceDetected)
-    onNewFaceDetectedRef.current = onNewFaceDetected
-
-    const onExistingVisitorDetectedRef = useRef(onExistingVisitorDetected)
-    onExistingVisitorDetectedRef.current = onExistingVisitorDetected
-
-    const setBriefingListRef = useRef(setBriefingList)
-    setBriefingListRef.current = setBriefingList
-
-    const isCapturingFaceRef = useRef(isCapturingFace)
-    isCapturingFaceRef.current = isCapturingFace
+    const onNewFaceDetectedRef = useStableRef(onNewFaceDetected)
+    const onExistingVisitorDetectedRef = useStableRef(onExistingVisitorDetected)
+    const onBriefingRecievedRef = useStableRef(onBriefingRecieved)
+    const isCapturingFaceRef = useStableRef(isCapturingFace)
 
     const seenVisitorIdsRef = useRef<Set<string>>(new Set())
     useEffect(() => {
@@ -55,10 +48,7 @@ export function VisitorFaceProcess(
                 seenVisitorIdsRef.current.add(visitorId)
                 console.log("existing visitor response received", data)
                 onExistingVisitorDetectedRef.current(visitorId)
-                setBriefingListRef.current((prev: BriefingComponent[]) => [...prev, {
-                    visitorName: data.visitor_name,
-                    briefingText: data.briefing
-                }])
+                onBriefingRecievedRef.current({ visitorName: data.visitor_name, briefingText: data.briefing })
             }
         }
 
@@ -79,7 +69,11 @@ export function VisitorFaceProcess(
     useFaceCapture({ enabled: isCapturingFace, onFrame, testMode: false })
 }
 
-export function NewVisitorFaceRegister(
+
+/**
+ * 
+ */
+export function useNewVisitorFaceRegister(
     ws: WebSocket | null, 
     shouldRegister: boolean,
     faceEmbedding: string,
@@ -87,8 +81,7 @@ export function NewVisitorFaceRegister(
     visitorName: string,
     onSuccess: (visitorId: string) => void
 ) {
-    const onSuccessRef = useRef(onSuccess)
-    onSuccessRef.current = onSuccess
+    const onSuccessRef = useStableRef(onSuccess)
 
     useEffect(() => {
         if (!shouldRegister || !ws || ws.readyState !== WebSocket.OPEN) return
@@ -115,15 +108,14 @@ export function NewVisitorFaceRegister(
     }, [ws])
 }
 
-
 /**
- * @description send to images to backend to process faces to sync user profile,
+ * send to images to backend to process faces to sync user profile,
  * saves the returned profile_id to localStorage and calls onProfileSynced
  * @param isCapturingFace boolean to control whether to start the webcam
  * @param onProfileSynced called with the profile_id once a face is confirmed
  * @param frameCount number of face frame to capture before sending to backend
  */
-export function SyncProfileProcess(
+export function useSyncProfileProcess(
     ws: WebSocket | null, 
     isCapturingFace: boolean,
     onProfileSynced: (profileId: number) => void,
@@ -132,8 +124,7 @@ export function SyncProfileProcess(
     const framesRef = useRef<string[]>([])
     const hasSentRef = useRef(false)
 
-    const onProfileSyncedRef = useRef(onProfileSynced)
-    useEffect(() => { onProfileSyncedRef.current = onProfileSynced })
+    const onProfileSyncedRef = useStableRef(onProfileSynced)
 
     // reset on start capturingface
     useEffect(() => {
@@ -149,7 +140,7 @@ export function SyncProfileProcess(
         // saves the profile_id to localstorage for later use
         const handleMessage = (event: MessageEvent) => {
             const data = JSON.parse(event.data)
-            if (data.type !== "profile_face_response" || data.type !== "profile_face_response") return
+            if (data.type !== "profile_face_response") return
             localStorage.setItem("profile_id", String(data.profile_id))
             onProfileSyncedRef.current(data.profile_id)
         }
