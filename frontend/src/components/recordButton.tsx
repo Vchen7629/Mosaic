@@ -2,15 +2,20 @@ import { Camera } from "lucide-react";
 import { SyncProfileProcess } from "../api/utils/face";
 import { SyncState } from "../types/profle";
 import { Dispatch, SetStateAction } from "react";
+import { BriefingComponent } from "../types/briefing";
 
 type RecordButtonProps = {
   ws: WebSocket | null;
   syncState: SyncState;
   setSyncState: Dispatch<SetStateAction<SyncState>>;
   isRecording: boolean;
+  profileId: string;
+  visitorIds: string[];
   setIsRecording: (val: boolean) => void;
   setIsSyncCapture: (val: boolean) => void;
   setIsFaceCapture: (val: boolean) => void;
+  setVisitorIds: Dispatch<SetStateAction<string[]>>
+  setBriefingList: Dispatch<SetStateAction<BriefingComponent[]>>
 };
 
 /**
@@ -18,7 +23,7 @@ type RecordButtonProps = {
  * Has possible states states: idle → scanning → active/start → active/stop
  * @param ws
  */
-export const RecordButton = ({ ws, syncState, setSyncState, isRecording, setIsRecording, setIsSyncCapture, setIsFaceCapture }: RecordButtonProps) => {
+export const RecordButton = ({ ws,  syncState, setSyncState, isRecording, profileId, visitorIds, setIsRecording, setIsSyncCapture, setIsFaceCapture, setVisitorIds, setBriefingList }: RecordButtonProps) => {
   SyncProfileProcess(ws, syncState === "scanning", (_profileId) => {
     setSyncState("active");
     setIsSyncCapture(false);
@@ -37,6 +42,20 @@ export const RecordButton = ({ ws, syncState, setSyncState, isRecording, setIsRe
   function handleRecordToggle() {
     setIsRecording(!isRecording);
     setIsFaceCapture(!isRecording);
+  }
+
+  function handleStopRecording() {
+    if (ws?.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: "save_audio_transcript",
+        profile_id: profileId,
+        visitor_id: visitorIds[0] ?? "0",
+      }))
+    }
+    setIsRecording(false)
+    setIsFaceCapture(false)
+    setVisitorIds([])
+    setBriefingList([])
   }
 
   if (syncState === "idle") {
@@ -66,7 +85,7 @@ export const RecordButton = ({ ws, syncState, setSyncState, isRecording, setIsRe
   return (
     <div className="flex items-center gap-1.5">
       <button
-        onClick={handleRecordToggle}
+        onClick={isRecording ? handleStopRecording : handleRecordToggle}
         className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold transition-all duration-200 border ${
           isRecording
             ? "bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30 cursor-pointer"
