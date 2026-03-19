@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	at "mosaic-client.com/gen/audio_transcription"
 	fd "mosaic-client.com/gen/face_detection"
+	cb "mosaic-client.com/gen/conversation_briefing"
 	"mosaic-client.com/internal/handler"
 	"mosaic-client.com/internal/middleware"
 )
@@ -19,12 +20,14 @@ import (
 func WebsocketServer(
 	audio_client at.AudioTranscriptionServiceClient,
 	face_client fd.FaceDetectionServiceClient,
+	briefing_client cb.ConversationBriefingServiceClient,
 ) {
 	router := http.NewServeMux()
 
 	wsHandler := &handler.WebSocketHandler{
 		AudioClient: audio_client,
 		FaceClient:  face_client,
+		BriefingClient: briefing_client,
 	}
 
 	router.HandleFunc("/api/v1/ws", wsHandler.HandleWebSocket)
@@ -46,14 +49,16 @@ func main() {
 
 	audioConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	faceConn, err := grpc.NewClient("localhost:40040", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	briefingConn, err := grpc.NewClient("localhost:30030", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal("Unable to start gRPC client")
 	}
 
 	atClient := at.NewAudioTranscriptionServiceClient(audioConn)
 	fdClient := fd.NewFaceDetectionServiceClient(faceConn)
+	cbClient := cb.NewConversationBriefingServiceClient(briefingConn)
 
-	go WebsocketServer(atClient, fdClient)
+	go WebsocketServer(atClient, fdClient, cbClient)
 
 	// go channel for listening to sigint/sigterm signals for graceful shutdown
 	sigChan := make(chan os.Signal, 1)

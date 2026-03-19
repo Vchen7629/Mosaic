@@ -18,7 +18,7 @@ type briefing struct {
 
 type ollamaChatMessage struct {
 	Role    string `json:"role"`
-	Content string `json:"context"`
+	Content string `json:"content"`
 }
 
 type ollamaChatRequest struct {

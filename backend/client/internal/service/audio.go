@@ -123,10 +123,6 @@ func SaveTranscriptWithRetry(
 		}
 		visitorIDList = append(visitorIDList, int32(visitorID64))
 	}
-
-	if err != nil {
-		return fmt.Errorf("Error converting visitorID string to int64: %w", err)
-	}
 	
 	var lastErr error
 	for attempt := range 3 {
