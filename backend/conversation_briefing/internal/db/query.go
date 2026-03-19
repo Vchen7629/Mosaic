@@ -64,24 +64,24 @@ func (db *DBPool) FetchRecentConversations(profileID int32, visitorIDs []int32) 
 
 // Upsert briefing for all visitorIDs as in batch
 // Not atomic currently since rather have some succeed with new briefing rather than all for nothing
-func (db *DBPool) InsertBriefing(profileID int32, visitorIDs []int32, briefing string) error {
+func (db *DBPool) InsertBriefing(profileID int32, briefings map[int32]string) error {
 	ctx := context.Background()
 	batch := &pgx.Batch{}
 
-	for _, visitorID := range visitorIDs {
+	for visitorID, briefing_text := range briefings {
 		batch.Queue(`
 			INSERT INTO briefings (profile_id, visitor_id, briefing_text) 
 			VALUES ($1, $2, $3)
 			ON CONFLICT (profile_id, visitor_id) DO UPDATE
 				SET briefing_text = EXCLUDED.briefing_text,
-		`, profileID, visitorID, briefing)
+		`, profileID, visitorID, briefing_text)
 	} 
 
 	br := db.pool.SendBatch(ctx, batch)
 	defer br.Close()
 	
 	failCount := 0
-	for _, visitorID := range visitorIDs {
+	for visitorID, _ := range briefings {
 		_, err := br.Exec()
 		if err != nil {
 			// not failing if some visitor ID fails in batch so succeeded visitors 
@@ -91,7 +91,7 @@ func (db *DBPool) InsertBriefing(profileID int32, visitorIDs []int32, briefing s
 		}
 	}
 
-	if failCount == len(visitorIDs) {
+	if failCount == len(briefings) {
 		return errors.New("all briefing inserts failed")
 	}
 
