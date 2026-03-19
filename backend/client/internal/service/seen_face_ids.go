@@ -11,6 +11,18 @@ var (
 	seenMu		sync.Mutex
 )
 
+func GetSeenVisitors() []int32 {
+	seenMu.Lock()
+	defer seenMu.Unlock()
+
+	ids := make([]int32, 0, len(seenFaceMap))
+	for id := range seenFaceMap {
+		ids = append(ids, id)
+	}
+
+	return ids
+}
+
 func HasSeenVisitor(visitorID int32) bool {
 	seenMu.Lock()
 	defer seenMu.Unlock()
