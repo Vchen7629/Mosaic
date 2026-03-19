@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+
+	"github.com/jackc/pgx/v4"
 )
 
 type Conversations struct {
@@ -13,14 +16,7 @@ type Conversations struct {
 }
 
 // fetch 5 most recent conversations from the db for the profile
-func (db *DBPool) FetchRecentConversations(profileID, visitorID int32) ([]Conversations, error) {
-	if profileID <= 0 {
-		return nil, errors.New("profileID must be positive")
-	}
-	if visitorID <= 0 {
-		return nil, errors.New("visitorID must be positive")
-	}
-
+func (db *DBPool) FetchRecentConversations(profileID int32, visitorIDs []int32) ([]Conversations, error) {
 	ctx := context.Background()
 
 	rows, err := db.pool.Query(ctx, `
@@ -28,7 +24,7 @@ func (db *DBPool) FetchRecentConversations(profileID, visitorID int32) ([]Conver
 		WHERE profile_id = $1
 		AND visitor_id = ANY($2)
 		ORDER BY visitor_id, created_at DESC
-	`, profileID, visitorID)
+	`, profileID, visitorIDs)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching convo text from db: %v", err)
 	}
@@ -66,19 +62,38 @@ func (db *DBPool) FetchRecentConversations(profileID, visitorID int32) ([]Conver
 	return result, nil
 }
 
-// fetch all user profile embeddings saved in the database
-func (db *DBPool) InsertBriefing(profileID, visitorID int32, briefing string) error {
+// Upsert briefing for all visitorIDs as in batch
+// Not atomic currently since rather have some succeed with new briefing rather than all for nothing
+func (db *DBPool) InsertBriefing(profileID int32, visitorIDs []int32, briefing string) error {
 	ctx := context.Background()
+	batch := &pgx.Batch{}
 
-	_, err := db.pool.Exec(ctx, `
-		INSERT INTO briefings (profile_id, visitor_id, briefing_text) 
-		VALUES ($1, $2, $3)
-		ON CONFLICT (profile_id, visitor_id) DO UPDATE
-			SET convo_text = EXCLUDED.convo_text,
-	`, profileID, visitorID, briefing)
-	if err != nil {
-		return fmt.Errorf("error inserting new briefing: %v", err)
+	for _, visitorID := range visitorIDs {
+		batch.Queue(`
+			INSERT INTO briefings (profile_id, visitor_id, briefing_text) 
+			VALUES ($1, $2, $3)
+			ON CONFLICT (profile_id, visitor_id) DO UPDATE
+				SET briefing_text = EXCLUDED.briefing_text,
+		`, profileID, visitorID, briefing)
 	} 
+
+	br := db.pool.SendBatch(ctx, batch)
+	defer br.Close()
+	
+	failCount := 0
+	for _, visitorID := range visitorIDs {
+		_, err := br.Exec()
+		if err != nil {
+			// not failing if some visitor ID fails in batch so succeeded visitors 
+			// will get updated batch
+			log.Printf("error inserting briefing for visitor %d: %v", visitorID, err)
+			failCount++
+		}
+	}
+
+	if failCount == len(visitorIDs) {
+		return errors.New("all briefing inserts failed")
+	}
 
 	return nil
 }
