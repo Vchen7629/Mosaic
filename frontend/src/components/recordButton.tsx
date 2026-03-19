@@ -39,7 +39,7 @@ export const RecordButton = ({
       ws.send(JSON.stringify({
         type: "save_audio_transcript",
         profile_id: profileId,
-        visitor_id: visitorIds[0],
+        visitor_id_list: visitorIds,
       }))
     }
     onRecordingStop()
