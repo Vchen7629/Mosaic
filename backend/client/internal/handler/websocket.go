@@ -19,6 +19,7 @@ type Message struct {
 	FaceEmbedding	string `json:"face_embedding,omitempty"`
 	ProfileID		string `json:"profile_id,omitempty"`
 	VisitorID		string `json:"visitor_id,omitempty"`
+	VisitorIDList []string `json:"visitor_id_list,omitempty"`
 	VisitorName		string `json:"visitor_name,omitempty"`
 	Frames		  []string `json:"frames,omitempty"`
 }
@@ -96,7 +97,7 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 		case "save_audio_transcript":
 			ctx := context.Background()
 			service.FlushAudio(ctx, msg.ProfileID, h.AudioClient)
-			err = service.SaveTranscriptWithRetry(ctx, msg.ProfileID, msg.VisitorID, h.AudioClient)
+			err = service.SaveTranscriptWithRetry(ctx, msg.ProfileID, msg.VisitorIDList, h.AudioClient)
 			if err != nil {
 				log.Printf("error saving transcript: %v", err)
 			}
