@@ -36,7 +36,7 @@ class AudioTranscriptionServicer(
             convo_text = logger.read()
 
             with self._db_pool.connection() as conn:
-                save_conversation(conn, request.profile_id, convo_text, request.visitor_id)
+                save_conversation(conn, request.profile_id, convo_text, request.visitor_ids)
         except Exception:
             return audio_transcription_pb2.SaveTranscriptResponse(success=False)
 
