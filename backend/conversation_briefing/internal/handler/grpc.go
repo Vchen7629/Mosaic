@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"log"
 
 	cb "mosaic-conversation-briefing.com/gen"
 	"mosaic-conversation-briefing.com/internal/db"
@@ -33,7 +34,9 @@ func (s *ConvoBriefingServer) GenerateConversationBriefing(
 			Success: false,
 		}, errors.New("Invalid profile id in the req, less than or equal to 0")
 	}
-	for visitorID := range req.VisitorIds {
+	log.Printf("dicked down: got ids %v", req.VisitorIds)
+
+	for _, visitorID := range req.VisitorIds {
 		if visitorID <= 0 {
 			return &cb.GenerateConversationBriefingResponse{
 				Success: false,
