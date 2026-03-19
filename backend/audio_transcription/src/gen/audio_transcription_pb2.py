@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19\x61udio_transcription.proto\x12\x19proto.audio_transcription\"A\n\x16TranscribeAudioRequest\x12\x13\n\x0b\x61udio_bytes\x18\x01 \x03(\x02\x12\x12\n\nprofile_id\x18\x02 \x01(\x05\"*\n\x17TranscribeAudioResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"?\n\x15SaveTranscriptRequest\x12\x12\n\nprofile_id\x18\x01 \x01(\x05\x12\x12\n\nvisitor_id\x18\x02 \x01(\x05\")\n\x16SaveTranscriptResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x32\x90\x02\n\x19\x41udioTranscriptionService\x12z\n\x0fTranscribeAudio\x12\x31.proto.audio_transcription.TranscribeAudioRequest\x1a\x32.proto.audio_transcription.TranscribeAudioResponse\"\x00\x12w\n\x0eSaveTranscript\x12\x30.proto.audio_transcription.SaveTranscriptRequest\x1a\x31.proto.audio_transcription.SaveTranscriptResponse\"\x00\x42+Z)mosaic-client.com/gen/audio_transcriptionb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19\x61udio_transcription.proto\x12\x19proto.audio_transcription\"A\n\x16TranscribeAudioRequest\x12\x13\n\x0b\x61udio_bytes\x18\x01 \x03(\x02\x12\x12\n\nprofile_id\x18\x02 \x01(\x05\"*\n\x17TranscribeAudioResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"@\n\x15SaveTranscriptRequest\x12\x12\n\nprofile_id\x18\x01 \x01(\x05\x12\x13\n\x0bvisitor_ids\x18\x02 \x03(\x05\")\n\x16SaveTranscriptResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x32\x90\x02\n\x19\x41udioTranscriptionService\x12z\n\x0fTranscribeAudio\x12\x31.proto.audio_transcription.TranscribeAudioRequest\x1a\x32.proto.audio_transcription.TranscribeAudioResponse\"\x00\x12w\n\x0eSaveTranscript\x12\x30.proto.audio_transcription.SaveTranscriptRequest\x1a\x31.proto.audio_transcription.SaveTranscriptResponse\"\x00\x42+Z)mosaic-client.com/gen/audio_transcriptionb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -37,9 +37,9 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_TRANSCRIBEAUDIORESPONSE']._serialized_start=123
   _globals['_TRANSCRIBEAUDIORESPONSE']._serialized_end=165
   _globals['_SAVETRANSCRIPTREQUEST']._serialized_start=167
-  _globals['_SAVETRANSCRIPTREQUEST']._serialized_end=230
-  _globals['_SAVETRANSCRIPTRESPONSE']._serialized_start=232
-  _globals['_SAVETRANSCRIPTRESPONSE']._serialized_end=273
-  _globals['_AUDIOTRANSCRIPTIONSERVICE']._serialized_start=276
-  _globals['_AUDIOTRANSCRIPTIONSERVICE']._serialized_end=548
+  _globals['_SAVETRANSCRIPTREQUEST']._serialized_end=231
+  _globals['_SAVETRANSCRIPTRESPONSE']._serialized_start=233
+  _globals['_SAVETRANSCRIPTRESPONSE']._serialized_end=274
+  _globals['_AUDIOTRANSCRIPTIONSERVICE']._serialized_start=277
+  _globals['_AUDIOTRANSCRIPTIONSERVICE']._serialized_end=549
 # @@protoc_insertion_point(module_scope)
