@@ -38,7 +38,7 @@ function App() {
     isFaceCapture,
     profileId,
     (_profileId, faceEmbedding) => { setNewFaceDetected(true); setPendingFaceEmbedding(faceEmbedding) },
-    (visitorId) => { setVisitorIds(prev => [...prev, visitorId]) },
+    (visitorId) => { setVisitorIds(prev => prev.includes(visitorId) ? prev : [...prev, visitorId]) },
     (briefing) => setBriefingList(prev => [...prev, briefing])
   )
 
@@ -82,7 +82,7 @@ function App() {
                   faceEmbedding={pendingFaceEmbedding} 
                   profileId={profileId ?? ""}
                   onVisitorRegistered={(visitorId => {
-                    setVisitorIds(prev => [...prev, visitorId])
+                    setVisitorIds(prev => prev.includes(visitorId) ? prev : [...prev, visitorId])
                     setNewFaceDetected(false)
                   })}
                 />
