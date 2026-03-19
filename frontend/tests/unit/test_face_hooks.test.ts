@@ -49,14 +49,14 @@ describe("useVisitorFace - message handling", () => {
         expect(onNewFaceDetected).toHaveBeenCalledWith(42, JSON.stringify([0.1, 0.2]))
     })
 
-    it("calls onExistingVisitorDetected and onBriefingRecieved for existing_visitor_response", () => {
+    it("calls onExistingVisitorDetected and onBriefingRecieved for visitor_briefing_response", () => {
         const { ws, dispatch } = makeWs()
         const onExistingVisitorDetected = vi.fn()
         const onBriefingRecieved = vi.fn()
 
         renderHook(() => useVisitorFace(ws, true, "profile1", vi.fn(), onExistingVisitorDetected, onBriefingRecieved))
 
-        dispatch({ type: "existing_visitor_response", visitor_id: "v1", visitor_name: "Alice", briefing: "Alice is great." })
+        dispatch({ type: "visitor_briefing_response", visitor_id: "v1", visitor_name: "Alice", briefing: "Alice is great." })
 
         expect(onExistingVisitorDetected).toHaveBeenCalledWith("v1")
         expect(onBriefingRecieved).toHaveBeenCalledWith({ visitorName: "Alice", briefingText: "Alice is great." })
@@ -68,8 +68,8 @@ describe("useVisitorFace - message handling", () => {
 
         renderHook(() => useVisitorFace(ws, true, "profile1", vi.fn(), onExistingVisitorDetected, vi.fn()))
 
-        dispatch({ type: "existing_visitor_response", visitor_id: "v1", visitor_name: "Alice", briefing: "text" })
-        dispatch({ type: "existing_visitor_response", visitor_id: "v1", visitor_name: "Alice", briefing: "text" })
+        dispatch({ type: "visitor_briefing_response", visitor_id: "v1", visitor_name: "Alice", briefing: "text" })
+        dispatch({ type: "visitor_briefing_response", visitor_id: "v1", visitor_name: "Alice", briefing: "text" })
 
         expect(onExistingVisitorDetected).toHaveBeenCalledTimes(1)
     })
@@ -84,13 +84,13 @@ describe("useVisitorFace - message handling", () => {
             { initialProps: { capturing: true } }
         )
 
-        dispatch({ type: "existing_visitor_response", visitor_id: "v1", visitor_name: "Alice", briefing: "text" })
+        dispatch({ type: "visitor_briefing_response", visitor_id: "v1", visitor_name: "Alice", briefing: "text" })
         expect(onExistingVisitorDetected).toHaveBeenCalledTimes(1)
 
         await act(async () => { rerender({ capturing: false }) })
         await act(async () => { rerender({ capturing: true }) })
 
-        dispatch({ type: "existing_visitor_response", visitor_id: "v1", visitor_name: "Alice", briefing: "text" })
+        dispatch({ type: "visitor_briefing_response", visitor_id: "v1", visitor_name: "Alice", briefing: "text" })
         expect(onExistingVisitorDetected).toHaveBeenCalledTimes(2)
     })
 
@@ -198,7 +198,6 @@ describe("useNewVisitorFaceRegister", () => {
     })
 })
 
-// ─── useSyncProfileProcess ────────────────────────────────────────────────────
 
 describe("useSyncProfileProcess", () => {
     it("sends sync_profile once frameCount frames have been captured", () => {
