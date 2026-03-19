@@ -20,7 +20,7 @@ func (db *DBPool) FetchRecentConversations(profileID int32, visitorIDs []int32) 
 	ctx := context.Background()
 
 	rows, err := db.pool.Query(ctx, `
-		SELECT convo_text FROM conversation_records
+		SELECT visitor_id, convo_text FROM conversation_records
 		WHERE profile_id = $1
 		AND visitor_id = ANY($2)
 		ORDER BY visitor_id, created_at DESC
@@ -73,7 +73,7 @@ func (db *DBPool) InsertBriefing(profileID int32, briefings map[int32]string) er
 			INSERT INTO briefings (profile_id, visitor_id, briefing_text) 
 			VALUES ($1, $2, $3)
 			ON CONFLICT (profile_id, visitor_id) DO UPDATE
-				SET briefing_text = EXCLUDED.briefing_text,
+				SET briefing_text = EXCLUDED.briefing_text
 		`, profileID, visitorID, briefing_text)
 	} 
 
