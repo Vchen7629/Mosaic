@@ -2,22 +2,31 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/joho/godotenv"
+	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	at "mosaic-client.com/gen/audio_transcription"
-	fd "mosaic-client.com/gen/face_detection"
 	cb "mosaic-client.com/gen/conversation_briefing"
+	fd "mosaic-client.com/gen/face_detection"
 	"mosaic-client.com/internal/handler"
 	"mosaic-client.com/internal/middleware"
 )
 
+type Config struct {
+	ServerPort  string 	`envconfig:"SERVER_PORT" default:"8080"`
+	ProdMode 	bool 	`envconfig:"PROD_MODE" default:"false"`
+}
+
 func WebsocketServer(
+	cfg *Config,
+	logger *slog.Logger,
 	audio_client at.AudioTranscriptionServiceClient,
 	face_client fd.FaceDetectionServiceClient,
 	briefing_client cb.ConversationBriefingServiceClient,
@@ -25,6 +34,7 @@ func WebsocketServer(
 	router := http.NewServeMux()
 
 	wsHandler := &handler.WebSocketHandler{
+		Logger: logger,
 		AudioClient: audio_client,
 		FaceClient:  face_client,
 		BriefingClient: briefing_client,
@@ -33,32 +43,43 @@ func WebsocketServer(
 	router.HandleFunc("/api/v1/ws", wsHandler.HandleWebSocket)
 
 	server := http.Server{
-		Addr: ":8000",
+		Addr: fmt.Sprintf(":%s", cfg.ServerPort),
 		Handler: middleware.Logging(router),
 	}
 
-	fmt.Println("[Go Backend] Server running on http://localhost:8000")
+	logger.Debug("[client] Server running on http://localhost:8000")
 	err := server.ListenAndServe()
 	if err != nil {
-		log.Fatalf("HTTP Server failed to start with error: %v", err)
+		logger.Error("HTTP Server failed to start", "err", err)
+		os.Exit(1)
 	}
 }
 
 func main() {
-	fmt.Println("[Go Backend] Starting Mosaic backend server...")
+	cfg, err := loadConfig()
+	var handler slog.Handler
+	if cfg.ProdMode {
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	} else {
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})		
+	}
+	logger := slog.New(handler).With("service", "client")
+
+	logger.Info("[client] Starting Mosaic backend server...")
 
 	audioConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	faceConn, err := grpc.NewClient("localhost:40040", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	briefingConn, err := grpc.NewClient("localhost:30030", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatal("Unable to start gRPC client")
+		logger.Error("Unable to start gRPC client")
+		os.Exit(1)
 	}
 
 	atClient := at.NewAudioTranscriptionServiceClient(audioConn)
 	fdClient := fd.NewFaceDetectionServiceClient(faceConn)
 	cbClient := cb.NewConversationBriefingServiceClient(briefingConn)
 
-	go WebsocketServer(atClient, fdClient, cbClient)
+	go WebsocketServer(cfg, logger, atClient, fdClient, cbClient)
 
 	// go channel for listening to sigint/sigterm signals for graceful shutdown
 	sigChan := make(chan os.Signal, 1)
@@ -67,9 +88,22 @@ func main() {
 
 	// Block until shutdown signal recieved
 	<-sigChan
-	log.Println("Shutting down gracefully...")
+	logger.Info("[client] Shutting down gracefully...")
 
 	audioConn.Close()
 	faceConn.Close()
-	log.Println("Closed gRPC connection")
+	logger.Debug("[client] Closed gRPC connection")
+}
+
+// method to load config values
+func loadConfig() (*Config, error) {
+	godotenv.Load("../.env")
+	var cfg Config
+
+	err := envconfig.Process("", &cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
 }

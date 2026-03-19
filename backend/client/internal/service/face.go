@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
+
 	fd "mosaic-client.com/gen/face_detection"
 )
 
@@ -23,6 +24,7 @@ type KnownVisitorResponse struct {
 
 // Process images for potential visitor
 func ProcessVisitorImage(
+	logger *slog.Logger,
 	frameData string, 
 	profileID string, 
 	conn *SafeConn,
@@ -54,12 +56,12 @@ func ProcessVisitorImage(
 	}
 
 	if !resp.FaceDetected {
-		log.Println("ProcessVisitorFace no faces detected")
+		logger.Debug("[ProcessVisitorFace] no faces detected")
 		return nil
 	}
 
 	if resp.NonVisitorFace {
-		log.Println("Current visitor face to process is same as the currently synced profile's face, skipping")
+		logger.Debug("[ProcessVisitorFace] Face detected is same as profile face, skipping")
 		return nil
 	}
 
@@ -73,7 +75,7 @@ func ProcessVisitorImage(
 			// only send data to the frontend if the visitor hasnt
 			// been sent to the frontend.
 			} else if !HasSeenVisitor(faceData.VisitorId) {
-				log.Println("This visitor briefing hasnt been sent to frontend, sending")
+				logger.Debug("[ProcessVisitorFace] This visitor briefing hasnt been sent to frontend, sending")
 				conn.WriteJSON(KnownVisitorResponse{
 					Type: "visitor_briefing_response",
 					VisitorName: faceData.Name,

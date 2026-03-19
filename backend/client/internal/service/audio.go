@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
-	"log"
+	"log/slog"
 	"math"
 	"strconv"
 	"sync"
@@ -30,6 +30,7 @@ const (
 
 
 func ProcessAudio(
+	logger *slog.Logger,
 	audioData string, 
 	profileID string,
 	client at.AudioTranscriptionServiceClient,
@@ -61,13 +62,11 @@ func ProcessAudio(
 		audioBuffer = audioBuffer[batchSize:]
 		bufferMutex.Unlock()
 
-		
-		log.Printf("[ProcessAudio] Sending batch: %d audio bytes, remaining: %d audio bytes", len(batch), len(audioBuffer))
+		logger.Debug("[ProcessAudio] Sending batch", "batch_bytes", len(batch), "remaining_bytes", len(audioBuffer))
 
 		err := transcribeWithRetry(ctx, client, batch, int32(id64))
 		if err != nil {
-			log.Printf("Error transcribing: %v", err)
-			return err
+			return fmt.Errorf("Error processing audio: %v", err)
 		}
 	}
 
@@ -79,10 +78,11 @@ func ProcessAudio(
 // prevents audio sent before 10s batch from being lost when
 // user clicks stop recording
 func FlushAudio(
+	logger *slog.Logger,
 	ctx context.Context,
 	profileID string, 
 	client at.AudioTranscriptionServiceClient,
-) {
+) error {
 	id64, err := strconv.ParseInt(profileID, 10, 32)
 
 	Wg.Wait()
@@ -94,13 +94,15 @@ func FlushAudio(
 
 	// handles case where there is audio less than 1 second
 	if len(remaining) < sampleRate {
-		return
+		return nil
 	}
 
 	err = transcribeWithRetry(ctx, client, remaining, int32(id64))
 	if err != nil {
-		log.Printf("Error flushing audio: %v", err)
+		return fmt.Errorf("Error flushing audio: %v", err)
 	}
+
+	return nil
 }
 
 // Method for sending gRPC request to save the transcript for the
