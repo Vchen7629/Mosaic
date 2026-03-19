@@ -32,7 +32,21 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 
 	_, matched := service.CompareProfileFaces(rec, []face.Descriptor{embeddings[0]}, currentProfileEmbs)
 	if matched {
-		return &fd.ProcessVisitorFacesResponse{FaceDetected: true, NonVisitorFace: true}, nil
+		briefing, err := retryDB(ctx, func() (string, error) {
+			return s.pool.FetchVisitorBriefing(req.ProfileId, int32(1))
+		})
+		if err != nil {
+			return &fd.ProcessVisitorFacesResponse{Success: false}, nil
+		}
+		return &fd.ProcessVisitorFacesResponse{
+			FaceDetected:   true,
+			NonVisitorFace: true,
+			Faces: []*fd.FaceResult{{
+				Name:      "Unknown",
+				Briefing:  briefing,
+				VisitorId: int32(1),
+			}},
+		}, nil
 	}
 
 	var knownVisitors []service.VisitorFaces
