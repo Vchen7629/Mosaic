@@ -108,14 +108,22 @@ func FlushAudio(
 func SaveTranscriptWithRetry(
 	ctx context.Context,
 	profileID string,
-	visitorID string,
+	visitorIDs []string,
 	client at.AudioTranscriptionServiceClient,
 ) error {
 	profileID64, err := strconv.ParseInt(profileID, 10, 32)
 	if err != nil {
 		return fmt.Errorf("Error converting profileID string to int64: %w", err)
 	}
-	visitorID64, err := strconv.ParseInt(visitorID, 10, 32)
+	visitorIDList := make([]int32, 0, len(visitorIDs))
+	for _, visitorID := range visitorIDs {
+		visitorID64, err := strconv.ParseInt(visitorID, 10, 32)
+		if err != nil {
+			return fmt.Errorf("Error converting profileID string to int64: %w", err)
+		}
+		visitorIDList = append(visitorIDList, int32(visitorID64))
+	}
+
 	if err != nil {
 		return fmt.Errorf("Error converting visitorID string to int64: %w", err)
 	}
@@ -124,7 +132,7 @@ func SaveTranscriptWithRetry(
 	for attempt := range 3 {
 		resp, rpcErr := client.SaveTranscript(ctx, &at.SaveTranscriptRequest{ 
 			ProfileId: int32(profileID64), 
-			VisitorId: int32(visitorID64),
+			VisitorIds: visitorIDList,
 		})
 		if rpcErr == nil && resp.Success {
 			return nil

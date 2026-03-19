@@ -123,7 +123,7 @@ func (x *TranscribeAudioResponse) GetSuccess() bool {
 type SaveTranscriptRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProfileId     int32                  `protobuf:"varint,1,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
-	VisitorId     int32                  `protobuf:"varint,2,opt,name=visitor_id,json=visitorId,proto3" json:"visitor_id,omitempty"`
+	VisitorIds    []int32                `protobuf:"varint,2,rep,packed,name=visitor_ids,json=visitorIds,proto3" json:"visitor_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -165,11 +165,11 @@ func (x *SaveTranscriptRequest) GetProfileId() int32 {
 	return 0
 }
 
-func (x *SaveTranscriptRequest) GetVisitorId() int32 {
+func (x *SaveTranscriptRequest) GetVisitorIds() []int32 {
 	if x != nil {
-		return x.VisitorId
+		return x.VisitorIds
 	}
-	return 0
+	return nil
 }
 
 // Response containing success to indicate if its successful or not
@@ -228,12 +228,12 @@ const file_audio_transcription_proto_rawDesc = "" +
 	"\n" +
 	"profile_id\x18\x02 \x01(\x05R\tprofileId\"3\n" +
 	"\x17TranscribeAudioResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"U\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"W\n" +
 	"\x15SaveTranscriptRequest\x12\x1d\n" +
 	"\n" +
-	"profile_id\x18\x01 \x01(\x05R\tprofileId\x12\x1d\n" +
-	"\n" +
-	"visitor_id\x18\x02 \x01(\x05R\tvisitorId\"2\n" +
+	"profile_id\x18\x01 \x01(\x05R\tprofileId\x12\x1f\n" +
+	"\vvisitor_ids\x18\x02 \x03(\x05R\n" +
+	"visitorIds\"2\n" +
 	"\x16SaveTranscriptResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess2\x90\x02\n" +
 	"\x19AudioTranscriptionService\x12z\n" +

@@ -6,7 +6,7 @@ def save_conversation(
     conn: psycopg.Connection, 
     profile_id: int,
     convo_text: str,
-    visitor_id: int
+    visitor_ids: list[int]
 ) -> None:
     """
     Save a transcript of the conversation to the database 
@@ -23,9 +23,9 @@ def save_conversation(
         raise ValueError("invalid profile_id provided")
     if not convo_text:
         raise ValueError("invalid convo text provided")
-    if not visitor_id or visitor_id <= 0:
-        raise ValueError("invalid visitor_id provided")
-
+    if not visitor_ids or not all(isinstance(vis_id, int) and vis_id > 0 for vis_id in visitor_ids):
+        raise ValueError("invalid visitor_ids provided")
+    
     query = """
         INSERT INTO conversation_records (
             profile_id, visitor_id, created_at, convo_text
@@ -34,12 +34,13 @@ def save_conversation(
         )"""
     
     try:
-        with conn.cursor() as cursor:
-            cursor.execute(query, {
-                "profile_id": profile_id, 
-                "visitor_id": visitor_id, 
-                "convo_text": convo_text,
-            })
+        for visitor_id in visitor_ids:
+            with conn.cursor() as cursor:
+                cursor.execute(query, {
+                    "profile_id": profile_id, 
+                    "visitor_id": visitor_id, 
+                    "convo_text": convo_text,
+                })
         conn.commit()
     except Exception:
         conn.rollback()
