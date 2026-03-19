@@ -59,7 +59,13 @@ func ProcessVisitorImage(
 	}
 
 	if resp.NonVisitorFace {
-		log.Println("Current visitor face to process is same as the currently synced profile's face, skipping")
+		log.Println("Current visitor face to process is same as the currently synced profile's face, fetching unknown")
+		conn.WriteJSON(KnownVisitorResponse{
+			Type: "visitor_briefing_response",
+			VisitorName: resp.Faces[0].Name,
+			Briefing: resp.Faces[0].Briefing,
+			VisitorID: resp.Faces[0].VisitorId,
+		})
 		return nil
 	}
 
@@ -72,7 +78,7 @@ func ProcessVisitorImage(
 				})
 			} else {
 				conn.WriteJSON(KnownVisitorResponse{
-					Type: "existing_visitor_response",
+					Type: "visitor_briefing_response",
 					VisitorName: faceData.Name,
 					Briefing: faceData.Briefing,
 					VisitorID: faceData.VisitorId,
