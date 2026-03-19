@@ -100,6 +100,7 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 			if err != nil {
 				log.Printf("error saving transcript: %v", err)
 			}
+			service.ClearSeenVisitors() // clear all the seen ids for the session
 		}
 	}
 }

@@ -69,13 +69,17 @@ func ProcessVisitorImage(
 					Type: "new_visitor_register",
 					FaceEmbedding: faceData.FaceEmbedding,
 				})
-			} else {
+			// only send data to the frontend if the visitor hasnt
+			// been sent to the frontend.
+			} else if !HasSeenVisitor(faceData.VisitorId) {
+				log.Println("This visitor briefing hasnt been sent to frontend, sending")
 				conn.WriteJSON(KnownVisitorResponse{
 					Type: "visitor_briefing_response",
 					VisitorName: faceData.Name,
 					Briefing: faceData.Briefing,
 					VisitorID: faceData.VisitorId,
 				})
+				AddSeenVisitor(faceData.VisitorId)
 			}
 		}
 	}
