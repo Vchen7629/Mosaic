@@ -35,11 +35,11 @@ export const RecordButton = ({
   useSyncProfileProcess(ws, syncState === "scanning", (_profileId) => { onSyncComplete() });
 
   function handleStopRecording() {
-    if (ws?.readyState === WebSocket.OPEN) {
+    if (ws?.readyState === WebSocket.OPEN && visitorIds.length > 0) {
       ws.send(JSON.stringify({
         type: "save_audio_transcript",
         profile_id: profileId,
-        visitor_id: visitorIds[0] ?? "0",
+        visitor_id: visitorIds[0],
       }))
     }
     onRecordingStop()

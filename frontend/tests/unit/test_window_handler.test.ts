@@ -2,7 +2,6 @@ import { renderHook } from "@testing-library/react"
 import { describe, it, expect, vi, beforeEach} from 'vitest'
 import { useAutoResizeWindow } from "../../src/hooks/useAutoResizeWindow"
 import { useSetWindowPosition } from "../../src/hooks/useSetWindowPosition"
-import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window"
 
 const { mockSetSize, mockSetPosition, mockCurrentWindow, mockCurrentMonitor } = vi.hoisted(() => {
     const mockSetSize = vi.fn()

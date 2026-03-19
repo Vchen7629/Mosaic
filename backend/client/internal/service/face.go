@@ -60,7 +60,6 @@ func ProcessVisitorImage(
 
 	if resp.NonVisitorFace {
 		log.Println("Current visitor face to process is same as the currently synced profile's face, skipping")
-		return nil
 	}
 
 	if len(resp.Faces) > 0 {
@@ -72,7 +71,7 @@ func ProcessVisitorImage(
 				})
 			} else {
 				conn.WriteJSON(KnownVisitorResponse{
-					Type: "existing_visitor_response",
+					Type: "visitor_briefing_response",
 					VisitorName: faceData.Name,
 					Briefing: faceData.Briefing,
 					VisitorID: faceData.VisitorId,

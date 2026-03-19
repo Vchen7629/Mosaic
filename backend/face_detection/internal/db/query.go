@@ -197,22 +197,7 @@ func (db *DBPool) AddNewFaceForUser(embeddings []face.Descriptor) (*int32, error
 		if err != nil {
 			return fmt.Errorf("error adding new profile: %w", err)
 		}
-
-		// adding this to handle a edge case where the user never confirms
-		// visitor name for unknown faces and saves the conversation recording
-		addUnknownVisitorQuery := `
-			INSERT INTO visitor_face_embeddings 
-			(profile_id, visitor_name, face_embedding)
-			VALUES ($1, 'Unknown', $2)`
-
-		zeroEmbedding := make([]float32, 128) // zero-initialized by default
-		zeroVector := pgvector.NewVector(zeroEmbedding)
-
-		_, err = tx.Exec(ctx, addUnknownVisitorQuery, profileID, zeroVector)
-		if err != nil {
-			return fmt.Errorf("error adding unknown visitor for profile: %w", err)
-		}
-
+		
 		insertEmbQuery := `
 			INSERT INTO profile_face_embeddings
 			(profile_id, face_embedding)

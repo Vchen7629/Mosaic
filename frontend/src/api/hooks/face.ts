@@ -37,16 +37,16 @@ export function useVisitorFace(
         const handleMessage = (event: MessageEvent) => {
             if (!isCapturingFaceRef.current) return
             const data = JSON.parse(event.data)
-            if (data.type !== "new_visitor_register" && data.type !== "existing_visitor_response") return
+            if (data.type !== "new_visitor_register" && data.type !== "visitor_briefing_response") return
 
             if (data.type == "new_visitor_register") {
                 onNewFaceDetectedRef.current(data.profile_id, JSON.stringify(data.face_embedding))
             }
-            if (data.type == "existing_visitor_response") {
+            if (data.type == "visitor_briefing_response") {
                 const visitorId = String(data.visitor_id)
                 if (seenVisitorIdsRef.current.has(visitorId)) return
                 seenVisitorIdsRef.current.add(visitorId)
-                console.log("existing visitor response received", data)
+                console.log("visitor_briefing_response received", data)
                 onExistingVisitorDetectedRef.current(visitorId)
                 onBriefingRecievedRef.current({ visitorName: data.visitor_name, briefingText: data.briefing })
             }

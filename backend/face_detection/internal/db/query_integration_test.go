@@ -280,7 +280,7 @@ func TestAddNewFaceForUser(t *testing.T) {
 		assert.Nil(t, id)
 	})
 
-	t.Run("successfully adds multiple face embedding for profile and creates unknown user placehold", func(t *testing.T) {
+	t.Run("successfully adds multiple face embedding for profile", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
 		embeddings := make([]face.Descriptor, 3)
@@ -292,14 +292,8 @@ func TestAddNewFaceForUser(t *testing.T) {
 		assert.Nil(t, err)
 		assert.NotNil(t, id)
 
-		zerosEmbedding := test.MakeEmbedding(0, 128)
-		var unknownVisEmbedding face.Descriptor
-		copy(unknownVisEmbedding[:], zerosEmbedding)
-
 		embeddingFromDB := test.CheckProfileEmbeddings(t, pool, *id)
-		unknownVisEmbFromDB := test.CheckVisitorEmbeddings(t, pool, *id, "Unknown")
 
 		assert.EqualValues(t, embeddings[0], embeddingFromDB)
-		assert.EqualValues(t, unknownVisEmbFromDB, unknownVisEmbedding)
 	})
 }

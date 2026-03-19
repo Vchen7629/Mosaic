@@ -24,7 +24,7 @@ const (
 	silenceThreshold = 0.02 // lower bound, prevents silence
 	loudThreshold    = 0.5 // upper bound, prevents loud noises
 	sampleRate		 = 16000 // 16khz required for whisper
-	batchDuration	 = 10 // seconds
+	batchDuration	 = 2.5 // seconds
 	batchSize 		 = sampleRate * batchDuration
 )
 
