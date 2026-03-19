@@ -10,19 +10,18 @@ import (
 
 type ConvoBriefingServer struct {
 	cb.UnimplementedConversationBriefingServiceServer
-	llmBaseURL	string
-	pool    		*db.DBPool
+	llmBaseURL string
+	pool       *db.DBPool
 }
 
 func NewConvoBriefingServer(
 	dbPool *db.DBPool, llmBaseUrl string,
 ) *ConvoBriefingServer {
 	return &ConvoBriefingServer{
-		pool: 		dbPool,
+		pool:       dbPool,
 		llmBaseURL: llmBaseUrl,
 	}
 }
-
 
 // Handler to generate conversation briefings
 func (s *ConvoBriefingServer) GenerateConversationBriefing(

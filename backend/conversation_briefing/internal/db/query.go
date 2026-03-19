@@ -75,16 +75,16 @@ func (db *DBPool) InsertBriefing(profileID int32, briefings map[int32]string) er
 			ON CONFLICT (profile_id, visitor_id) DO UPDATE
 				SET briefing_text = EXCLUDED.briefing_text
 		`, profileID, visitorID, briefing_text)
-	} 
+	}
 
 	br := db.pool.SendBatch(ctx, batch)
 	defer br.Close()
-	
+
 	failCount := 0
 	for visitorID, _ := range briefings {
 		_, err := br.Exec()
 		if err != nil {
-			// not failing if some visitor ID fails in batch so succeeded visitors 
+			// not failing if some visitor ID fails in batch so succeeded visitors
 			// will get updated batch
 			log.Printf("error inserting briefing for visitor %d: %v", visitorID, err)
 			failCount++

@@ -25,10 +25,10 @@ func TestBuildPrompt(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("it builds prompt with multiple conversations", func(t *testing.T) {                                                                                                     
-		prompt, err := service.BuildPrompt([]string{"convo 1", "convo 2"})                                                                                                         
-									
+	t.Run("it builds prompt with multiple conversations", func(t *testing.T) {
+		prompt, err := service.BuildPrompt([]string{"convo 1", "convo 2"})
+
 		assert.Nil(t, err)
 		assert.Equal(t, "Please summarize the follow visitor conversations into a concise briefing:\n\nConversation 1:\nconvo 1\n\nConversation 2:\nconvo 2\n\nProvide a 3-4 sentence summary of the key topics, and conversation starters", *prompt)
-  })
+	})
 }

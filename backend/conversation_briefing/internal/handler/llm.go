@@ -12,30 +12,30 @@ import (
 )
 
 type briefing struct {
-	VisitorID	int32
-	Briefing	string	
+	VisitorID int32
+	Briefing  string
 }
 
 type ollamaChatMessage struct {
-	Role	string `json:"role"`
+	Role    string `json:"role"`
 	Content string `json:"context"`
 }
 
 type ollamaChatRequest struct {
-	Model		string				`json:"model"`
-	Messages	[]ollamaChatMessage	`json:"messages"`
-	Stream		bool 				`json:"stream"`
+	Model    string              `json:"model"`
+	Messages []ollamaChatMessage `json:"messages"`
+	Stream   bool                `json:"stream"`
 }
 
 type ollamaChatResponse struct {
-	Message	ollamaChatMessage	`json:"message"`
+	Message ollamaChatMessage `json:"message"`
 }
 
 // handler to send conversations to llm to be summarized
 func SummarizeWithLLM(
 	model string,
 	llmBaseURL string,
-	conversationList []db.Conversations, 
+	conversationList []db.Conversations,
 ) ([]briefing, error) {
 	if len(conversationList) == 0 {
 		return []briefing{}, errors.New("conversationList is empty")
@@ -52,7 +52,7 @@ func SummarizeWithLLM(
 			Model: model,
 			Messages: []ollamaChatMessage{
 				{
-					Role: "system", 
+					Role:    "system",
 					Content: "You are a helpful assistant that summarizes user visitor conversations into concise briefings so they can view it later to see what they talked about",
 				},
 				{Role: "user", Content: *prompt},
@@ -74,7 +74,7 @@ func SummarizeWithLLM(
 		if resp.StatusCode != http.StatusOK {
 			return nil, fmt.Errorf("LLM returned status %d for visitor %d", resp.StatusCode, conv.VisitorID)
 		}
-		
+
 		var ollamaResp ollamaChatResponse
 		err = json.NewDecoder(resp.Body).Decode(&ollamaResp)
 		if err != nil {
@@ -83,7 +83,7 @@ func SummarizeWithLLM(
 
 		briefings = append(briefings, briefing{
 			VisitorID: conv.VisitorID,
-			Briefing: ollamaResp.Message.Content,
+			Briefing:  ollamaResp.Message.Content,
 		})
 	}
 

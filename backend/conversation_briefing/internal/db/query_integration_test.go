@@ -51,7 +51,7 @@ func TestFetchRecentConversations(t *testing.T) {
 			switch v.VisitorID {
 			case visitorID1:
 				assert.ElementsMatch(t, []string{
-					"this is convo 1 for visitor 1", 
+					"this is convo 1 for visitor 1",
 					"this is convo 2 for visitor 1",
 				}, v.ConvoList)
 			case visitorID2:
@@ -96,7 +96,6 @@ func TestFetchRecentConversations(t *testing.T) {
 		assert.Equal(t, 0, len(visitorData))
 	})
 }
-
 
 func TestInsertBriefing(t *testing.T) {
 	pool := testDB.Pool
