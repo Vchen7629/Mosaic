@@ -75,7 +75,7 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 			go h.handleRegisterVisitorFace(msg, safe)
 		case "audio":
 			service.Wg.Add(1)
-			go h.handleAudio(msg, safe)
+			go h.handleAudio(msg)
 		case "save_audio_transcript":
 			h.handleSaveAudioTranscript(msg)
 		}
@@ -109,7 +109,7 @@ func (h *WebSocketHandler) handleRegisterVisitorFace(m Message, safe *service.Sa
 }
 
 // process the audio sent from use mic by transcribing it to text
-func (h *WebSocketHandler) handleAudio(m Message, safe *service.SafeConn) {
+func (h *WebSocketHandler) handleAudio(m Message) {
 	defer service.Wg.Done()
 	err := service.ProcessAudio(m.AudioData, m.ProfileID, h.AudioClient)
 	if err != nil {
