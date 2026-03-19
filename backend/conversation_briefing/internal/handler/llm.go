@@ -43,7 +43,10 @@ func SummarizeWithLLM(
 
 	briefings := make([]briefing, 0, len(conversationList))
 	for _, conv := range conversationList {
-		prompt := service.BuildPrompt(conv.ConvoList)
+		prompt, err := service.BuildPrompt(conv.ConvoList)
+		if err != nil {
+			return nil, err
+		}
 
 		reqBody := ollamaChatRequest{
 			Model: model,
@@ -52,7 +55,7 @@ func SummarizeWithLLM(
 					Role: "system", 
 					Content: "You are a helpful assistant that summarizes user visitor conversations into concise briefings so they can view it later to see what they talked about",
 				},
-				{Role: "user", Content: prompt},
+				{Role: "user", Content: *prompt},
 			},
 			Stream: false,
 		}

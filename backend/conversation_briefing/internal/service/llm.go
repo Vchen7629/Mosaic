@@ -1,12 +1,16 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
 
 // formats the conversation list into a summariation prompt
-func BuildPrompt(convos []string) string {
+func BuildPrompt(convos []string) (*string, error) {
+	if len(convos) == 0 {
+		return nil, errors.New("missing conversation strings")
+	}
 	var sb strings.Builder
 
 	sb.WriteString(
@@ -17,5 +21,7 @@ func BuildPrompt(convos []string) string {
 	}
 
 	sb.WriteString("Provide a 3-4 sentence summary of the key topics, and conversation starters")
-	return sb.String()
+	
+	result := sb.String()
+	return &result, nil
 }
