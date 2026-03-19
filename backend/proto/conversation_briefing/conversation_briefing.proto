@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option go_package = "mosaic-client.com/gen/conversation_briefing";
+
+package conversation_briefing;
+
+// Conversation Briefing service definition
+service ConversationBriefingService {
+    // Called to generate a 3-4 sentence briefing summarizing conversations after each recording stops
+    rpc GenerateConversationBriefing (GenerateConversationBriefingRequest) returns (GenerateConversationBriefingResponse) {}
+}
+
+// Request to generate a new conversation briefing
+message GenerateConversationBriefingRequest {
+    int32 profile_id = 1;
+    repeated int32 visitor_ids = 2;
+}
+
+// Response from generate a new conversation briefing request
+message GenerateConversationBriefingResponse {
+    bool success = 1;
+}
