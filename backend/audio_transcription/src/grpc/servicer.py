@@ -1,11 +1,14 @@
 from psycopg_pool import ConnectionPool
 from ..core.logging import logger
 from ..core.settings import _LOGS_DIR
+from ..core.metrics import ErrorsTotal
+from ..core.metrics import ConvoSaveDuration
 from ..gen import audio_transcription_pb2
 from ..gen import audio_transcription_pb2_grpc
 from ..db.queries import save_conversation
 from ..transcription.log import ConvoLogHandler
 from ..transcription.handler import transcribe_handler
+import time
 import threading
 import numpy as np
 
@@ -45,11 +48,14 @@ class AudioTranscriptionServicer(
             profile_logger.close()
             convo_text = profile_logger.read()
 
+            convo_start = time.monotonic()
             with self._db_pool.connection() as conn:
                 save_conversation(
                     conn, request.profile_id, convo_text, request.visitor_ids
                 )
+            ConvoSaveDuration.observe((time.monotonic() - convo_start) * 1000)
         except Exception as e:
+            ErrorsTotal.labels(operation="save_conversation").inc()
             logger.error("failed to save conversation", err=str(e))
             return audio_transcription_pb2.SaveTranscriptResponse(success=False)
 

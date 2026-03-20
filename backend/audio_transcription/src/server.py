@@ -1,4 +1,5 @@
 from .db.connection_pool import create_connection_pool
+from prometheus_client import start_http_server
 from concurrent.futures import ThreadPoolExecutor
 from grpc_health.v1 import health as grpc_health
 from grpc_health.v1 import health_pb2_grpc
@@ -29,6 +30,8 @@ def serve():
     server.add_insecure_port(f"[::]:{settings.grpc_server_port}")
     server.start()
     logger.info("gRPC server running on", port=f"[::]:{settings.grpc_server_port}")
+    start_http_server(settings.metrics_server_port)
+    logger.info("metrics server listening", port=settings.metrics_server_port)
 
     signal.signal(signal.SIGINT, lambda sig, frame: handle_shutdown(server, sig, frame))
     signal.signal(

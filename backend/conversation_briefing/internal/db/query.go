@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	"mosaic-conversation-briefing.com/internal/observability"
 )
 
 type Conversations struct {
@@ -15,6 +17,7 @@ type Conversations struct {
 // fetch 5 most recent conversations from the db for the profile
 func (db *DBPool) FetchRecentConversations(profileID int32, visitorIDs []int32) ([]Conversations, error) {
 	ctx := context.Background()
+	observability.DBReadsTotal.WithLabelValues("fetch_conversations").Inc()
 
 	rows, err := db.pool.Query(ctx, `
 		SELECT visitor_id, convo_text FROM conversation_records
@@ -70,6 +73,7 @@ func (db *DBPool) FetchRecentConversations(profileID int32, visitorIDs []int32) 
 // Not atomic currently since rather have some succeed with new briefing rather than all for nothing
 func (db *DBPool) InsertBriefing(profileID int32, briefings map[int32]string) error {
 	ctx := context.Background()
+	observability.DBWritesTotal.WithLabelValues("insert_briefings").Inc()
 
 	query := `INSERT INTO briefings (profile_id, visitor_id, briefing_text)
 			VALUES ($1, $2, $3)

@@ -5,6 +5,7 @@ import (
 	"log"
 	"log/slog"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -19,10 +21,12 @@ import (
 	"mosaic-face-detection.com/internal/db"
 	"mosaic-face-detection.com/internal/handler"
 	"mosaic-face-detection.com/internal/service"
+	"mosaic-face-detection.com/internal/observability"
 )
 
 type Config struct {
 	ServerPort  string `envconfig:"SERVER_PORT" default:"40040"`
+	MetricsPort  string `envconfig:"METRICS_PORT" default:"8080"`
 	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
 	ModelsDir   string `envconfig:"MODELS_DIR" default:"models"`
 	RecPoolSize int    `envconfig:"REC_POOL_SIZE" default:"5"`
@@ -60,7 +64,7 @@ func gRPCServer(
 			os.Exit(1)
 		}
 	}()
-
+	
 	return grpcServer, nil
 }
 
@@ -90,6 +94,18 @@ func main() {
 	}
 
 	defer recPool.Close()
+
+	observability.RegisterMetrics()
+
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", promhttp.Handler())
+		logger.Info("metrics server listening", "port", cfg.MetricsPort)
+		err = http.ListenAndServe(":"+cfg.MetricsPort, mux)
+		if err != nil {
+			logger.Error("metrics server failed to start", "err", err)
+		}
+	}()
 
 	grpcServer, err := gRPCServer(logger, cfg, recPool, pool)
 	if err != nil {

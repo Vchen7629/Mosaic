@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	pgvector "github.com/pgvector/pgvector-go"
 	"mosaic-face-detection.com/internal/service"
+	"mosaic-face-detection.com/internal/observability"
 )
 
 // fetch all user profile embeddings saved in the database
@@ -17,6 +18,7 @@ func (db *DBPool) FetchProfileFaceEmbForID(profileID int32) ([]service.ProfileFa
 		return nil, errors.New("profileID must be positive")
 	}
 	ctx := context.Background()
+	observability.DBReadsTotal.WithLabelValues("fetch_profile_embeddings").Inc()
 
 	rows, err := db.pool.Query(ctx, `
 		SELECT profile_id, face_embedding FROM profile_face_embeddings
@@ -47,6 +49,7 @@ func (db *DBPool) FetchProfileFaceEmbForID(profileID int32) ([]service.ProfileFa
 // fetch all user profile embeddings saved in the database
 func (db *DBPool) FetchAllProfileFaceEmb() ([]service.ProfileFaces, error) {
 	ctx := context.Background()
+	observability.DBReadsTotal.WithLabelValues("fetch_all_profile_embeddings").Inc()
 
 	rows, err := db.pool.Query(ctx, `
 		SELECT profile_id, face_embedding FROM profile_face_embeddings
@@ -79,6 +82,7 @@ func (db *DBPool) FetchAllVisitorData(profileID int32) ([]service.VisitorFaces, 
 		return nil, errors.New("profileID must be positive")
 	}
 	ctx := context.Background()
+	observability.DBReadsTotal.WithLabelValues("fetch_visitor_data").Inc()
 
 	rows, err := db.pool.Query(ctx, `
 		SELECT id, visitor_name, face_embedding
@@ -125,6 +129,8 @@ func (db *DBPool) FetchVisitorBriefing(profileID, visitorID int32) (string, erro
 	}
 
 	ctx := context.Background()
+	observability.DBReadsTotal.WithLabelValues("fetch_briefing").Inc()
+
 	var briefing string
 
 	query := `
@@ -169,6 +175,8 @@ func (db *DBPool) AddNewFaceForVisitor(
 		return nil, errors.New("name must be a non empty string")
 	}
 
+	observability.DBReadsTotal.WithLabelValues("add_visitor").Inc()
+
 	err := service.ValidateEmbedding(embedding)
 	if err != nil {
 		return nil, err
@@ -207,6 +215,8 @@ func (db *DBPool) AddNewFaceForVisitor(
 
 // Add a new visitor for a user with their name and face_embedding
 func (db *DBPool) AddNewFaceForUser(embeddings []face.Descriptor) (*int32, error) {
+	observability.DBReadsTotal.WithLabelValues("register_profile").Inc()
+
 	for _, emb := range embeddings {
 		err := service.ValidateEmbedding(emb)
 		if err != nil {

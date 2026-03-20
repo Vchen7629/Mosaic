@@ -1,4 +1,5 @@
 from ..core.logging import logger
+from ..core.metrics import DBWritesTotal
 from .retry import retry_with_backoff
 import psycopg
 
@@ -26,7 +27,7 @@ def save_conversation(
         isinstance(vis_id, int) and vis_id > 0 for vis_id in visitor_ids
     ):
         raise ValueError("invalid visitor_ids provided")
-
+    
     query = """
         INSERT INTO conversation_records (
             profile_id, visitor_id, created_at, convo_text
@@ -36,6 +37,8 @@ def save_conversation(
 
     try:
         for visitor_id in visitor_ids:
+            DBWritesTotal.labels(operation="save_conversation").inc()
+
             with conn.cursor() as cursor:
                 cursor.execute(
                     query,

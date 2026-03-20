@@ -35,6 +35,18 @@ var transientErrorPatterns = map[string]bool{
 	"broken pipe":                   true,
 }
 
+// wrapper abstraction for db function
+func RetryDB[T any](logger *slog.Logger, ctx context.Context, fn func() (T, error)) (T, error) {
+	var result T
+	err := RetryWithBackoff(logger, ctx, DefaultRetryConfig(), func() error {
+		var err error
+		result, err = fn()
+		return err
+	})
+
+	return result, err
+}
+
 // retries a function with exponential backoff for transient errors
 func RetryWithBackoff(logger *slog.Logger, ctx context.Context, config RetryConfig, fn func() error) error {
 	var lastErr error

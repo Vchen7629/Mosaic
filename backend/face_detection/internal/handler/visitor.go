@@ -2,10 +2,13 @@ package handler
 
 import (
 	"context"
+	"time"
 
 	"github.com/Kagami/go-face"
 	fd "mosaic-face-detection.com/gen"
+	"mosaic-face-detection.com/internal/observability"
 	"mosaic-face-detection.com/internal/service"
+	"mosaic-face-detection.com/internal/db"
 )
 
 // Handler to process faces for visitors
@@ -21,9 +24,12 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 		"profile_id", req.ProfileId,
 		"face_byte_size", len(req.FaceBytes),
 	)
-
+	
+	embGenStart := time.Now()
 	embeddings, err := service.GenerateFaceEmbeddings(rec, req.FaceBytes)
+	observability.EmbeddingGenerationDuration.Observe(float64(time.Since(embGenStart).Milliseconds()))
 	if err != nil {
+		observability.ErrorsTotal.WithLabelValues("generate_embeddings").Inc()
 		s.logger.Error("error generating face embeddings", "err", err)
 		return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, nil
 	}
@@ -33,15 +39,20 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 		return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, nil
 	}
 
-	currentProfileEmbs, err := retryDB(s.logger, ctx, func() ([]service.ProfileFaces, error) {
+	profileFetchStart := time.Now()
+	currentProfileEmbs, err := db.RetryDB(s.logger, ctx, func() ([]service.ProfileFaces, error) {
 		return s.pool.FetchProfileFaceEmbForID(req.ProfileId)
 	})
+	observability.ProfileEmbFetchDuration.Observe(float64(time.Since(profileFetchStart).Milliseconds()))
 	if err != nil {
+		observability.ErrorsTotal.WithLabelValues("fetch_profile_embeddings").Inc()
 		s.logger.Error("error fetching profile face embedding", "err", err)
 		return &fd.ProcessVisitorFacesResponse{Success: false}, err
 	}
 
+	profileCmbStart := time.Now()
 	_, matched := service.CompareProfileFaces(rec, []face.Descriptor{embeddings[0]}, currentProfileEmbs)
+	observability.ProfileComparisonDuration.Observe(float64(time.Since(profileCmbStart).Milliseconds()))
 	if matched {
 		s.logger.Debug("process visitor face, matched face")
 		return &fd.ProcessVisitorFacesResponse{FaceDetected: true, NonVisitorFace: true}, nil
@@ -49,16 +60,21 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 
 	var knownVisitors []service.VisitorFaces
 	if req.ProfileId > 0 {
-		knownVisitors, err = retryDB(s.logger, ctx, func() ([]service.VisitorFaces, error) {
+		visitorFetchStart := time.Now()
+		knownVisitors, err = db.RetryDB(s.logger, ctx, func() ([]service.VisitorFaces, error) {
 			return s.pool.FetchAllVisitorData(req.ProfileId)
 		})
+		observability.VisitorEmbFetchDuration.Observe(float64(time.Since(visitorFetchStart).Milliseconds()))
 		if err != nil {
+			observability.ErrorsTotal.WithLabelValues("fetch_visitor_data").Inc()
 			s.logger.Error("error fetching visitor data", "err", err)
 			return &fd.ProcessVisitorFacesResponse{Success: false}, err
 		}
 	}
 
+	visitorCmpStart := time.Now()
 	matchingFaceRes := service.CompareVisitorFaces(rec, embeddings, knownVisitors)
+	observability.VisitorComparisonDuration.Observe(float64(time.Since(visitorCmpStart).Milliseconds()))
 
 	faceResults := make([]*fd.FaceResult, len(embeddings))
 	for i, match := range matchingFaceRes {
@@ -73,10 +89,13 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 				FaceEmbedding: embeddings[i][:], // [128]float32 to []float32
 			}
 		} else {
-			briefing, err := retryDB(s.logger, ctx, func() (string, error) {
+			briefingFetchStart := time.Now()
+			briefing, err := db.RetryDB(s.logger, ctx, func() (string, error) {
 				return s.pool.FetchVisitorBriefing(req.ProfileId, match.ID)
 			})
+			observability.BriefingFetchDuration.Observe(float64(time.Since(briefingFetchStart).Milliseconds()))
 			if err != nil {
+				observability.ErrorsTotal.WithLabelValues("fetch_briefing").Inc()
 				s.logger.Error(
 					"Failed to fetch briefing for visitor", 
 					"profile_id", req.ProfileId,
@@ -123,10 +142,13 @@ func (s *FaceDetectionServer) RegisterVisitorFace(
 	var embedding face.Descriptor
 	copy(embedding[:], req.FaceEmbedding)
 
-	visitorID, err := retryDB(s.logger, ctx, func() (*int32, error) {
+	visitorRegisterStart := time.Now()
+	visitorID, err := db.RetryDB(s.logger, ctx, func() (*int32, error) {
 		return s.pool.AddNewFaceForVisitor(req.ProfileId, req.VisitorName, embedding)
 	})
+	observability.VisitorRegisterDuration.Observe(float64(time.Since(visitorRegisterStart).Milliseconds()))
 	if err != nil {
+		observability.ErrorsTotal.WithLabelValues("register_visitor").Inc()
 		s.logger.Error("error adding new face for visitor", "profile_id", req.ProfileId, "err", err)
 		return &fd.RegisterVisitorFaceResponse{Success: false}, nil
 	}
