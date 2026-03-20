@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"log"
 
 	"github.com/Kagami/go-face"
 	fd "mosaic-face-detection.com/gen"
@@ -17,30 +16,44 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 	rec := s.recPool.Acquire() // acquiring one instance of the rec model from pool
 	defer s.recPool.Release(rec)
 
+	s.logger.Debug(
+		"Processing visitor faces while recording", 
+		"profile_id", req.ProfileId,
+		"face_byte_size", len(req.FaceBytes),
+	)
+
 	embeddings, err := service.GenerateFaceEmbeddings(rec, req.FaceBytes)
-	if err != nil || len(embeddings) == 0 {
+	if err != nil {
+		s.logger.Error("error generating face embeddings", "err", err)
 		return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, nil
 	}
 
-	currentProfileEmbs, err := retryDB(ctx, func() ([]service.ProfileFaces, error) {
+	if len(embeddings) == 0 {
+		s.logger.Debug("embeddings generated has size 0")
+		return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, nil
+	}
+
+	currentProfileEmbs, err := retryDB(s.logger, ctx, func() ([]service.ProfileFaces, error) {
 		return s.pool.FetchProfileFaceEmbForID(req.ProfileId)
 	})
 	if err != nil {
-		log.Printf("GRPC user profile error fetching from db: %v", err)
+		s.logger.Error("error fetching profile face embedding", "err", err)
 		return &fd.ProcessVisitorFacesResponse{Success: false}, err
 	}
 
 	_, matched := service.CompareProfileFaces(rec, []face.Descriptor{embeddings[0]}, currentProfileEmbs)
 	if matched {
+		s.logger.Debug("process visitor face, matched face")
 		return &fd.ProcessVisitorFacesResponse{FaceDetected: true, NonVisitorFace: true}, nil
 	}
 
 	var knownVisitors []service.VisitorFaces
 	if req.ProfileId > 0 {
-		knownVisitors, err = retryDB(ctx, func() ([]service.VisitorFaces, error) {
+		knownVisitors, err = retryDB(s.logger, ctx, func() ([]service.VisitorFaces, error) {
 			return s.pool.FetchAllVisitorData(req.ProfileId)
 		})
 		if err != nil {
+			s.logger.Error("error fetching visitor data", "err", err)
 			return &fd.ProcessVisitorFacesResponse{Success: false}, err
 		}
 	}
@@ -50,16 +63,26 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 	faceResults := make([]*fd.FaceResult, len(embeddings))
 	for i, match := range matchingFaceRes {
 		if match.ID == -1 { // non matching face case
+			s.logger.Debug(
+				"visitor face doesnt match with a visitor in the db for profile", 
+				"profile_id", req.ProfileId,
+				"visitor_name", match.Name,
+			)
 			faceResults[i] = &fd.FaceResult{
 				IsKnown:       false,
 				FaceEmbedding: embeddings[i][:], // [128]float32 to []float32
 			}
 		} else {
-			briefing, err := retryDB(ctx, func() (string, error) {
+			briefing, err := retryDB(s.logger, ctx, func() (string, error) {
 				return s.pool.FetchVisitorBriefing(req.ProfileId, match.ID)
 			})
 			if err != nil {
-				log.Printf("Failed to fetch briefing for visitor %d: %v", match.ID, err)
+				s.logger.Error(
+					"Failed to fetch briefing for visitor", 
+					"profile_id", req.ProfileId,
+					"visitor_id", match.ID,
+					"err", err,
+				)
 				briefing = "" // continuing with empty briefing instead of failing entire req
 			}
 
@@ -90,17 +113,21 @@ func (s *FaceDetectionServer) RegisterVisitorFace(
 		return nil, err
 	}
 
-	log.Printf(
-		"Recieved one face embedding of size %d with name %s patientID %d",
-		len(req.FaceEmbedding), req.VisitorName, req.ProfileId)
+	s.logger.Debug(
+		"Recieved one face embedding of size", 
+		"name", req.VisitorName, 
+		"profile_id", req.ProfileId, 
+		"embedding_len", len(req.FaceEmbedding),
+	)
 	// converting []float32 to face.Descriptor [128]float32
 	var embedding face.Descriptor
 	copy(embedding[:], req.FaceEmbedding)
 
-	visitorID, err := retryDB(ctx, func() (*int32, error) {
+	visitorID, err := retryDB(s.logger, ctx, func() (*int32, error) {
 		return s.pool.AddNewFaceForVisitor(req.ProfileId, req.VisitorName, embedding)
 	})
 	if err != nil {
+		s.logger.Error("error adding new face for visitor", "profile_id", req.ProfileId, "err", err)
 		return &fd.RegisterVisitorFaceResponse{Success: false}, nil
 	}
 

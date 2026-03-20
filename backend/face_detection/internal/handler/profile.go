@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/Kagami/go-face"
 	fd "mosaic-face-detection.com/gen"
@@ -18,10 +17,14 @@ func (s *FaceDetectionServer) SyncProfile(
 	rec := s.recPool.Acquire() // acquiring one instance of the rec model from pool
 	defer s.recPool.Release(rec)
 
+	s.logger.Debug("Syncing Profile using face bytes", "face_byte_size", len(req.FaceBytes))
+
+
 	var allEmbeddings []face.Descriptor
 	for _, frameBytes := range req.FaceBytes {
 		embeddings, err := service.GenerateFaceEmbeddings(rec, frameBytes)
 		if err != nil {
+			s.logger.Error("failed to generate face embeddings using the profile face", "err", err)
 			return nil, err
 		}
 		allEmbeddings = append(allEmbeddings, embeddings...)
@@ -29,22 +32,22 @@ func (s *FaceDetectionServer) SyncProfile(
 
 	// return early if no faces in frame
 	if len(allEmbeddings) == 0 {
-		log.Println("GRPC profile no faces detected in any frame")
+		s.logger.Debug("SyncProfile no faces detected in any frame")
 		return &fd.SyncProfileResponse{FaceDetected: false}, nil
 	}
 
-	knownProfileFaceEmbs, err := retryDB(ctx, func() ([]service.ProfileFaces, error) {
+	knownProfileFaceEmbs, err := retryDB(s.logger, ctx, func() ([]service.ProfileFaces, error) {
 		return s.pool.FetchAllProfileFaceEmb()
 	})
 	if err != nil {
-		log.Printf("GRPC user profile error fetching from db: %v", err)
+		s.logger.Error("failed to fetch face embeddings for all profiles from db", "err", err)
 		return &fd.SyncProfileResponse{Success: false}, err
 	}
 
 	matchingProfileID, matched := service.CompareProfileFaces(rec, allEmbeddings, knownProfileFaceEmbs)
 
 	if !matched {
-		log.Println("GRPC profile no faces matched!, returning embeddings for registration")
+		s.logger.Debug("GRPC profile no faces matched!, returning embeddings for registration")
 		faceEmbeddings := make([]*fd.FaceEmbedding, len(allEmbeddings))
 		for i, emb := range allEmbeddings {
 			faceEmbeddings[i] = &fd.FaceEmbedding{FaceEmbedding: emb[:]}
@@ -83,10 +86,11 @@ func (s *FaceDetectionServer) RegisterProfileFace(
 		copy(embeddings[i][:], e.FaceEmbedding)
 	}
 
-	profileID, err := retryDB(ctx, func() (*int32, error) {
+	profileID, err := retryDB(s.logger, ctx, func() (*int32, error) {
 		return s.pool.AddNewFaceForUser(embeddings)
 	})
 	if err != nil {
+		s.logger.Error("failed to add register new profile with face", "err", err)
 		return &fd.RegisterProfileFaceResponse{Success: false}, nil
 	}
 

@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 	"errors"
-	"log"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -36,7 +36,7 @@ var transientErrorPatterns = map[string]bool{
 }
 
 // retries a function with exponential backoff for transient errors
-func RetryWithBackoff(ctx context.Context, config RetryConfig, fn func() error) error {
+func RetryWithBackoff(logger *slog.Logger, ctx context.Context, config RetryConfig, fn func() error) error {
 	var lastErr error
 	wait := config.InitialWait
 
@@ -58,10 +58,7 @@ func RetryWithBackoff(ctx context.Context, config RetryConfig, fn func() error) 
 			break
 		}
 
-		log.Printf(
-			"Transient error on attempt %d/%d: %v. Retrying in %v",
-			attempt, config.MaxAttempts, err, wait,
-		)
+		logger.Warn("Transient error", "attempt", attempt, "wait-duration", wait, "err", err)
 
 		select {
 		case <-time.After(wait):
