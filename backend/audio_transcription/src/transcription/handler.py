@@ -1,6 +1,9 @@
 from .model import get_model
 from ..core.logging import logger
+from ..core.metrics import ErrorsTotal
+from ..core.metrics import WhisperDuration
 from typing import Optional
+import time
 import numpy as np
 
 
@@ -24,6 +27,7 @@ def transcribe_handler(chunk: np.ndarray) -> Optional[str]:
         chunk /= max_val
 
     try:
+        whisper_start = time.monotonic()
         result = get_model().transcribe(
             chunk,
             language="en",
@@ -34,9 +38,11 @@ def transcribe_handler(chunk: np.ndarray) -> Optional[str]:
             no_speech_threshold=0.9,
             fp16=False,
         )
+        WhisperDuration.observe((time.monotonic() - whisper_start) * 1000)
         text = result.get("text")
         return text.strip() or None if isinstance(text, str) else None
     except Exception as e:
+        ErrorsTotal.labels(operation="whisper_transcribe").inc()
         logger.error("Transcription error", err=str(e))
         if "CUDA" in str(e):
             logger.warning(
