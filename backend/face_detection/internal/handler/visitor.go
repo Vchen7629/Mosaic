@@ -6,9 +6,9 @@ import (
 
 	"github.com/Kagami/go-face"
 	fd "mosaic-face-detection.com/gen"
+	"mosaic-face-detection.com/internal/db"
 	"mosaic-face-detection.com/internal/observability"
 	"mosaic-face-detection.com/internal/service"
-	"mosaic-face-detection.com/internal/db"
 )
 
 // Handler to process faces for visitors
@@ -19,12 +19,8 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 	rec := s.recPool.Acquire() // acquiring one instance of the rec model from pool
 	defer s.recPool.Release(rec)
 
-	s.logger.Debug(
-		"Processing visitor faces while recording", 
-		"profile_id", req.ProfileId,
-		"face_byte_size", len(req.FaceBytes),
-	)
-	
+	s.logger.Debug("Processing visitor faces while recording", "profile_id", req.ProfileId, "face_byte_size", len(req.FaceBytes))
+
 	embGenStart := time.Now()
 	embeddings, err := service.GenerateFaceEmbeddings(rec, req.FaceBytes)
 	observability.EmbeddingGenerationDuration.Observe(float64(time.Since(embGenStart).Milliseconds()))
@@ -39,13 +35,15 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 		return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, nil
 	}
 
-	profileFetchStart := time.Now()
-	currentProfileEmbs, err := db.RetryDB(s.logger, ctx, func() ([]service.ProfileFaces, error) {
-		return s.pool.FetchProfileFaceEmbForID(req.ProfileId)
-	})
-	observability.ProfileEmbFetchDuration.Observe(float64(time.Since(profileFetchStart).Milliseconds()))
+	currentProfileEmbs, err := service.FetchProfileFaceEmbForIDWithCache(
+		ctx, req.ProfileId, s.cache, s.logger,
+		func() ([]service.ProfileFaces, error) {
+			return db.RetryDB(s.logger, ctx, func() ([]service.ProfileFaces, error) {
+				return s.pool.FetchProfileFaceEmbForID(req.ProfileId)
+			})
+		},
+	)
 	if err != nil {
-		observability.ErrorsTotal.WithLabelValues("fetch_profile_embeddings").Inc()
 		s.logger.Error("error fetching profile face embedding", "err", err)
 		return &fd.ProcessVisitorFacesResponse{Success: false}, err
 	}
@@ -61,9 +59,14 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 	var knownVisitors []service.VisitorFaces
 	if req.ProfileId > 0 {
 		visitorFetchStart := time.Now()
-		knownVisitors, err = db.RetryDB(s.logger, ctx, func() ([]service.VisitorFaces, error) {
-			return s.pool.FetchAllVisitorData(req.ProfileId)
-		})
+		knownVisitors, err = service.FetchAllVisitorDataWithCache(
+			ctx, req.ProfileId, s.cache, s.logger,
+			func() ([]service.VisitorFaces, error) {
+				return db.RetryDB(s.logger, ctx, func() ([]service.VisitorFaces, error) {
+					return s.pool.FetchAllVisitorData(req.ProfileId)
+				})
+			},
+		)
 		observability.VisitorEmbFetchDuration.Observe(float64(time.Since(visitorFetchStart).Milliseconds()))
 		if err != nil {
 			observability.ErrorsTotal.WithLabelValues("fetch_visitor_data").Inc()
@@ -78,40 +81,7 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 
 	faceResults := make([]*fd.FaceResult, len(embeddings))
 	for i, match := range matchingFaceRes {
-		if match.ID == -1 { // non matching face case
-			s.logger.Debug(
-				"visitor face doesnt match with a visitor in the db for profile", 
-				"profile_id", req.ProfileId,
-				"visitor_name", match.Name,
-			)
-			faceResults[i] = &fd.FaceResult{
-				IsKnown:       false,
-				FaceEmbedding: embeddings[i][:], // [128]float32 to []float32
-			}
-		} else {
-			briefingFetchStart := time.Now()
-			briefing, err := db.RetryDB(s.logger, ctx, func() (string, error) {
-				return s.pool.FetchVisitorBriefing(req.ProfileId, match.ID)
-			})
-			observability.BriefingFetchDuration.Observe(float64(time.Since(briefingFetchStart).Milliseconds()))
-			if err != nil {
-				observability.ErrorsTotal.WithLabelValues("fetch_briefing").Inc()
-				s.logger.Error(
-					"Failed to fetch briefing for visitor", 
-					"profile_id", req.ProfileId,
-					"visitor_id", match.ID,
-					"err", err,
-				)
-				briefing = "" // continuing with empty briefing instead of failing entire req
-			}
-
-			faceResults[i] = &fd.FaceResult{
-				IsKnown:   true,
-				Briefing:  briefing,
-				VisitorId: match.ID,
-				Name:      match.Name,
-			}
-		}
+		faceResults[i] = s.buildFaceResult(ctx, req.ProfileId, match, embeddings[i])
 	}
 
 	return &fd.ProcessVisitorFacesResponse{
@@ -133,9 +103,9 @@ func (s *FaceDetectionServer) RegisterVisitorFace(
 	}
 
 	s.logger.Debug(
-		"Recieved one face embedding of size", 
-		"name", req.VisitorName, 
-		"profile_id", req.ProfileId, 
+		"Recieved one face embedding of size",
+		"name", req.VisitorName,
+		"profile_id", req.ProfileId,
 		"embedding_len", len(req.FaceEmbedding),
 	)
 	// converting []float32 to face.Descriptor [128]float32
@@ -153,5 +123,40 @@ func (s *FaceDetectionServer) RegisterVisitorFace(
 		return &fd.RegisterVisitorFaceResponse{Success: false}, nil
 	}
 
+	newEntry := service.VisitorFaces{ID: *visitorID, Name: req.VisitorName, Embedding: embedding}
+	service.AppendToVisitorDataCache(ctx, req.ProfileId, s.cache, newEntry)
+
 	return &fd.RegisterVisitorFaceResponse{Success: true, VisitorId: *visitorID}, nil
+}
+
+// Builds the face result gRPC response with briefing text, visitor id and name
+func (s *FaceDetectionServer) buildFaceResult(
+	ctx context.Context,
+	profileID int32,
+	match service.VisitorMatch,
+	embedding face.Descriptor,
+) *fd.FaceResult {
+	if match.ID == -1 { // non matching face case
+		s.logger.Debug(
+			"visitor face doesnt match with a visitor in the db for profile",
+			"profile_id", profileID,
+			"visitor_name", match.Name,
+		)
+		return &fd.FaceResult{
+			IsKnown:       false,
+			FaceEmbedding: embedding[:], // [128]float32 to []float32
+		}
+	}
+	briefingFetchStart := time.Now()
+	briefing, err := db.RetryDB(s.logger, ctx, func() (string, error) {
+		return s.pool.FetchVisitorBriefing(profileID, match.ID)
+	})
+	observability.BriefingFetchDuration.Observe(float64(time.Since(briefingFetchStart).Milliseconds()))
+	if err != nil {
+		observability.ErrorsTotal.WithLabelValues("fetch_briefing").Inc()
+		s.logger.Error("Failed to fetch briefing for visitor", "profile_id", profileID, "visitor_id", match.ID, "err", err)
+		briefing = "" // continuing with empty briefing instead of failing entire req
+	}
+
+	return &fd.FaceResult{IsKnown: true, Briefing: briefing, VisitorId: match.ID, Name: match.Name}
 }
