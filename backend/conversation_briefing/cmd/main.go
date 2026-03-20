@@ -5,6 +5,7 @@ import (
 	"log"
 	"log/slog"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,16 +13,19 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	cb "mosaic-conversation-briefing.com/gen"
 	"mosaic-conversation-briefing.com/internal/db"
 	"mosaic-conversation-briefing.com/internal/handler"
+	"mosaic-conversation-briefing.com/internal/observability"
 )
 
 type Config struct {
 	ServerPort  string `envconfig:"SERVER_PORT" default:"30030"`
+	MetricsPort  string `envconfig:"METRICS_PORT" default:"8080"`
 	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
 	LLMBaseURL  string `envconfig:"OLLAMA_BASE_URL" default:""`
 	ProdMode 	bool   `envconfig:"PROD_MODE" default:"false"`
@@ -81,6 +85,18 @@ func main() {
 		logger.Error("failed to start gRPC server", "err", err)
 		os.Exit(1)
 	}
+
+	observability.RegisterMetrics()
+
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", promhttp.Handler())
+		logger.Info("metrics server listening", "port", cfg.MetricsPort)
+		err = http.ListenAndServe(":"+cfg.MetricsPort, mux)
+		if err != nil {
+			logger.Error("metrics server failed to start", "err", err)
+		}
+	}()
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
