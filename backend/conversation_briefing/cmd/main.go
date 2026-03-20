@@ -27,7 +27,7 @@ import (
 
 type Config struct {
 	ServerPort  string `envconfig:"SERVER_PORT" default:"30030"`
-	MetricsPort  string `envconfig:"METRICS_PORT" default:"9091"`
+	MetricsPort  string `envconfig:"METRICS_PORT" default:"9090"`
 	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
 	LLMBaseURL  string `envconfig:"OLLAMA_BASE_URL" default:""`
 	ProdMode 	bool   `envconfig:"PROD_MODE" default:"false"`

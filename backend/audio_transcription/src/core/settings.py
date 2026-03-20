@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     grpc_server_port: int = 50051
     max_workers: int = 10
 
-    metrics_server_port: int = 8080
+    metrics_server_port: int = 9091
 
     # --- Audio Settings ---
     whisper_mode: str = "small"
