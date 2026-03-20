@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"log/slog"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/joho/godotenv"
@@ -25,7 +27,7 @@ import (
 
 type Config struct {
 	ServerPort  string `envconfig:"SERVER_PORT" default:"30030"`
-	MetricsPort  string `envconfig:"METRICS_PORT" default:"8080"`
+	MetricsPort  string `envconfig:"METRICS_PORT" default:"9091"`
 	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
 	LLMBaseURL  string `envconfig:"OLLAMA_BASE_URL" default:""`
 	ProdMode 	bool   `envconfig:"PROD_MODE" default:"false"`
@@ -60,6 +62,27 @@ func gRPCServer(logger *slog.Logger, cfg *Config, pool *pgxpool.Pool) (*grpc.Ser
 	return gRPCServer, nil
 }
 
+// exposes a /metrics prometheus and /ready endpoint for readiness
+func observabilityServer(logger *slog.Logger, cfg *Config, pool *pgxpool.Pool) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+		err := pool.Ping(ctx)
+		if err != nil {
+			http.Error(w, "service not ready", http.StatusServiceUnavailable)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+	mux.Handle("/metrics", promhttp.Handler())
+	logger.Info("metrics server listening", "port", cfg.MetricsPort)
+	err := http.ListenAndServe(":"+cfg.MetricsPort, mux)
+	if err != nil {
+		logger.Error("metrics server failed to start", "err", err)
+	}
+}
+
 func main() {
 	cfg, err := loadConfig()
 	if err != nil {
@@ -88,15 +111,7 @@ func main() {
 
 	observability.RegisterMetrics()
 
-	go func() {
-		mux := http.NewServeMux()
-		mux.Handle("/metrics", promhttp.Handler())
-		logger.Info("metrics server listening", "port", cfg.MetricsPort)
-		err = http.ListenAndServe(":"+cfg.MetricsPort, mux)
-		if err != nil {
-			logger.Error("metrics server failed to start", "err", err)
-		}
-	}()
+	go observabilityServer(logger, cfg, pool)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
