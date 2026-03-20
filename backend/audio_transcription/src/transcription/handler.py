@@ -1,9 +1,8 @@
 from .model import get_model
+from ..core.logging import logger
 from typing import Optional
-import logging
 import numpy as np
 
-logger = logging.getLogger(__name__)
 
 def transcribe_handler(chunk: np.ndarray) -> Optional[str]:
     """
@@ -14,7 +13,7 @@ def transcribe_handler(chunk: np.ndarray) -> Optional[str]:
         chunk: the audio chunk containing audio bytes
 
     Returns:
-        the transcribed audio in text using whisper or empty string 
+        the transcribed audio in text using whisper or empty string
     """
     chunk = chunk.astype(np.float32)
     if not np.isfinite(chunk).all():
@@ -37,8 +36,10 @@ def transcribe_handler(chunk: np.ndarray) -> Optional[str]:
         )
         return result.get("text", "").strip() or None
     except Exception as e:
-        logger.error(f"Transcription error: {e}")
+        logger.error("Transcription error", err=str(e))
         if "CUDA" in str(e):
-            logger.warning("CUDA error detected, clearing model cache for reload on next call")
+            logger.warning(
+                "CUDA error detected, clearing model cache for reload on next call"
+            )
             get_model.cache_clear()
         return None
