@@ -28,7 +28,7 @@ import (
 
 type Config struct {
 	ServerPort  string `envconfig:"SERVER_PORT" default:"40040"`
-	MetricsPort  string `envconfig:"METRICS_PORT" default:"9091"`
+	MetricsPort  string `envconfig:"METRICS_PORT" default:"9092"`
 	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
 	ModelsDir   string `envconfig:"MODELS_DIR" default:"models"`
 	RecPoolSize int    `envconfig:"REC_POOL_SIZE" default:"5"`
