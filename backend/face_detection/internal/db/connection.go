@@ -2,37 +2,42 @@ package db
 
 import (
 	"context"
+	"os"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"log"
+	"log/slog"
 	"time"
 )
 
 type DBPool struct {
-	pool *pgxpool.Pool
+	pool 	*pgxpool.Pool
+	logger 	*slog.Logger
 }
 
 // allows us to initialize the db pool in main.go
-func NewDBPool(pool *pgxpool.Pool) *DBPool {
-	return &DBPool{pool: pool}
+func NewDBPool(pool *pgxpool.Pool, logger *slog.Logger) *DBPool {
+	return &DBPool{pool: pool, logger: logger}
 }
 
 // set up pgxpool db connection pool
-func ConnectionPool(database_url string) *pgxpool.Pool {
+func ConnectionPool(logger *slog.Logger, database_url string) *pgxpool.Pool {
 	pool, err := pgxpool.ConnectConfig(
-		context.Background(), databaseConfig(database_url),
+		context.Background(), databaseConfig(logger, database_url),
 	)
 	if err != nil {
-		log.Fatalf("Unable to connect to database %v\n", err)
+		logger.Error("Unable to connect to database", "err", err)
+		os.Exit(1)
 	}
 
+	logger.Info("successfully created db connection pool")
 	return pool
 }
 
 // Pgxpool postgres connection pool config values
-func databaseConfig(database_url string) *pgxpool.Config {
+func databaseConfig(logger *slog.Logger, database_url string) *pgxpool.Config {
 	config, err := pgxpool.ParseConfig(database_url)
 	if err != nil {
-		log.Fatalf("Unable to parse DATABASE_URL %v\n", err)
+		logger.Error("Unable to parse DATABASE_URL", "err", err)
+		os.Exit(1)	
 	}
 
 	config.MaxConns = 50

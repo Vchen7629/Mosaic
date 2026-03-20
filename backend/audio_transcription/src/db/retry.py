@@ -1,6 +1,9 @@
 import time
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any
+from typing import TypeVar
+from typing import Callable
+from ..core.logging import logger
 import psycopg
 
 ReturnType = TypeVar("ReturnType")
@@ -45,16 +48,23 @@ def retry_with_backoff(
             for attempt in range(max_retries + 1):
                 try:
                     return func(*args, **kwargs)
+
                 except RETRYABLE_ERRORS as e:
                     if attempt == max_retries:
-                        # Final failure - log it
+                        logger.error("failed after max retries", err=str(e))
                         raise
-
+                    logger.warning(
+                        "failed with transient error",
+                        current_attempt=attempt,
+                        max_retries=max_retries,
+                        err=str(e),
+                    )
                     # Retry with exponential backoff
                     time.sleep(delay)
                     delay = min(delay * backoff_multiplier, max_delay)
                 except Exception as e:
                     # Non-retryable error - fail immediately
+                    logger.error("Non retryable error, failing early", err=str(e))
                     raise
 
         return wrapper

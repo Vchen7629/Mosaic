@@ -2,10 +2,11 @@ import pytest
 from src.db.queries import save_conversation
 import psycopg
 
+
 def test_insert_one_valid_convo(
     db_connection: psycopg.Connection,
     seed_profile_table: int,
-    seed_visitor_face_embeddings_table: int
+    seed_visitor_face_embeddings_table: int,
 ) -> None:
     """Should add the convo to db properly"""
     profileID = seed_profile_table(db_connection)
@@ -26,10 +27,11 @@ def test_insert_one_valid_convo(
 
         assert result[0] == "placeholdText"
 
+
 def test_insert_multiple_convo_for_same_profile_visitor_no_issues(
     db_connection: psycopg.Connection,
     seed_profile_table: int,
-    seed_visitor_face_embeddings_table: int
+    seed_visitor_face_embeddings_table: int,
 ) -> None:
     """Should add the convos to db properly"""
     profileID = seed_profile_table(db_connection)
@@ -53,7 +55,10 @@ def test_insert_multiple_convo_for_same_profile_visitor_no_issues(
         assert result[1][0] == "placeholdText1"
         assert result[4][0] == "placeholdText4"
 
-def test_insert_nonexistant_patient_or_visitor_id(db_connection: psycopg.Connection) -> None:
+
+def test_insert_nonexistant_patient_or_visitor_id(
+    db_connection: psycopg.Connection,
+) -> None:
     """non existant profile id or visitor id should raise error"""
     with pytest.raises(Exception):
-        save_conversation(db_connection, 23, f"placeholdText{i}", 23)
+        save_conversation(db_connection, 23, "placeholdText", 23)

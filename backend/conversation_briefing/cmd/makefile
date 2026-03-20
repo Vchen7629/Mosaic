@@ -1,4 +1,5 @@
-all: integration unit
+build: 
+tests: integration unit
 
 integration:
 	go test -tags integration ../internal/db/...

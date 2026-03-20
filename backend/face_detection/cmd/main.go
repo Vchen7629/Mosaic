@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -23,10 +24,12 @@ type Config struct {
 	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
 	ModelsDir   string `envconfig:"MODELS_DIR" default:"models"`
 	RecPoolSize int    `envconfig:"REC_POOL_SIZE" default:"5"`
+	ProdMode	bool   `envconfig:"PROD_MODE" default:"false"`
 }
 
 // handles starting the gRPC server
 func gRPCServer(
+	logger *slog.Logger,
 	cfg *Config,
 	recPool *service.RecognizerPool,
 	pool *pgxpool.Pool,
@@ -36,18 +39,19 @@ func gRPCServer(
 		return nil, fmt.Errorf("failed to listen: %w", err)
 	}
 
-	dbPool := db.NewDBPool(pool)
+	dbPool := db.NewDBPool(pool, logger)
 
 	grpcServer := grpc.NewServer()
 	fd.RegisterFaceDetectionServiceServer(
-		grpcServer, handler.NewFaceDetectionServer(recPool, dbPool),
+		grpcServer, handler.NewFaceDetectionServer(logger, recPool, dbPool),
 	)
 
 	go func() {
-		log.Printf("face detection gRPC server listening on: %s", cfg.ServerPort)
+		logger.Info("gRPC server listening on", "port", cfg.ServerPort)
 		err = grpcServer.Serve(lis)
 		if err != nil {
-			log.Fatalf("failed to serve: %v", err)
+			logger.Error("failed to serve gRPC server", "err", err,)
+			os.Exit(1)
 		}
 	}()
 
@@ -60,21 +64,31 @@ func main() {
 		log.Fatalf("failed to load config values: %v", err)
 	}
 
-	log.Println("Starting Service...")
-	pool := db.ConnectionPool(cfg.DatabaseURL)
+	var handler slog.Handler
+	if cfg.ProdMode {
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	} else {
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})		
+	}
+	logger := slog.New(handler).With("service", "face_detection")
+
+	logger.Info("Starting gRPC server...")
+	pool := db.ConnectionPool(logger, cfg.DatabaseURL)
 
 	defer pool.Close()
 
 	recPool, err := service.NewRecognizerPool(cfg.ModelsDir, cfg.RecPoolSize)
 	if err != nil {
-		log.Fatalf("failed to init recognizer pool: %v", err)
+		logger.Error("failed to init recognizer pool", "err", err)
+		os.Exit(1)
 	}
 
 	defer recPool.Close()
 
-	grpcServer, err := gRPCServer(cfg, recPool, pool)
+	grpcServer, err := gRPCServer(logger, cfg, recPool, pool)
 	if err != nil {
-		log.Fatalf("failed to start gRPC server: %v", err)
+		logger.Error("failed to start gRPC server", "err", err)
+		os.Exit(1)
 	}
 
 	// go channel for listening to sigint/sigterm signals for graceful shutdown
@@ -84,12 +98,12 @@ func main() {
 
 	// Block until shutdown signal recieved
 	<-sigChan
-	log.Println("Shutting down gracefully...")
+	logger.Info("Shutting down gracefully...")
 
 	grpcServer.GracefulStop()
 	pool.Close()
 
-	log.Println("Closed gRPC and dbpool connection")
+	logger.Info("Closed gRPC and dbpool connection")
 }
 
 // method to load config values

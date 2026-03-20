@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
-
-	"github.com/jackc/pgx/v4"
 )
 
 type Conversations struct {
@@ -54,6 +51,13 @@ func (db *DBPool) FetchRecentConversations(profileID int32, visitorIDs []int32) 
 		}
 	}
 
+	db.logger.Debug(
+		"Fetched recent conversations", 
+		"profile_id", profileID, 
+		"visitor_ids", visitorIDs, 
+		"convo_count", len(convoMap),
+	)
+
 	result := make([]Conversations, 0, len(convoMap))
 	for _, convo := range convoMap {
 		result = append(result, *convo)
@@ -62,31 +66,22 @@ func (db *DBPool) FetchRecentConversations(profileID int32, visitorIDs []int32) 
 	return result, nil
 }
 
-// Upsert briefing for all visitorIDs as in batch
+// Upsert briefing for all visitorIDs individually
 // Not atomic currently since rather have some succeed with new briefing rather than all for nothing
 func (db *DBPool) InsertBriefing(profileID int32, briefings map[int32]string) error {
 	ctx := context.Background()
-	batch := &pgx.Batch{}
 
-	for visitorID, briefing_text := range briefings {
-		batch.Queue(`
-			INSERT INTO briefings (profile_id, visitor_id, briefing_text) 
+	query := `INSERT INTO briefings (profile_id, visitor_id, briefing_text)
 			VALUES ($1, $2, $3)
 			ON CONFLICT (profile_id, visitor_id) DO UPDATE
-				SET briefing_text = EXCLUDED.briefing_text
-		`, profileID, visitorID, briefing_text)
-	}
-
-	br := db.pool.SendBatch(ctx, batch)
-	defer br.Close()
+				SET briefing_text = EXCLUDED.briefing_text`
 
 	failCount := 0
-	for visitorID, _ := range briefings {
-		_, err := br.Exec()
+	for visitorID, briefingText := range briefings {
+		_, err := db.pool.Exec(ctx, query, profileID, visitorID, briefingText)
 		if err != nil {
-			// not failing if some visitor ID fails in batch so succeeded visitors
-			// will get updated batch
-			log.Printf("error inserting briefing for visitor %d: %v", visitorID, err)
+			// not failing if some visitor ID fails so succeeded visitors will get updated briefing
+			db.logger.Warn("briefing failed to save", "visitor", visitorID, "err", err)
 			failCount++
 		}
 	}
