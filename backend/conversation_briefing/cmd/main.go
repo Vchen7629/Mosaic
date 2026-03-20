@@ -43,6 +43,7 @@ func gRPCServer(logger *slog.Logger, cfg *Config, pool *pgxpool.Pool) (*grpc.Ser
 		err = gRPCServer.Serve(lis)
 		if err != nil {
 			logger.Error("failed to serve gRPC server", "err", err,)
+			os.Exit(1)
 		}
 	}()
 
