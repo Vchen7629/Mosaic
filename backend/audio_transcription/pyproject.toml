@@ -15,6 +15,7 @@ dependencies = [
     "psycopg-pool>=3.3.0",
     "psycopg>=3.3.3",
     "structlog>=25.5.0",
+    "grpcio-health-checking>=1.78.0",
 ]
 
 [[tool.uv.index]]
