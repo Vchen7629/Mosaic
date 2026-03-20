@@ -48,7 +48,7 @@ func WebsocketServer(
 		Handler: middleware.Logging(router),
 	}
 
-	logger.Debug("[client] Server running on http://localhost:8000")
+	logger.Debug("[client] Server running on", "port", cfg.ServerPort)
 	err := server.ListenAndServe()
 	if err != nil {
 		logger.Error("HTTP Server failed to start", "err", err)
