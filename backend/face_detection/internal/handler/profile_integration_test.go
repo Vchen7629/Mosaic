@@ -4,6 +4,7 @@ package handler_test
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"testing"
@@ -36,8 +37,10 @@ func TestSyncProfile(t *testing.T) {
 	assert.NoError(t, err)
 
 	pool := testDB.Pool
-	dbPool := db.NewDBPool(pool)
-	server := handler.NewFaceDetectionServer(recPool, dbPool)
+	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	logger := slog.New(jsonHandler).With("service", "face_detection")
+	dbPool := db.NewDBPool(pool, logger)
+	server := handler.NewFaceDetectionServer(logger, recPool, dbPool)
 
 	t.Run("No face bytes input should return face detected = false", func(t *testing.T) {
 		res, err := server.SyncProfile(context.Background(), &fd.SyncProfileRequest{
@@ -128,8 +131,10 @@ func TestRegisterProfileFace(t *testing.T) {
 	assert.NoError(t, err)
 
 	pool := testDB.Pool
-	dbPool := db.NewDBPool(pool)
-	server := handler.NewFaceDetectionServer(recPool, dbPool)
+	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	logger := slog.New(jsonHandler).With("service", "face_detection")
+	dbPool := db.NewDBPool(pool, logger)
+	server := handler.NewFaceDetectionServer(logger, recPool, dbPool)
 
 	t.Run("One valid embedding should be saved to db properly", func(t *testing.T) {
 		test.CleanupTables(t, pool)

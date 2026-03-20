@@ -4,6 +4,7 @@ package handler_test
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"testing"
@@ -25,9 +26,11 @@ func TestProcessVisitorFaces(t *testing.T) {
 	rec := recPool.Acquire()
 	defer recPool.Release(rec)
 
+	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	logger := slog.New(jsonHandler).With("service", "face_detection")
 	pool := testDB.Pool
-	dbPool := db.NewDBPool(pool)
-	server := handler.NewFaceDetectionServer(recPool, dbPool)
+	dbPool := db.NewDBPool(pool, logger)
+	server := handler.NewFaceDetectionServer(logger, recPool, dbPool)
 
 	t.Run("No face bytes input should return face detected = false", func(t *testing.T) {
 		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
@@ -105,9 +108,11 @@ func TestRegisterVisitorFace(t *testing.T) {
 	recPool, err := service.NewRecognizerPool(testModelsDir, 5)
 	assert.NoError(t, err)
 
+	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	logger := slog.New(jsonHandler).With("service", "face_detection")
 	pool := testDB.Pool
-	dbPool := db.NewDBPool(pool)
-	server := handler.NewFaceDetectionServer(recPool, dbPool)
+	dbPool := db.NewDBPool(pool, logger)
+	server := handler.NewFaceDetectionServer(logger, recPool, dbPool)
 
 	t.Run("One valid embedding should be saved to db properly", func(t *testing.T) {
 		test.CleanupTables(t, pool)

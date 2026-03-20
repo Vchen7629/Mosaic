@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"log/slog"
 
 	"github.com/Kagami/go-face"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +30,9 @@ func TestMain(m *testing.M) {
 
 func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 	pool := testDB.Pool
-	dbPool := db.NewDBPool(pool)
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	logger := slog.New(handler).With("service", "face_detection")
+	dbPool := db.NewDBPool(pool, logger)
 	t.Run("returns error for negative profileID", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
@@ -86,7 +89,10 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 
 func TestFetchAllProfileFaceEmb(t *testing.T) {
 	pool := testDB.Pool
-	dbPool := db.NewDBPool(pool)
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	logger := slog.New(handler).With("service", "face_detection")
+	dbPool := db.NewDBPool(pool, logger)
+
 	t.Run("returns empty list when fetching from an empty db", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
@@ -122,7 +128,9 @@ func TestFetchAllProfileFaceEmb(t *testing.T) {
 
 func TestFetchVisitorBriefing(t *testing.T) {
 	pool := testDB.Pool
-	dbPool := db.NewDBPool(pool)
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	logger := slog.New(handler).With("service", "face_detection")
+	dbPool := db.NewDBPool(pool, logger)
 	embedding := test.MakeEmbedding(0.1, 128)
 
 	t.Run("returns error for negative profileID and visitorID", func(t *testing.T) {
@@ -187,7 +195,9 @@ func TestFetchVisitorBriefing(t *testing.T) {
 
 func TestAddNewFaceForVisitor(t *testing.T) {
 	pool := testDB.Pool
-	dbPool := db.NewDBPool(pool)
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	logger := slog.New(handler).With("service", "face_detection")
+	dbPool := db.NewDBPool(pool, logger)
 
 	t.Run("returns error for invalid profileID, name, and embedding", func(t *testing.T) {
 		test.CleanupTables(t, pool)
@@ -266,7 +276,9 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 
 func TestAddNewFaceForUser(t *testing.T) {
 	pool := testDB.Pool
-	dbPool := db.NewDBPool(pool)
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	logger := slog.New(handler).With("service", "face_detection")
+	dbPool := db.NewDBPool(pool, logger)
 
 	t.Run("returns error and nil id for invalid embedding", func(t *testing.T) {
 		test.CleanupTables(t, pool)
