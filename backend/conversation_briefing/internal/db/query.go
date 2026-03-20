@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
-
 )
 
 type Conversations struct {
@@ -53,6 +51,13 @@ func (db *DBPool) FetchRecentConversations(profileID int32, visitorIDs []int32) 
 		}
 	}
 
+	db.logger.Debug(
+		"Fetched recent conversations", 
+		"profile_id", profileID, 
+		"visitor_ids", visitorIDs, 
+		"convo_count", len(convoMap),
+	)
+
 	result := make([]Conversations, 0, len(convoMap))
 	for _, convo := range convoMap {
 		result = append(result, *convo)
@@ -63,7 +68,7 @@ func (db *DBPool) FetchRecentConversations(profileID int32, visitorIDs []int32) 
 
 // Upsert briefing for all visitorIDs individually
 // Not atomic currently since rather have some succeed with new briefing rather than all for nothing
-func (db *DBPool) InsertBriefing(logger *slog.Logger, profileID int32, briefings map[int32]string) error {
+func (db *DBPool) InsertBriefing(profileID int32, briefings map[int32]string) error {
 	ctx := context.Background()
 
 	query := `INSERT INTO briefings (profile_id, visitor_id, briefing_text)
@@ -76,7 +81,7 @@ func (db *DBPool) InsertBriefing(logger *slog.Logger, profileID int32, briefings
 		_, err := db.pool.Exec(ctx, query, profileID, visitorID, briefingText)
 		if err != nil {
 			// not failing if some visitor ID fails so succeeded visitors will get updated briefing
-			logger.Warn("briefing failed to save", "service", "conversation_briefing", "visitor", visitorID, "err", err)
+			db.logger.Warn("briefing failed to save", "visitor", visitorID, "err", err)
 			failCount++
 		}
 	}
