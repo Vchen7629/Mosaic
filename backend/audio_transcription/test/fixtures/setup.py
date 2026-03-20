@@ -1,10 +1,8 @@
 from typing import Generator
-from pgvector.psycopg import register_vector
 from psycopg_pool import ConnectionPool
 from testcontainers.postgres import PostgresContainer
 import pytest
 import psycopg
-import numpy as np
 
 
 @pytest.fixture(scope="session")
@@ -57,7 +55,9 @@ def db_connection(
 
     # Cleanup BEFORE test to ensure clean state
     with conn.cursor() as cursor:
-        cursor.execute("TRUNCATE TABLE profiles, visitor_face_embeddings, conversation_records RESTART IDENTITY CASCADE;")
+        cursor.execute(
+            "TRUNCATE TABLE profiles, visitor_face_embeddings, conversation_records RESTART IDENTITY CASCADE;"
+        )
     conn.commit()
 
     yield conn
@@ -69,7 +69,9 @@ def db_connection(
 
 
 @pytest.fixture
-def db_pool(postgres_container: PostgresContainer) -> Generator[ConnectionPool, None, None]:
+def db_pool(
+    postgres_container: PostgresContainer,
+) -> Generator[ConnectionPool, None, None]:
     """
     Create a connection pool for testing pool-based operations. clean up tables after each test
     """
