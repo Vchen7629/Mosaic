@@ -46,6 +46,12 @@ var (
 		Buckets: 	[]float64{0.05, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1},
 	})
 
+	VisitorRegisterDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:		"face_detection_visitor_register_duration_seconds",
+		Help: 		"Time to register a new visitor with face embeddings in DB",
+		Buckets: 	[]float64{0.05, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1},
+	})
+
 	DBReadsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name:	"face_detection_db_reads_total",
 		Help:	"Total DB read operations by operation",
@@ -72,7 +78,7 @@ var (
 	}, []string{"operation"})
 )
 
-func Register() {
+func RegisterMetrics() {
 	prometheus.MustRegister(
 		EmbeddingGenerationDuration,
 		ProfileEmbFetchDuration,
@@ -81,6 +87,7 @@ func Register() {
 		VisitorComparisonDuration,
 		BriefingFetchDuration,
 		ProfileRegisterDuration,
+		VisitorRegisterDuration,
 		DBReadsTotal,
 		DBWritesTotal,
 		CacheHitsTotal,
