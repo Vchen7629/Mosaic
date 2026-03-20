@@ -13,6 +13,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	fd "mosaic-face-detection.com/gen"
 	"mosaic-face-detection.com/internal/db"
 	"mosaic-face-detection.com/internal/handler"
@@ -45,6 +47,10 @@ func gRPCServer(
 	fd.RegisterFaceDetectionServiceServer(
 		grpcServer, handler.NewFaceDetectionServer(logger, recPool, dbPool),
 	)
+
+	healthServer := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(grpcServer, healthServer)
+	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	go func() {
 		logger.Info("gRPC server listening on", "port", cfg.ServerPort)
