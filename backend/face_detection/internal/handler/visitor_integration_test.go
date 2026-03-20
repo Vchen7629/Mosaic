@@ -30,9 +30,12 @@ func TestProcessVisitorFaces(t *testing.T) {
 	logger := slog.New(jsonHandler).With("service", "face_detection")
 	pool := testDB.Pool
 	dbPool := db.NewDBPool(pool, logger)
-	server := handler.NewFaceDetectionServer(logger, recPool, dbPool)
+	cacheClient := testCache.Client
+	server := handler.NewFaceDetectionServer(logger, recPool, cacheClient, dbPool)
 
 	t.Run("No face bytes input should return face detected = false", func(t *testing.T) {
+		test.FlushCache(t, cacheClient)
+
 		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
 			FaceBytes: []byte{},
 		})
@@ -43,6 +46,7 @@ func TestProcessVisitorFaces(t *testing.T) {
 
 	t.Run("Trying to process a face that matches no visitors in the db should return isKnown false and face embedding", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
 
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
@@ -65,6 +69,8 @@ func TestProcessVisitorFaces(t *testing.T) {
 
 	t.Run("Face matching a visitor in db and not the current profile should return isKnown true with briefing", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
+
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
 
@@ -88,6 +94,8 @@ func TestProcessVisitorFaces(t *testing.T) {
 
 	t.Run("Visitor Face matching currently synced profile face should return the NonVisitorFace = true and face_detected = true", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
+
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
 
@@ -112,10 +120,12 @@ func TestRegisterVisitorFace(t *testing.T) {
 	logger := slog.New(jsonHandler).With("service", "face_detection")
 	pool := testDB.Pool
 	dbPool := db.NewDBPool(pool, logger)
-	server := handler.NewFaceDetectionServer(logger, recPool, dbPool)
+	cacheClient := testCache.Client
+	server := handler.NewFaceDetectionServer(logger, recPool, cacheClient, dbPool)
 
 	t.Run("One valid embedding should be saved to db properly", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
 
 		validEmbedding := test.MakeEmbedding(0.5, 128)
 		var embedding face.Descriptor
@@ -139,6 +149,7 @@ func TestRegisterVisitorFace(t *testing.T) {
 
 	t.Run("Return error on invalid embedding length", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
 
 		invalidEmbedding := test.MakeEmbedding(0.5, 256)
 
@@ -153,6 +164,7 @@ func TestRegisterVisitorFace(t *testing.T) {
 
 	t.Run("Empty embeddings slice should return error", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
 
 		_, err := server.RegisterVisitorFace(context.Background(), &fd.RegisterVisitorFaceRequest{
 			FaceEmbedding: []float32{},

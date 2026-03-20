@@ -8,8 +8,8 @@ import (
 	"github.com/Kagami/go-face"
 	fd "mosaic-face-detection.com/gen"
 	"mosaic-face-detection.com/internal/db"
-	"mosaic-face-detection.com/internal/service"
 	"mosaic-face-detection.com/internal/observability"
+	"mosaic-face-detection.com/internal/service"
 )
 
 // Handler to process faces for syncing user profile

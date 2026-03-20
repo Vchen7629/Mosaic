@@ -19,15 +19,19 @@ import (
 )
 
 var testDB *test.TestDBContainer
-var testRec *face.Recognizer
+var testCache *test.TestCacheContainer
 
 const testModelsDir = "../models"
 const testImagesDir = "../test/images"
 
 func TestMain(m *testing.M) {
-	var cleanup func()
-	testDB, cleanup = test.SetupTestDatabaseForTestMain()
-	defer cleanup()
+	var dbcleanup func()
+	testDB, dbcleanup = test.SetupTestDatabaseForTestMain()
+	defer dbcleanup()
+
+	var cacheCleanup func()
+	testCache, cacheCleanup = test.SetupTestCacheForTestMain()
+	defer cacheCleanup()
 
 	m.Run()
 }
@@ -40,9 +44,12 @@ func TestSyncProfile(t *testing.T) {
 	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
 	logger := slog.New(jsonHandler).With("service", "face_detection")
 	dbPool := db.NewDBPool(pool, logger)
-	server := handler.NewFaceDetectionServer(logger, recPool, dbPool)
+	cacheClient := testCache.Client
+	server := handler.NewFaceDetectionServer(logger, recPool, cacheClient, dbPool)
 
 	t.Run("No face bytes input should return face detected = false", func(t *testing.T) {
+		test.FlushCache(t, cacheClient)
+
 		res, err := server.SyncProfile(context.Background(), &fd.SyncProfileRequest{
 			FaceBytes: [][]byte{},
 		})
@@ -53,6 +60,8 @@ func TestSyncProfile(t *testing.T) {
 
 	t.Run("Face detected but no profiles in db should return correct vals", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
+
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
 
@@ -70,6 +79,8 @@ func TestSyncProfile(t *testing.T) {
 
 	t.Run("Face matching a profile in db should return the profileID", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
+
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
 
@@ -87,6 +98,8 @@ func TestSyncProfile(t *testing.T) {
 
 	t.Run("Face detected but no matches with existing profile should return emb", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
+
 		imgBytes, err1 := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		noMatchImgBytes, err2 := os.ReadFile(filepath.Join(testImagesDir, "man1.jpg"))
 
@@ -107,6 +120,8 @@ func TestSyncProfile(t *testing.T) {
 
 	t.Run("Multiple frames of same face aggregates embeddings and still matches profile", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
+
 		imgBytes1, err1 := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		imgBytes2, err2 := os.ReadFile(filepath.Join(testImagesDir, "bona2.jpg"))
 		assert.NoError(t, err1)
@@ -134,10 +149,12 @@ func TestRegisterProfileFace(t *testing.T) {
 	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
 	logger := slog.New(jsonHandler).With("service", "face_detection")
 	dbPool := db.NewDBPool(pool, logger)
-	server := handler.NewFaceDetectionServer(logger, recPool, dbPool)
+	cacheClient := testCache.Client
+	server := handler.NewFaceDetectionServer(logger, recPool, cacheClient, dbPool)
 
 	t.Run("One valid embedding should be saved to db properly", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
 
 		validEmbedding := test.MakeEmbedding(0.5, 128)
 		var embedding face.Descriptor
@@ -159,6 +176,7 @@ func TestRegisterProfileFace(t *testing.T) {
 
 	t.Run("Multiple valid embedding should be saved to db properly", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
 
 		embeddings := make([]face.Descriptor, 3)
 		for i, val := range []float32{0.1, 0.2, 0.3} {
@@ -184,6 +202,7 @@ func TestRegisterProfileFace(t *testing.T) {
 
 	t.Run("Return error on invalid embedding length", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
 
 		invalidEmbedding := test.MakeEmbedding(0.5, 256)
 
@@ -198,6 +217,7 @@ func TestRegisterProfileFace(t *testing.T) {
 
 	t.Run("Empty embeddings slice should return error", func(t *testing.T) {
 		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
 
 		_, err := server.RegisterProfileFace(context.Background(), &fd.RegisterProfileFaceRequest{
 			FaceEmbedding: []*fd.FaceEmbedding{},

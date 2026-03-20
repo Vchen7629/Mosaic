@@ -8,8 +8,8 @@ import (
 	"github.com/Kagami/go-face"
 	"github.com/jackc/pgx/v4"
 	pgvector "github.com/pgvector/pgvector-go"
-	"mosaic-face-detection.com/internal/service"
 	"mosaic-face-detection.com/internal/observability"
+	"mosaic-face-detection.com/internal/service"
 )
 
 // fetch all user profile embeddings saved in the database
@@ -41,7 +41,6 @@ func (db *DBPool) FetchProfileFaceEmbForID(profileID int32) ([]service.ProfileFa
 		result = append(result, f)
 	}
 	db.logger.Debug("Fetched profile face embeddings for profile from db", "profile_id", profileID)
-
 
 	return result, nil
 }
@@ -101,7 +100,7 @@ func (db *DBPool) FetchAllVisitorData(profileID int32) ([]service.VisitorFaces, 
 		var visitor service.VisitorFaces
 		var embVector pgvector.Vector
 
-		err := rows.Scan(&visitor.ID, &visitor.Name, &embVector);
+		err := rows.Scan(&visitor.ID, &visitor.Name, &embVector)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching visitor emb: %v", err)
 		}
@@ -111,8 +110,8 @@ func (db *DBPool) FetchAllVisitorData(profileID int32) ([]service.VisitorFaces, 
 	}
 
 	db.logger.Debug(
-		"Fetched all visitor data for a specific profile from db", 
-		"profile_id", profileID, 
+		"Fetched all visitor data for a specific profile from db",
+		"profile_id", profileID,
 		"visitor_face_count", len(visitorFaces),
 	)
 
@@ -143,8 +142,8 @@ func (db *DBPool) FetchVisitorBriefing(profileID, visitorID int32) (string, erro
 	err := db.pool.QueryRow(ctx, query, profileID, visitorID).Scan(&briefing)
 	if errors.Is(err, pgx.ErrNoRows) {
 		db.logger.Warn(
-			"No visitor briefings fetched for this visitor", 
-			"profile_id", profileID, 
+			"No visitor briefings fetched for this visitor",
+			"profile_id", profileID,
 			"visitor_id", visitorID,
 		)
 		return "", nil
@@ -155,7 +154,7 @@ func (db *DBPool) FetchVisitorBriefing(profileID, visitorID int32) (string, erro
 	}
 
 	db.logger.Debug(
-		"Fetched visitor briefing for the visitor for profile", 
+		"Fetched visitor briefing for the visitor for profile",
 		"profile_id", profileID,
 		"visitor_id", visitorID,
 	)
@@ -204,8 +203,8 @@ func (db *DBPool) AddNewFaceForVisitor(
 	}
 
 	db.logger.Debug(
-		"created new visitor with face embedding", 
-		"profile_id", profileID, 
+		"created new visitor with face embedding",
+		"profile_id", profileID,
 		"visitor_name", name,
 		"new_visitor_id", visitor_id,
 	)
@@ -235,7 +234,7 @@ func (db *DBPool) AddNewFaceForUser(embeddings []face.Descriptor) (*int32, error
 		if err != nil {
 			return fmt.Errorf("error adding new profile: %w", err)
 		}
-		
+
 		insertEmbQuery := `
 			INSERT INTO profile_face_embeddings
 			(profile_id, face_embedding)
