@@ -1,5 +1,5 @@
 from ..core.logging import logger
-from src.db.retry import retry_with_backoff
+from .retry import retry_with_backoff
 import psycopg
 
 

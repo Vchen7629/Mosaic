@@ -51,3 +51,12 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["test"]
 pythonpath = ["."]
+
+[tool.ruff]
+exclude = [
+    "src/gen",
+    ".venv",
+]
+
+[tool.pyrefly]
+project-excludes = ["src/gen/**", "test/**"]
