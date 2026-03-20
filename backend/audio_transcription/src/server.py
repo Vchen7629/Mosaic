@@ -1,5 +1,7 @@
 from .db.connection_pool import create_connection_pool
 from concurrent.futures import ThreadPoolExecutor
+from grpc_health.v1 import health as grpc_health
+from grpc_health.v1 import health_pb2_grpc
 from .grpc.servicer import AudioTranscriptionServicer
 from .core.logging import logger
 from .core.settings import settings
@@ -13,14 +15,17 @@ def handle_shutdown(server, _sig, _frame):
 
 
 def serve():
-    server = grpc.server(
+    server = grpc.server( # pyrefly: ignore
         ThreadPoolExecutor(max_workers=settings.max_workers)
-    )  # pyrefly: ignore
+    )
     db_pool = create_connection_pool()
 
     audio_transcription_pb2_grpc.add_AudioTranscriptionServiceServicer_to_server(
         AudioTranscriptionServicer(db_pool), server
     )
+    health_servicer = grpc_health.HealthServicer()
+    health_pb2_grpc.add_HealthServicer_to_server(health_servicer, server)
+
     server.add_insecure_port(f"[::]:{settings.grpc_server_port}")
     server.start()
     logger.info("gRPC server running on", port=f"[::]:{settings.grpc_server_port}")

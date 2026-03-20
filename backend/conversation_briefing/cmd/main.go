@@ -13,6 +13,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	cb "mosaic-conversation-briefing.com/gen"
 	"mosaic-conversation-briefing.com/internal/db"
 	"mosaic-conversation-briefing.com/internal/handler"
@@ -37,6 +39,10 @@ func gRPCServer(logger *slog.Logger, cfg *Config, pool *pgxpool.Pool) (*grpc.Ser
 	cb.RegisterConversationBriefingServiceServer(
 		gRPCServer, handler.NewConvoBriefingServer(logger, dbPool, cfg.LLMBaseURL),
 	)
+
+	healthServer := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(gRPCServer, healthServer)
+	healthServer.SetServingStatus("", grpc_health_v1.HealthCheckResponse_SERVING)
 
 	go func() {
 		logger.Info("conversation briefing gRPC server listening on", "port", cfg.ServerPort)
