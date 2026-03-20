@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"mosaic-conversation-briefing.com/internal/db"
+	"mosaic-conversation-briefing.com/internal/observability"
 	"mosaic-conversation-briefing.com/internal/service"
 )
 
@@ -72,8 +74,11 @@ func GenerateBriefings(
 
 		logger.Debug("created json llm request", "visitor_id", conv.VisitorID)
 
+		llmCallStart := time.Now()
 		resp, err := http.Post(llmBaseURL+"/api/chat", "application/json", bytes.NewReader(bodyBytes))
+		observability.LLMResponseDuration.Observe(float64(time.Since(llmCallStart).Milliseconds()))
 		if err != nil {
+			observability.ErrorsTotal.WithLabelValues("llm_response").Inc()
 			return nil, fmt.Errorf("failed to call LLM for visitor %d:%w", conv.VisitorID, err)
 		}
 

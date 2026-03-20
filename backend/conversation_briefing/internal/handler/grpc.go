@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"time"
 
 	cb "mosaic-conversation-briefing.com/gen"
 	"mosaic-conversation-briefing.com/internal/db"
+	"mosaic-conversation-briefing.com/internal/observability"
 )
 
 type ConvoBriefingServer struct {
@@ -48,13 +50,16 @@ func (s *ConvoBriefingServer) GenerateConversationBriefing(
 		}
 	}
 
+	fetchConvoStart := time.Now()
 	var conversationList []db.Conversations
 	err := db.RetryWithBackoff(s.logger, ctx, db.DefaultRetryConfig(), func() error {
 		var err error
 		conversationList, err = s.pool.FetchRecentConversations(req.ProfileId, req.VisitorIds)
 		return err
 	})
+	observability.ConvoFetchDuration.Observe(float64(time.Since(fetchConvoStart).Milliseconds()))
 	if err != nil {
+		observability.ErrorsTotal.WithLabelValues("fetch_conversation").Inc()
 		s.logger.Error("Error fetching recent conversations", "err", err)
 
 		return &cb.GenerateConversationBriefingResponse{
@@ -76,11 +81,14 @@ func (s *ConvoBriefingServer) GenerateConversationBriefing(
 		briefingMap[briefing.VisitorID] = briefing.Briefing
 	}
 
+	insertBriefingStart := time.Now()
 	err = db.RetryWithBackoff(s.logger, ctx, db.DefaultRetryConfig(), func() error {
 		err = s.pool.InsertBriefing(req.ProfileId, briefingMap)
 		return err
 	})
+	observability.BriefingInsertDuration.Observe(float64(time.Since(insertBriefingStart).Milliseconds()))
 	if err != nil {
+		observability.ErrorsTotal.WithLabelValues("insert_briefing").Inc()
 		s.logger.Error("error inserting briefing", "err", err)
 		return &cb.GenerateConversationBriefingResponse{
 			Success: false,

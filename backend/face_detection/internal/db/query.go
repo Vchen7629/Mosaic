@@ -19,7 +19,6 @@ func (db *DBPool) FetchProfileFaceEmbForID(profileID int32) ([]service.ProfileFa
 	}
 	ctx := context.Background()
 	observability.DBReadsTotal.WithLabelValues("fetch_profile_embeddings").Inc()
-	observability.CacheMissesTotal.WithLabelValues("fetch_profile_embeddings").Inc()
 
 	rows, err := db.pool.Query(ctx, `
 		SELECT profile_id, face_embedding FROM profile_face_embeddings
@@ -51,7 +50,6 @@ func (db *DBPool) FetchProfileFaceEmbForID(profileID int32) ([]service.ProfileFa
 func (db *DBPool) FetchAllProfileFaceEmb() ([]service.ProfileFaces, error) {
 	ctx := context.Background()
 	observability.DBReadsTotal.WithLabelValues("fetch_all_profile_embeddings").Inc()
-	observability.CacheMissesTotal.WithLabelValues("fetch_all_profile_embeddings").Inc()
 
 	rows, err := db.pool.Query(ctx, `
 		SELECT profile_id, face_embedding FROM profile_face_embeddings
@@ -85,7 +83,6 @@ func (db *DBPool) FetchAllVisitorData(profileID int32) ([]service.VisitorFaces, 
 	}
 	ctx := context.Background()
 	observability.DBReadsTotal.WithLabelValues("fetch_visitor_data").Inc()
-	observability.CacheMissesTotal.WithLabelValues("fetch_visitor_data").Inc()
 
 	rows, err := db.pool.Query(ctx, `
 		SELECT id, visitor_name, face_embedding
@@ -133,7 +130,6 @@ func (db *DBPool) FetchVisitorBriefing(profileID, visitorID int32) (string, erro
 
 	ctx := context.Background()
 	observability.DBReadsTotal.WithLabelValues("fetch_briefing").Inc()
-	observability.CacheMissesTotal.WithLabelValues("fetch_briefing").Inc()
 
 	var briefing string
 
@@ -180,7 +176,6 @@ func (db *DBPool) AddNewFaceForVisitor(
 	}
 
 	observability.DBReadsTotal.WithLabelValues("add_visitor").Inc()
-	observability.CacheMissesTotal.WithLabelValues("add_visitor").Inc()
 
 	err := service.ValidateEmbedding(embedding)
 	if err != nil {
@@ -221,7 +216,6 @@ func (db *DBPool) AddNewFaceForVisitor(
 // Add a new visitor for a user with their name and face_embedding
 func (db *DBPool) AddNewFaceForUser(embeddings []face.Descriptor) (*int32, error) {
 	observability.DBReadsTotal.WithLabelValues("register_profile").Inc()
-	observability.CacheMissesTotal.WithLabelValues("register_profile").Inc()
 
 	for _, emb := range embeddings {
 		err := service.ValidateEmbedding(emb)
