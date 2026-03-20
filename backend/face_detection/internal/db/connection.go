@@ -2,15 +2,16 @@ package db
 
 import (
 	"context"
-	"os"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"log/slog"
+	"os"
 	"time"
+
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 type DBPool struct {
-	pool 	*pgxpool.Pool
-	logger 	*slog.Logger
+	pool   *pgxpool.Pool
+	logger *slog.Logger
 }
 
 // allows us to initialize the db pool in main.go
@@ -37,7 +38,7 @@ func databaseConfig(logger *slog.Logger, database_url string) *pgxpool.Config {
 	config, err := pgxpool.ParseConfig(database_url)
 	if err != nil {
 		logger.Error("Unable to parse DATABASE_URL", "err", err)
-		os.Exit(1)	
+		os.Exit(1)
 	}
 
 	config.MaxConns = 50
