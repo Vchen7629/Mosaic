@@ -16,6 +16,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/valkey-io/valkey-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -28,11 +29,12 @@ import (
 
 type Config struct {
 	ServerPort  string `envconfig:"SERVER_PORT" default:"40040"`
-	MetricsPort  string `envconfig:"METRICS_PORT" default:"9092"`
+	MetricsPort string `envconfig:"METRICS_PORT" default:"9092"`
+	CachePort   string `envconfig:"CACHE_PORT" default:"6379"`
 	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
 	ModelsDir   string `envconfig:"MODELS_DIR" default:"models"`
 	RecPoolSize int    `envconfig:"REC_POOL_SIZE" default:"5"`
-	ProdMode	bool   `envconfig:"PROD_MODE" default:"false"`
+	ProdMode    bool   `envconfig:"PROD_MODE" default:"false"`
 }
 
 // handles starting the gRPC server
@@ -40,6 +42,7 @@ func gRPCServer(
 	logger *slog.Logger,
 	cfg *Config,
 	recPool *service.RecognizerPool,
+	client valkey.Client,
 	pool *pgxpool.Pool,
 ) (*grpc.Server, error) {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", cfg.ServerPort))
@@ -51,7 +54,7 @@ func gRPCServer(
 
 	grpcServer := grpc.NewServer()
 	fd.RegisterFaceDetectionServiceServer(
-		grpcServer, handler.NewFaceDetectionServer(logger, recPool, dbPool),
+		grpcServer, handler.NewFaceDetectionServer(logger, recPool, client, dbPool),
 	)
 
 	healthServer := health.NewServer()
@@ -62,11 +65,11 @@ func gRPCServer(
 		logger.Info("gRPC server listening on", "port", cfg.ServerPort)
 		err = grpcServer.Serve(lis)
 		if err != nil {
-			logger.Error("failed to serve gRPC server", "err", err,)
+			logger.Error("failed to serve gRPC server", "err", err)
 			os.Exit(1)
 		}
 	}()
-	
+
 	return grpcServer, nil
 }
 
@@ -101,7 +104,7 @@ func main() {
 	if cfg.ProdMode {
 		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
 	} else {
-		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})		
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
 	}
 	logger := slog.New(handler).With("service", "face_detection")
 
@@ -118,11 +121,18 @@ func main() {
 
 	defer recPool.Close()
 
+	client, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{
+		fmt.Sprintf("127.0.0.1:%s", cfg.CachePort),
+	}})
+	if err != nil {
+		logger.Warn("error initializing caching client", "err", err)
+	}
+
 	observability.RegisterMetrics()
 
 	go observabilityServer(logger, cfg, pool)
 
-	grpcServer, err := gRPCServer(logger, cfg, recPool, pool)
+	grpcServer, err := gRPCServer(logger, cfg, recPool, client, pool)
 	if err != nil {
 		logger.Error("failed to start gRPC server", "err", err)
 		os.Exit(1)
@@ -139,6 +149,7 @@ func main() {
 
 	grpcServer.GracefulStop()
 	pool.Close()
+	client.Close()
 
 	logger.Info("Closed gRPC and dbpool connection")
 }
