@@ -8,7 +8,7 @@
     {
       "id": 1,
       "title": "CPU Usage",
-      "type": "stat",
+      "type": "gauge",
       "gridPos": { "x": 0, "y": 0, "w": 8, "h": 4 },
       "targets": [
         {
@@ -17,19 +17,22 @@
         }
       ],
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
-        "graphMode": "area"
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       },
       "fieldConfig": {
         "defaults": {
           "unit": "percentunit",
+          "min": 0,
+          "max": 1,
           "color": { "mode": "thresholds" },
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "yellow", "value": 0.5 },
-              { "color": "red", "value": 0.8 }
+              { "color": "yellow", "value": 0.05 },
+              { "color": "red", "value": 0.1 }
             ]
           }
         }
@@ -38,7 +41,7 @@
     {
       "id": 2,
       "title": "Memory Usage (RSS)",
-      "type": "stat",
+      "type": "gauge",
       "gridPos": { "x": 8, "y": 0, "w": 8, "h": 4 },
       "targets": [
         {
@@ -47,19 +50,22 @@
         }
       ],
       "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
-        "graphMode": "area"
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       },
       "fieldConfig": {
         "defaults": {
           "unit": "bytes",
+          "min": 0,
+          "max": 536870912,
           "color": { "mode": "thresholds" },
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "green", "value": null },
-              { "color": "yellow", "value": 500000000 },
-              { "color": "red", "value": 1000000000 }
+              { "color": "yellow", "value": 104857600 },
+              { "color": "red", "value": 209715200 }
             ]
           }
         }
@@ -211,6 +217,36 @@
       ],
       "fieldConfig": {
         "defaults": { "unit": "ops", "color": { "fixedColor": "red", "mode": "fixed" }, "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 9,
+      "title": "CPU Usage History",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 28, "w": 12, "h": 7 },
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"conversation_briefing\"}[2m])",
+          "legendFormat": "cpu"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Memory Usage History",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 28, "w": 12, "h": 7 },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"conversation_briefing\"}",
+          "legendFormat": "rss"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "custom": { "lineWidth": 2 } }
       }
     }
   ]
