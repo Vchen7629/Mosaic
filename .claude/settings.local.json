@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls C:/Users/Zephyr/Documents/Mosaic/backend/audio_transcription/*.py)",
+      "WebSearch",
+      "WebFetch(domain:pyrefly.org)",
+      "Bash(curl:*)",
+      "Bash(xargs grep:*)"
+    ]
+  }
+}

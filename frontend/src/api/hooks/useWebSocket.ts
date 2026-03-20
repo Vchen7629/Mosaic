@@ -14,7 +14,7 @@ export function useWebSocketConnection(isActive: boolean): WebSocket | null {
             return
         }
 
-        const socket = new WebSocket(`ws://localhost:8000/api/v1/ws`)
+        const socket = new WebSocket(`ws://localhost:8080/api/v1/ws`)
         setWs(socket)
 
         return () => { socket.close(); setWs(null) }

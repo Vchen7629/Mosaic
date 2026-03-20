@@ -1,0 +1,253 @@
+{
+  "title": "Conversation Briefing Service",
+  "uid": "conversation-briefing",
+  "schemaVersion": 38,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "CPU Usage",
+      "type": "gauge",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"conversation_briefing\"}[2m])",
+          "legendFormat": "cpu"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.05 },
+              { "color": "red", "value": 0.1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Memory Usage (RSS)",
+      "type": "gauge",
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"conversation_briefing\"}",
+          "legendFormat": "rss"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "min": 0,
+          "max": 536870912,
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 104857600 },
+              { "color": "red", "value": 209715200 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Go Goroutines",
+      "type": "stat",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "expr": "go_goroutines{job=\"conversation_briefing\"}",
+          "legendFormat": "goroutines"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 100 },
+              { "color": "red", "value": 500 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "LLM Response Latency per Visitor (ms)",
+      "description": "Per-visitor Ollama call latency. Expect 500ms-60s depending on model load.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(conversation_briefing_llm_response_duration_milliseconds_bucket[5m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(conversation_briefing_llm_response_duration_milliseconds_bucket[5m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(conversation_briefing_llm_response_duration_milliseconds_bucket[5m]))",
+          "legendFormat": "p99"
+        },
+        {
+          "expr": "rate(conversation_briefing_llm_response_duration_milliseconds_sum[5m]) / rate(conversation_briefing_llm_response_duration_milliseconds_count[5m])",
+          "legendFormat": "avg"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Conversation Fetch Latency (ms)",
+      "description": "DB query fetching recent conversations per visitor.",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(conversation_briefing_conversation_fetch_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(conversation_briefing_conversation_fetch_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(conversation_briefing_conversation_fetch_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p99"
+        },
+        {
+          "expr": "rate(conversation_briefing_conversation_fetch_duration_milliseconds_sum[2m]) / rate(conversation_briefing_conversation_fetch_duration_milliseconds_count[2m])",
+          "legendFormat": "avg"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Briefing Insert Latency (ms)",
+      "description": "DB upsert after briefing is generated.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(conversation_briefing_briefing_insert_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(conversation_briefing_briefing_insert_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(conversation_briefing_briefing_insert_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p99"
+        },
+        {
+          "expr": "rate(conversation_briefing_briefing_insert_duration_milliseconds_sum[2m]) / rate(conversation_briefing_briefing_insert_duration_milliseconds_count[2m])",
+          "legendFormat": "avg"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 7,
+      "title": "DB Read/Write Rate (ops/sec)",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(conversation_briefing_db_reads_total[2m])",
+          "legendFormat": "reads — {{operation}}"
+        },
+        {
+          "expr": "rate(conversation_briefing_db_writes_total[2m])",
+          "legendFormat": "writes — {{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Error Rate (errors/sec)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(conversation_briefing_errors_total[2m])",
+          "legendFormat": "{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops", "color": { "fixedColor": "red", "mode": "fixed" }, "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 9,
+      "title": "CPU Usage History",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 28, "w": 12, "h": 7 },
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"conversation_briefing\"}[2m])",
+          "legendFormat": "cpu"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Memory Usage History",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 28, "w": 12, "h": 7 },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"conversation_briefing\"}",
+          "legendFormat": "rss"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "custom": { "lineWidth": 2 } }
+      }
+    }
+  ]
+}
