@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -57,6 +58,10 @@ func WebsocketServer(
 
 func main() {
 	cfg, err := loadConfig()
+	if err != nil {
+		log.Fatalf("failed to load config values: %v", err)
+	}
+
 	var handler slog.Handler
 	if cfg.ProdMode {
 		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
@@ -65,7 +70,7 @@ func main() {
 	}
 	logger := slog.New(handler).With("service", "client")
 
-	logger.Info("[client] Starting Mosaic backend server...")
+	logger.Info("Starting Mosaic backend server...")
 
 	audioConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	faceConn, err := grpc.NewClient("localhost:40040", grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -88,11 +93,11 @@ func main() {
 
 	// Block until shutdown signal recieved
 	<-sigChan
-	logger.Info("[client] Shutting down gracefully...")
+	logger.Info("Shutting down gracefully...")
 
 	audioConn.Close()
 	faceConn.Close()
-	logger.Debug("[client] Closed gRPC connection")
+	logger.Debug("Closed gRPC connection")
 }
 
 // method to load config values
