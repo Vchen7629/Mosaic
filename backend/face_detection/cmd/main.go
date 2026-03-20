@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"log/slog"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/joho/godotenv"
@@ -20,13 +22,13 @@ import (
 	fd "mosaic-face-detection.com/gen"
 	"mosaic-face-detection.com/internal/db"
 	"mosaic-face-detection.com/internal/handler"
-	"mosaic-face-detection.com/internal/service"
 	"mosaic-face-detection.com/internal/observability"
+	"mosaic-face-detection.com/internal/service"
 )
 
 type Config struct {
 	ServerPort  string `envconfig:"SERVER_PORT" default:"40040"`
-	MetricsPort  string `envconfig:"METRICS_PORT" default:"8080"`
+	MetricsPort  string `envconfig:"METRICS_PORT" default:"9091"`
 	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
 	ModelsDir   string `envconfig:"MODELS_DIR" default:"models"`
 	RecPoolSize int    `envconfig:"REC_POOL_SIZE" default:"5"`
@@ -68,6 +70,27 @@ func gRPCServer(
 	return grpcServer, nil
 }
 
+// exposes a /metrics prometheus and /ready endpoint for readiness
+func observabilityServer(logger *slog.Logger, cfg *Config, pool *pgxpool.Pool) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
+		err := pool.Ping(ctx)
+		if err != nil {
+			http.Error(w, "service not ready", http.StatusServiceUnavailable)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+	mux.Handle("/metrics", promhttp.Handler())
+	logger.Info("metrics server listening", "port", cfg.MetricsPort)
+	err := http.ListenAndServe(":"+cfg.MetricsPort, mux)
+	if err != nil {
+		logger.Error("metrics server failed to start", "err", err)
+	}
+}
+
 func main() {
 	cfg, err := loadConfig()
 	if err != nil {
@@ -97,15 +120,7 @@ func main() {
 
 	observability.RegisterMetrics()
 
-	go func() {
-		mux := http.NewServeMux()
-		mux.Handle("/metrics", promhttp.Handler())
-		logger.Info("metrics server listening", "port", cfg.MetricsPort)
-		err = http.ListenAndServe(":"+cfg.MetricsPort, mux)
-		if err != nil {
-			logger.Error("metrics server failed to start", "err", err)
-		}
-	}()
+	go observabilityServer(logger, cfg, pool)
 
 	grpcServer, err := gRPCServer(logger, cfg, recPool, pool)
 	if err != nil {
