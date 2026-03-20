@@ -4,13 +4,13 @@ global:
 scrape_configs:
   - job_name: conversation_briefing
     static_configs:
-      - targets: ["host.docker.internal:9090"]
+      - targets: ["172.25.115.180:9090"]
 
   - job_name: audio_transcription
     static_configs:
       - targets: ["host.docker.internal:9091"]
-  
+
   - job_name: face_detection
     static_configs:
-      - targets: ["host.docker.internal:9092"]
+      - targets: ["172.25.115.180:9092"]
 

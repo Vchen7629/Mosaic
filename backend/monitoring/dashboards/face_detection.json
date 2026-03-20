@@ -7,10 +7,100 @@
   "panels": [
     {
       "id": 1,
+      "title": "CPU Usage",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"face_detection\"}[2m])",
+          "legendFormat": "cpu"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.5 },
+              { "color": "red", "value": 0.8 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Memory Usage (RSS)",
+      "type": "stat",
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"face_detection\"}",
+          "legendFormat": "rss"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 500000000 },
+              { "color": "red", "value": 1000000000 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Go Goroutines",
+      "type": "stat",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "expr": "go_goroutines{job=\"face_detection\"}",
+          "legendFormat": "goroutines"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 100 },
+              { "color": "red", "value": 500 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
       "title": "Per-Frame Latency — Fetch Visitor Embeddings (ms)",
       "description": "DB query that runs every frame. Primary Redis caching target.",
       "type": "timeseries",
-      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, rate(face_detection_visitor_emb_fetch_duration_milliseconds_bucket[2m]))",
@@ -34,11 +124,11 @@
       }
     },
     {
-      "id": 2,
+      "id": 5,
       "title": "Per-Frame Latency — Fetch Profile Embeddings (ms)",
       "description": "DB query that runs every frame. Secondary Redis caching target.",
       "type": "timeseries",
-      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, rate(face_detection_profile_emb_fetch_duration_milliseconds_bucket[2m]))",
@@ -62,11 +152,11 @@
       }
     },
     {
-      "id": 3,
+      "id": 6,
       "title": "Embedding Generation Latency (ms)",
       "description": "CPU-bound Kagami/go-face model inference. Not cacheable — baseline for comparison.",
       "type": "timeseries",
-      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, rate(face_detection_embedding_generation_duration_milliseconds_bucket[2m]))",
@@ -90,11 +180,11 @@
       }
     },
     {
-      "id": 4,
+      "id": 7,
       "title": "Briefing Fetch Latency (ms)",
       "description": "Runs once per matched visitor per session.",
       "type": "timeseries",
-      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, rate(face_detection_briefing_fetch_duration_milliseconds_bucket[2m]))",
@@ -118,11 +208,11 @@
       }
     },
     {
-      "id": 5,
+      "id": 8,
       "title": "In-Memory Comparison Latency (ms)",
       "description": "Profile and visitor embedding comparisons — pure CPU, should be negligible.",
       "type": "timeseries",
-      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
       "targets": [
         {
           "expr": "histogram_quantile(0.99, rate(face_detection_visitor_comparison_duration_milliseconds_bucket[2m]))",
@@ -138,11 +228,11 @@
       }
     },
     {
-      "id": 6,
+      "id": 9,
       "title": "DB Read Rate (reads/sec)",
       "description": "Before Redis: climbs every frame. After Redis: drops to near zero for cached operations.",
       "type": "timeseries",
-      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
       "targets": [
         {
           "expr": "rate(face_detection_db_reads_total{operation=\"fetch_visitor_data\"}[2m])",
@@ -162,10 +252,10 @@
       }
     },
     {
-      "id": 7,
+      "id": 10,
       "title": "Error Rate (errors/sec)",
       "type": "timeseries",
-      "gridPos": { "x": 0, "y": 24, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 28, "w": 12, "h": 8 },
       "targets": [
         {
           "expr": "rate(face_detection_errors_total[2m])",
@@ -174,51 +264,6 @@
       ],
       "fieldConfig": {
         "defaults": { "unit": "ops", "color": { "fixedColor": "red", "mode": "fixed" }, "custom": { "lineWidth": 2 } }
-      }
-    },
-    {
-      "id": 8,
-      "title": "CPU Usage",
-      "type": "timeseries",
-      "gridPos": { "x": 12, "y": 24, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "expr": "rate(process_cpu_seconds_total{job=\"face_detection\"}[2m])",
-          "legendFormat": "cpu"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "percentunit", "custom": { "lineWidth": 2 } }
-      }
-    },
-    {
-      "id": 9,
-      "title": "Memory Usage (RSS)",
-      "type": "timeseries",
-      "gridPos": { "x": 0, "y": 32, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "expr": "process_resident_memory_bytes{job=\"face_detection\"}",
-          "legendFormat": "rss"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "bytes", "custom": { "lineWidth": 2 } }
-      }
-    },
-    {
-      "id": 10,
-      "title": "Go Goroutines",
-      "type": "timeseries",
-      "gridPos": { "x": 12, "y": 32, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "expr": "go_goroutines{job=\"face_detection\"}",
-          "legendFormat": "goroutines"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "short", "custom": { "lineWidth": 2 } }
       }
     }
   ]

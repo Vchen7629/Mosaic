@@ -7,10 +7,98 @@
   "panels": [
     {
       "id": 1,
+      "title": "CPU Usage",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"audio_transcription\"}[2m])",
+          "legendFormat": "cpu"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.5 },
+              { "color": "red", "value": 0.8 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Memory Usage (RSS)",
+      "type": "stat",
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"audio_transcription\"}",
+          "legendFormat": "rss"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 500000000 },
+              { "color": "red", "value": 1000000000 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Whisper Calls/sec",
+      "type": "stat",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 4 },
+      "targets": [
+        {
+          "expr": "rate(audio_transcription_whisper_duration_milliseconds_count[2m])",
+          "legendFormat": "calls/sec"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
       "title": "Whisper Inference Latency (ms)",
       "description": "Time for Whisper to transcribe each audio chunk. Called every 2.5s per active session.",
       "type": "timeseries",
-      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, rate(audio_transcription_whisper_duration_milliseconds_bucket[2m]))",
@@ -34,11 +122,11 @@
       }
     },
     {
-      "id": 2,
+      "id": 5,
       "title": "DB Save Latency (ms)",
       "description": "Time to save the full conversation transcript to DB at end of session.",
       "type": "timeseries",
-      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, rate(audio_transcription_db_save_duration_milliseconds_bucket[2m]))",
@@ -62,10 +150,10 @@
       }
     },
     {
-      "id": 3,
+      "id": 6,
       "title": "DB Write Rate (ops/sec)",
       "type": "timeseries",
-      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
       "targets": [
         {
           "expr": "rate(audio_transcription_db_writes_total[2m])",
@@ -77,10 +165,10 @@
       }
     },
     {
-      "id": 4,
+      "id": 7,
       "title": "Error Rate (errors/sec)",
       "type": "timeseries",
-      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
       "targets": [
         {
           "expr": "rate(audio_transcription_errors_total[2m])",
@@ -89,36 +177,6 @@
       ],
       "fieldConfig": {
         "defaults": { "unit": "ops", "color": { "fixedColor": "red", "mode": "fixed" }, "custom": { "lineWidth": 2 } }
-      }
-    },
-    {
-      "id": 5,
-      "title": "CPU Usage",
-      "type": "timeseries",
-      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "expr": "rate(process_cpu_seconds_total{job=\"audio_transcription\"}[2m])",
-          "legendFormat": "cpu"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "percentunit", "custom": { "lineWidth": 2 } }
-      }
-    },
-    {
-      "id": 6,
-      "title": "Memory Usage (RSS)",
-      "type": "timeseries",
-      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "expr": "process_resident_memory_bytes{job=\"audio_transcription\"}",
-          "legendFormat": "rss"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "bytes", "custom": { "lineWidth": 2 } }
       }
     }
   ]
