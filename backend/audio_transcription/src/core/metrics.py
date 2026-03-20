@@ -1,5 +1,18 @@
-from prometheus_client import Counter
-from prometheus_client import Histogram
+import os
+import psutil
+from prometheus_client import Counter, Gauge, Histogram
+
+_process = psutil.Process(os.getpid())
+
+process_cpu_seconds_total = Gauge(
+    "process_cpu_seconds_total",
+    "Total user and system CPU time spent in seconds",
+)
+
+process_resident_memory_bytes = Gauge(
+    "process_resident_memory_bytes",
+    "Resident memory size in bytes",
+)
 
 WhisperDuration = Histogram(
     "audio_transcription_whisper_duration_milliseconds",

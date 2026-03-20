@@ -1,4 +1,5 @@
 from .db.connection_pool import create_connection_pool
+from .core.metrics import _process, process_cpu_seconds_total, process_resident_memory_bytes
 from psycopg_pool import ConnectionPool
 from prometheus_client import make_wsgi_app
 from wsgiref.simple_server import make_server
@@ -12,6 +13,15 @@ from .gen import audio_transcription_pb2_grpc
 import grpc
 import signal
 import threading
+import time
+
+
+def _collect_process_metrics():
+    while True:
+        cpu = _process.cpu_times()
+        process_cpu_seconds_total.set(cpu.user + cpu.system)
+        process_resident_memory_bytes.set(_process.memory_info().rss)
+        time.sleep(15)
 
 def handle_shutdown(server, _sig, _frame):
     server.stop(grace=5)
@@ -33,9 +43,9 @@ def start_metrics_server(port: int, db_pool: ConnectionPool) -> None:
         return metrics_app(environ, start_response)
 
     server = make_server("", port, app)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    threading.Thread(target=_collect_process_metrics, daemon=True).start()
+    
 def serve():
     server = grpc.server( # pyrefly: ignore
         ThreadPoolExecutor(max_workers=settings.max_workers)
