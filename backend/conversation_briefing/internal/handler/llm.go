@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"mosaic-conversation-briefing.com/internal/db"
@@ -31,9 +32,10 @@ type ollamaChatResponse struct {
 	Message ollamaChatMessage `json:"message"`
 }
 
-// handler to send conversations to llm to be summarized
-func SummarizeWithLLM(
+// handler to send conversations to llm to generate briefings
+func GenerateBriefings(
 	model string,
+	logger *slog.Logger,
 	llmBaseURL string,
 	conversationList []db.Conversations,
 ) ([]briefing, error) {
@@ -45,9 +47,11 @@ func SummarizeWithLLM(
 	for _, conv := range conversationList {
 		prompt, err := service.BuildPrompt(conv.ConvoList)
 		if err != nil {
+			logger.Error("error building prompt", "visitor_id", conv.VisitorID, "err", err)
 			return nil, err
 		}
 
+		logger.Debug("built llm prompt", "visitor_id", conv.VisitorID)
 		reqBody := ollamaChatRequest{
 			Model: model,
 			Messages: []ollamaChatMessage{
@@ -60,15 +64,20 @@ func SummarizeWithLLM(
 			Stream: false,
 		}
 
+
 		bodyBytes, err := json.Marshal(reqBody)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal request for visitor %d: %w", conv.VisitorID, err)
 		}
 
+		logger.Debug("created json llm request", "visitor_id", conv.VisitorID)
+
 		resp, err := http.Post(llmBaseURL+"/api/chat", "application/json", bytes.NewReader(bodyBytes))
 		if err != nil {
 			return nil, fmt.Errorf("failed to call LLM for visitor %d:%w", conv.VisitorID, err)
 		}
+
+		logger.Debug("sent request to llm with prompt", "visitor_id", conv.VisitorID)
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
@@ -80,6 +89,7 @@ func SummarizeWithLLM(
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode LLM response for visitor %d: %w", conv.VisitorID, err)
 		}
+		logger.Debug("recieved response from llm", "visitor_id", conv.VisitorID)
 
 		briefings = append(briefings, briefing{
 			VisitorID: conv.VisitorID,
@@ -87,5 +97,6 @@ func SummarizeWithLLM(
 		})
 	}
 
+	logger.Debug("generated all briefings", "count", len(briefings))
 	return briefings, nil
 }
