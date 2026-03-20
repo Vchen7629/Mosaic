@@ -1,0 +1,225 @@
+{
+  "title": "Face Detection Service",
+  "uid": "face-detection",
+  "schemaVersion": 38,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Per-Frame Latency — Fetch Visitor Embeddings (ms)",
+      "description": "DB query that runs every frame. Primary Redis caching target.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(face_detection_visitor_emb_fetch_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(face_detection_visitor_emb_fetch_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(face_detection_visitor_emb_fetch_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p99"
+        },
+        {
+          "expr": "rate(face_detection_visitor_emb_fetch_duration_milliseconds_sum[2m]) / rate(face_detection_visitor_emb_fetch_duration_milliseconds_count[2m])",
+          "legendFormat": "avg"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Per-Frame Latency — Fetch Profile Embeddings (ms)",
+      "description": "DB query that runs every frame. Secondary Redis caching target.",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(face_detection_profile_emb_fetch_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(face_detection_profile_emb_fetch_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(face_detection_profile_emb_fetch_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p99"
+        },
+        {
+          "expr": "rate(face_detection_profile_emb_fetch_duration_milliseconds_sum[2m]) / rate(face_detection_profile_emb_fetch_duration_milliseconds_count[2m])",
+          "legendFormat": "avg"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Embedding Generation Latency (ms)",
+      "description": "CPU-bound Kagami/go-face model inference. Not cacheable — baseline for comparison.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(face_detection_embedding_generation_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(face_detection_embedding_generation_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(face_detection_embedding_generation_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p99"
+        },
+        {
+          "expr": "rate(face_detection_embedding_generation_duration_milliseconds_sum[2m]) / rate(face_detection_embedding_generation_duration_milliseconds_count[2m])",
+          "legendFormat": "avg"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Briefing Fetch Latency (ms)",
+      "description": "Runs once per matched visitor per session.",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(face_detection_briefing_fetch_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(face_detection_briefing_fetch_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(face_detection_briefing_fetch_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p99"
+        },
+        {
+          "expr": "rate(face_detection_briefing_fetch_duration_milliseconds_sum[2m]) / rate(face_detection_briefing_fetch_duration_milliseconds_count[2m])",
+          "legendFormat": "avg"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 5,
+      "title": "In-Memory Comparison Latency (ms)",
+      "description": "Profile and visitor embedding comparisons — pure CPU, should be negligible.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, rate(face_detection_visitor_comparison_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "visitor cmp p99"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(face_detection_profile_comparison_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "profile cmp p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 6,
+      "title": "DB Read Rate (reads/sec)",
+      "description": "Before Redis: climbs every frame. After Redis: drops to near zero for cached operations.",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(face_detection_db_reads_total{operation=\"fetch_visitor_data\"}[2m])",
+          "legendFormat": "fetch_visitor_data"
+        },
+        {
+          "expr": "rate(face_detection_db_reads_total{operation=\"fetch_profile_embeddings\"}[2m])",
+          "legendFormat": "fetch_profile_embeddings"
+        },
+        {
+          "expr": "rate(face_detection_db_reads_total{operation=\"fetch_briefing\"}[2m])",
+          "legendFormat": "fetch_briefing"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Error Rate (errors/sec)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 24, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(face_detection_errors_total[2m])",
+          "legendFormat": "{{operation}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops", "color": { "fixedColor": "red", "mode": "fixed" }, "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 8,
+      "title": "CPU Usage",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 24, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "rate(process_cpu_seconds_total{job=\"face_detection\"}[2m])",
+          "legendFormat": "cpu"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "percentunit", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Memory Usage (RSS)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 32, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "process_resident_memory_bytes{job=\"face_detection\"}",
+          "legendFormat": "rss"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Go Goroutines",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 32, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "go_goroutines{job=\"face_detection\"}",
+          "legendFormat": "goroutines"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2 } }
+      }
+    }
+  ]
+}
