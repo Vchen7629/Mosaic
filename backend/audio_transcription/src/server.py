@@ -13,7 +13,9 @@ def handle_shutdown(server, _sig, _frame):
 
 
 def serve():
-    server = grpc.server(ThreadPoolExecutor(max_workers=settings.max_workers))
+    server = grpc.server(
+        ThreadPoolExecutor(max_workers=settings.max_workers)
+    )  # pyrefly: ignore
     db_pool = create_connection_pool()
 
     audio_transcription_pb2_grpc.add_AudioTranscriptionServiceServicer_to_server(

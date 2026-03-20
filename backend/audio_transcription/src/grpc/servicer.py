@@ -18,7 +18,7 @@ class AudioTranscriptionServicer(
         self._lock = threading.Lock()
         self._db_pool: ConnectionPool = db_pool
 
-    def TranscribeAudio(self, request, _context):
+    def TranscribeAudio(self, request, context):  # noqa: ARG002
         chunk = np.array(request.audio_bytes, dtype=np.float32)
         logger.debug("got audio chunk to transcribe", chunk_size=len(chunk))
         text = transcribe_handler(chunk)
@@ -28,7 +28,7 @@ class AudioTranscriptionServicer(
 
         return audio_transcription_pb2.TranscribeAudioResponse(success=text is not None)
 
-    def SaveTranscript(self, request, _context):
+    def SaveTranscript(self, request, context):  # noqa: ARG002
         """gRPC handler that saves the current transcript to db"""
         logger.debug(
             "called savetranscript to save transcript", profile_id=request.profile_id

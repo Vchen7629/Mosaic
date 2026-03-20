@@ -34,7 +34,8 @@ def transcribe_handler(chunk: np.ndarray) -> Optional[str]:
             no_speech_threshold=0.9,
             fp16=False,
         )
-        return result.get("text", "").strip() or None
+        text = result.get("text")
+        return text.strip() or None if isinstance(text, str) else None
     except Exception as e:
         logger.error("Transcription error", err=str(e))
         if "CUDA" in str(e):

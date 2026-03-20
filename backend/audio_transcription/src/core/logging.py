@@ -9,7 +9,7 @@ def configure_logging() -> None:
     level = logging.DEBUG if settings.log_level == "DEBUG" else logging.INFO
     logging.basicConfig(stream=sys.stdout, level=level)
 
-    processors = [
+    processors: list[structlog.types.Processor] = [
         structlog.stdlib.add_log_level,
         structlog.processors.TimeStamper(fmt="iso"),
     ]
