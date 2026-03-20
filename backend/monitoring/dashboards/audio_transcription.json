@@ -1,183 +1,641 @@
 {
-  "title": "Audio Transcription Service",
-  "uid": "audio-transcription",
-  "schemaVersion": 38,
-  "refresh": "10s",
-  "time": { "from": "now-30m", "to": "now" },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 2,
+  "links": [],
   "panels": [
     {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 10,
+      "panels": [],
+      "title": "Service Stats",
+      "type": "row"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 0.8
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 9,
+        "x": 0,
+        "y": 1
+      },
       "id": 1,
-      "title": "CPU Usage",
-      "type": "stat",
-      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 4 },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
       "targets": [
         {
           "expr": "rate(process_cpu_seconds_total{job=\"audio_transcription\"}[2m])",
-          "legendFormat": "cpu"
+          "legendFormat": "cpu",
+          "refId": "A"
         }
       ],
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
-        "graphMode": "area"
-      },
+      "title": "CPU Usage",
+      "type": "stat"
+    },
+    {
       "fieldConfig": {
         "defaults": {
-          "unit": "percentunit",
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 0.5 },
-              { "color": "red", "value": 0.8 }
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 500000000
+              },
+              {
+                "color": "red",
+                "value": 1000000000
+              }
             ]
-          }
-        }
-      }
-    },
-    {
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 7,
+        "x": 9,
+        "y": 1
+      },
       "id": 2,
-      "title": "Memory Usage (RSS)",
-      "type": "stat",
-      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 4 },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
       "targets": [
         {
           "expr": "process_resident_memory_bytes{job=\"audio_transcription\"}",
-          "legendFormat": "rss"
+          "legendFormat": "rss",
+          "refId": "A"
         }
       ],
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
-        "graphMode": "area"
-      },
+      "title": "Memory Usage (RSS)",
+      "type": "stat"
+    },
+    {
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes",
-          "color": { "mode": "thresholds" },
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 500000000 },
-              { "color": "red", "value": 1000000000 }
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
             ]
-          }
-        }
-      }
-    },
-    {
-      "id": 3,
-      "title": "Whisper Calls/sec",
-      "type": "stat",
-      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 4 },
-      "targets": [
-        {
-          "expr": "rate(audio_transcription_whisper_duration_milliseconds_count[2m])",
-          "legendFormat": "calls/sec"
-        }
-      ],
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"] },
-        "graphMode": "area"
+          },
+          "unit": "ops"
+        },
+        "overrides": []
       },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ops",
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "id": 4,
-      "title": "Whisper Inference Latency (ms)",
-      "description": "Time for Whisper to transcribe each audio chunk. Called every 2.5s per active session.",
-      "type": "timeseries",
-      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.50, rate(audio_transcription_whisper_duration_milliseconds_bucket[2m]))",
-          "legendFormat": "p50"
-        },
-        {
-          "expr": "histogram_quantile(0.95, rate(audio_transcription_whisper_duration_milliseconds_bucket[2m]))",
-          "legendFormat": "p95"
-        },
-        {
-          "expr": "histogram_quantile(0.99, rate(audio_transcription_whisper_duration_milliseconds_bucket[2m]))",
-          "legendFormat": "p99"
-        },
-        {
-          "expr": "rate(audio_transcription_whisper_duration_milliseconds_sum[2m]) / rate(audio_transcription_whisper_duration_milliseconds_count[2m])",
-          "legendFormat": "avg"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "ms", "custom": { "lineWidth": 2 } }
-      }
-    },
-    {
-      "id": 5,
-      "title": "DB Save Latency (ms)",
-      "description": "Time to save the full conversation transcript to DB at end of session.",
-      "type": "timeseries",
-      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "expr": "histogram_quantile(0.50, rate(audio_transcription_db_save_duration_milliseconds_bucket[2m]))",
-          "legendFormat": "p50"
-        },
-        {
-          "expr": "histogram_quantile(0.95, rate(audio_transcription_db_save_duration_milliseconds_bucket[2m]))",
-          "legendFormat": "p95"
-        },
-        {
-          "expr": "histogram_quantile(0.99, rate(audio_transcription_db_save_duration_milliseconds_bucket[2m]))",
-          "legendFormat": "p99"
-        },
-        {
-          "expr": "rate(audio_transcription_db_save_duration_milliseconds_sum[2m]) / rate(audio_transcription_db_save_duration_milliseconds_count[2m])",
-          "legendFormat": "avg"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "ms", "custom": { "lineWidth": 2 } }
-      }
-    },
-    {
-      "id": 6,
-      "title": "DB Write Rate (ops/sec)",
-      "type": "timeseries",
-      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
-      "targets": [
-        {
-          "expr": "rate(audio_transcription_db_writes_total[2m])",
-          "legendFormat": "{{operation}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": { "unit": "ops", "custom": { "lineWidth": 2 } }
-      }
-    },
-    {
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 1
+      },
       "id": 7,
-      "title": "Error Rate (errors/sec)",
-      "type": "timeseries",
-      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.0",
       "targets": [
         {
           "expr": "rate(audio_transcription_errors_total[2m])",
-          "legendFormat": "{{operation}}"
+          "legendFormat": "{{operation}}",
+          "refId": "A"
         }
       ],
+      "title": "Error Rate (errors/sec)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 9,
+      "panels": [],
+      "title": "Latency",
+      "type": "row"
+    },
+    {
+      "description": "Time for Whisper to transcribe each audio chunk. Called every 2.5s per active session.",
       "fieldConfig": {
-        "defaults": { "unit": "ops", "color": { "fixedColor": "red", "mode": "fixed" }, "custom": { "lineWidth": 2 } }
-      }
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(audio_transcription_whisper_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(audio_transcription_whisper_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p95",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(audio_transcription_whisper_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p99",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(audio_transcription_whisper_duration_milliseconds_sum[2m]) / rate(audio_transcription_whisper_duration_milliseconds_count[2m])",
+          "legendFormat": "avg",
+          "refId": "D"
+        }
+      ],
+      "title": "Whisper Inference Latency (ms)",
+      "type": "timeseries"
+    },
+    {
+      "description": "Time to save the full conversation transcript to DB at end of session.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(audio_transcription_db_save_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(audio_transcription_db_save_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p95",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(audio_transcription_db_save_duration_milliseconds_bucket[2m]))",
+          "legendFormat": "p99",
+          "refId": "C"
+        },
+        {
+          "expr": "rate(audio_transcription_db_save_duration_milliseconds_sum[2m]) / rate(audio_transcription_db_save_duration_milliseconds_count[2m])",
+          "legendFormat": "avg",
+          "refId": "D"
+        }
+      ],
+      "title": "DB Save Latency (ms)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 8,
+      "panels": [],
+      "title": "Operation count",
+      "type": "row"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 17
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "expr": "rate(audio_transcription_db_writes_total[2m])",
+          "legendFormat": "{{operation}}",
+          "refId": "A"
+        }
+      ],
+      "title": "DB Write Rate (ops/sec)",
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 17
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "expr": "rate(audio_transcription_whisper_duration_milliseconds_count[2m])",
+          "legendFormat": "calls/sec",
+          "refId": "A"
+        }
+      ],
+      "title": "Whisper Calls/sec",
+      "type": "stat"
     }
-  ]
+  ],
+  "preload": false,
+  "refresh": "10s",
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Audio Transcription Service",
+  "uid": "audio-transcription",
+  "version": 1
 }
