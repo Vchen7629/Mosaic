@@ -149,7 +149,9 @@ func main() {
 
 	grpcServer.GracefulStop()
 	pool.Close()
-	client.Close()
+	if client != nil {
+		client.Close()
+	}
 
 	logger.Info("Closed gRPC and dbpool connection")
 }

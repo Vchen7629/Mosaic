@@ -20,6 +20,10 @@ func FetchProfileFaceEmbForIDWithCache(
 ) ([]ProfileFaces, error) {
 	key := fmt.Sprintf("fetch_profile_face_emb_for_id:%d", profileID)
 
+	if cacheClient == nil {
+		return fetchProfileFaceEmb()
+	}
+
 	cacheResult := cacheClient.Do(ctx, cacheClient.B().Get().Key(key).Build())
 
 	cacheBytes, err := cacheResult.AsBytes()
@@ -63,6 +67,10 @@ func FetchAllVisitorDataWithCache(
 ) ([]VisitorFaces, error) {
 	key := fmt.Sprintf("fetch_all_visitor_data:%d", profileID)
 
+	if cacheClient == nil {
+		return fetchAllVisitorData()
+	}
+
 	cacheResult := cacheClient.Do(ctx, cacheClient.B().Get().Key(key).Build())
 
 	cacheBytes, err := cacheResult.AsBytes()
@@ -99,6 +107,10 @@ func AppendToVisitorDataCache(
 	cacheClient valkey.Client,
 	newEntry VisitorFaces,
 ) {
+	if cacheClient == nil {
+		return
+	}
+
 	key := fmt.Sprintf("fetch_all_visitor_data:%d", profileID)
 
 	cacheResult := cacheClient.Do(ctx, cacheClient.B().Get().Key(key).Build())
