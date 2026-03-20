@@ -45,8 +45,7 @@ def transcribe_handler(chunk: np.ndarray) -> Optional[str]:
         ErrorsTotal.labels(operation="whisper_transcribe").inc()
         logger.error("Transcription error", err=str(e))
         if "CUDA" in str(e):
-            logger.warning(
-                "CUDA error detected, clearing model cache for reload on next call"
+            logger.error(
+                "CUDA error detected, keeping cached model — GPU memory may be insufficient for reload"
             )
-            get_model.cache_clear()
         return None
