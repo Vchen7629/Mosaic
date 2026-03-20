@@ -5,6 +5,8 @@ package db_test
 import (
 	"context"
 	"errors"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -21,11 +23,13 @@ var fastConfig = db.RetryConfig{
 }
 
 func TestRetryWithBackoff(t *testing.T) {
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	logger := slog.New(handler).With("service", "conversation_briefing")
 	t.Run("does not retry on non-transient error", func(t *testing.T) {
 		calls := 0
 		permanent := errors.New("some perm error")
 
-		err := db.RetryWithBackoff(context.Background(), fastConfig, func() error {
+		err := db.RetryWithBackoff(logger, context.Background(), fastConfig, func() error {
 			calls++
 			return permanent
 		})
@@ -38,7 +42,7 @@ func TestRetryWithBackoff(t *testing.T) {
 		calls := 0
 		transient := &pgconn.PgError{Code: "40P01"}
 
-		err := db.RetryWithBackoff(context.Background(), fastConfig, func() error {
+		err := db.RetryWithBackoff(logger, context.Background(), fastConfig, func() error {
 			calls++
 			return transient
 		})
@@ -56,7 +60,7 @@ func TestRetryWithBackoff(t *testing.T) {
 		// cancel immediately so first backoff sleep is interrupted
 		cancel()
 
-		err := db.RetryWithBackoff(ctx, fastConfig, func() error {
+		err := db.RetryWithBackoff(logger, ctx, fastConfig, func() error {
 			calls++
 			return transient
 		})
@@ -77,9 +81,7 @@ func TestRetryWithBackoff(t *testing.T) {
 		}
 		transient := &pgconn.PgError{Code: "40001"}
 
-		err := db.RetryWithBackoff(ctx, slowConfig, func() error {
-			return transient
-		})
+		err := db.RetryWithBackoff(logger,ctx, slowConfig, func() error { return transient })
 
 		assert.Equal(t, context.DeadlineExceeded, err)
 	})
@@ -88,7 +90,7 @@ func TestRetryWithBackoff(t *testing.T) {
 		calls := 0
 		transient := errors.New("connection refused by server")
 
-		err := db.RetryWithBackoff(context.Background(), fastConfig, func() error {
+		err := db.RetryWithBackoff(logger, context.Background(), fastConfig, func() error {
 			calls++
 			return transient
 		})
@@ -106,7 +108,7 @@ func TestRetryWithBackoff(t *testing.T) {
 		calls := 0
 		transient := &pgconn.PgError{Code: "40001"}
 
-		err := db.RetryWithBackoff(context.Background(), singleAttempt, func() error {
+		err := db.RetryWithBackoff(logger, context.Background(), singleAttempt, func() error {
 			calls++
 			return transient
 		})
@@ -117,7 +119,7 @@ func TestRetryWithBackoff(t *testing.T) {
 
 	t.Run("succeeds on first attempt", func(t *testing.T) {
 		calls := 0
-		err := db.RetryWithBackoff(context.Background(), fastConfig, func() error {
+		err := db.RetryWithBackoff(logger, context.Background(), fastConfig, func() error {
 			calls++
 			return nil
 		})
@@ -130,7 +132,7 @@ func TestRetryWithBackoff(t *testing.T) {
 		calls := 0
 		transient := &pgconn.PgError{Code: "40001"}
 
-		err := db.RetryWithBackoff(context.Background(), fastConfig, func() error {
+		err := db.RetryWithBackoff(logger, context.Background(), fastConfig, func() error {
 			calls++
 			if calls < 2 {
 				return transient
