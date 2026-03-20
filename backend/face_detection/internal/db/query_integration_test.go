@@ -4,9 +4,9 @@ package db_test
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"testing"
-	"log/slog"
 
 	"github.com/Kagami/go-face"
 	"github.com/stretchr/testify/assert"

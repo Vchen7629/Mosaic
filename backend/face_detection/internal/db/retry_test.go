@@ -5,10 +5,10 @@ package db_test
 import (
 	"context"
 	"errors"
-	"testing"
-	"time"
 	"log/slog"
 	"os"
+	"testing"
+	"time"
 
 	"github.com/jackc/pgconn"
 	"github.com/stretchr/testify/assert"
