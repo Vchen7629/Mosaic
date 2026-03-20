@@ -3,6 +3,7 @@
 package db_test
 
 import (
+	"log/slog"
 	"os"
 	"testing"
 
@@ -100,6 +101,8 @@ func TestFetchRecentConversations(t *testing.T) {
 func TestInsertBriefing(t *testing.T) {
 	pool := testDB.Pool
 	dbPool := db.NewDBPool(pool)
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	logger := slog.New(handler).With("service", "conversation_briefing")
 
 	t.Run("inserts briefing for a single visitor", func(t *testing.T) {
 		test.CleanupTables(t, pool)
@@ -108,7 +111,7 @@ func TestInsertBriefing(t *testing.T) {
 		profileID := test.SeedProfile(t, pool, embedding)
 		visitorID := test.SeedVisitor(t, pool, profileID, "visitor 1", embedding)
 
-		err := dbPool.InsertBriefing(profileID, map[int32]string{
+		err := dbPool.InsertBriefing(logger, profileID, map[int32]string{
 			visitorID: "briefing for visitor 1",
 		})
 
@@ -126,7 +129,7 @@ func TestInsertBriefing(t *testing.T) {
 		visitorID1 := test.SeedVisitor(t, pool, profileID, "visitor 1", embedding)
 		visitorID2 := test.SeedVisitor(t, pool, profileID, "visitor 2", embedding)
 
-		err := dbPool.InsertBriefing(profileID, map[int32]string{
+		err := dbPool.InsertBriefing(logger, profileID, map[int32]string{
 			visitorID1: "briefing for visitor 1",
 			visitorID2: "briefing for visitor 2",
 		})
@@ -149,12 +152,12 @@ func TestInsertBriefing(t *testing.T) {
 		profileID := test.SeedProfile(t, pool, embedding)
 		visitorID := test.SeedVisitor(t, pool, profileID, "visitor 1", embedding)
 
-		err := dbPool.InsertBriefing(profileID, map[int32]string{
+		err := dbPool.InsertBriefing(logger, profileID, map[int32]string{
 			visitorID: "original briefing",
 		})
 		assert.Nil(t, err)
 
-		err = dbPool.InsertBriefing(profileID, map[int32]string{
+		err = dbPool.InsertBriefing(logger, profileID, map[int32]string{
 			visitorID: "updated briefing",
 		})
 		assert.Nil(t, err)
@@ -164,6 +167,33 @@ func TestInsertBriefing(t *testing.T) {
 		assert.Equal(t, "updated briefing", text)
 	})
 
+	t.Run("returns nil and persists successful inserts when only some visitors fail", func(t *testing.T) {
+		test.CleanupTables(t, pool)
+
+		embedding := test.MakeEmbedding(0.1, 128)
+		profileID := test.SeedProfile(t, pool, embedding)
+		visitorID1 := test.SeedVisitor(t, pool, profileID, "visitor 1", embedding)
+		visitorID2 := test.SeedVisitor(t, pool, profileID, "visitor 2", embedding)
+		invalidVisitorID := int32(99999)
+
+		err := dbPool.InsertBriefing(logger, profileID, map[int32]string{
+			visitorID1:      "briefing for visitor 1",
+			visitorID2:      "briefing for visitor 2",
+			invalidVisitorID: "briefing for invalid visitor",
+		})
+
+		// partial failure should not return an error
+		assert.Nil(t, err)
+
+		text1, found1 := test.FetchBriefing(t, pool, profileID, visitorID1)
+		assert.True(t, found1)
+		assert.Equal(t, "briefing for visitor 1", text1)
+
+		text2, found2 := test.FetchBriefing(t, pool, profileID, visitorID2)
+		assert.True(t, found2)
+		assert.Equal(t, "briefing for visitor 2", text2)
+	})
+
 	t.Run("returns error when all inserts fail due to invalid profile id", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
@@ -171,7 +201,7 @@ func TestInsertBriefing(t *testing.T) {
 		profileID := test.SeedProfile(t, pool, embedding)
 		visitorID := test.SeedVisitor(t, pool, profileID, "visitor 1", embedding)
 
-		err := dbPool.InsertBriefing(99999, map[int32]string{
+		err := dbPool.InsertBriefing(logger, 99999, map[int32]string{
 			visitorID: "briefing",
 		})
 
