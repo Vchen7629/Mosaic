@@ -17,6 +17,7 @@ dependencies = [
     "prometheus-client>=0.24.1",
     "psutil>=7.0.0",
     "faster-whisper>=1.2.1",
+    "ctranslate2>=4.5.0",
 ]
 
 [[tool.uv.index]]
