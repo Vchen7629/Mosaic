@@ -122,7 +122,7 @@ jobs:
           working-directory: ./backend/client
       
       - name: run tests
-        working-directory: ./backend/client
+        working-directory: ./backend/client/cmd
         run: make test_all
 
   conversation-briefing-ci:
