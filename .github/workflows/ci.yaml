@@ -166,7 +166,12 @@ jobs:
         with:
           go-version: v1.25.6
           cache: 'true'
-      
+
+      - name: Install dlib dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libdlib-dev libblas-dev libatlas-base-dev liblapack-dev libjpeg-turbo8-dev pkg-config gcc g++
+
       - name: Download Go modules
         working-directory: ./backend/face_detection
         run: go mod download
@@ -192,10 +197,15 @@ jobs:
         working-directory: ./backend/audio_transcription
         run: make coverage
 
-      - uses: actions/checkout@v4                                                                              
-      - uses: actions/setup-go@v5                                                                              
-        with:                                                                                                  
-          go-version-file: 'backend/client/go.mod'                                                              
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'backend/client/go.mod'
+
+      - name: Install dlib dependencies for face_detection
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libdlib-dev libblas-dev libatlas-base-dev liblapack-dev libjpeg-turbo8-dev pkg-config gcc g++
 
       - name: Run backend client coverage
         working-directory: ./backend/client/cmd
