@@ -8,7 +8,7 @@ RUN go mod download
 COPY . .
 RUN go build -o server ./cmd/main.go
 
-FROM alpine
+FROM alpine:3.21
 
 WORKDIR /app
 
