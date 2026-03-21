@@ -3,19 +3,19 @@ package test
 import (
 	"context"
 	"fmt"
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 type TestDBContainer struct {
-	Container 	testcontainers.Container
-	Pool		*pgxpool.Pool
-	ConnStr		string
+	Container testcontainers.Container
+	Pool      *pgxpool.Pool
+	ConnStr   string
 }
 
 // core setup logic shared between SetupTestDatabase and SetupTestDatabaseForTestMain
