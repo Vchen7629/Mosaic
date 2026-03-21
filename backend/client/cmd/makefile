@@ -7,9 +7,8 @@ coverage:
 
 lint: 
 	go fmt . 
-	go fmt ../internal/db/... .
+	go fmt ../internal/middleware/... .
 	go fmt ../internal/handler/... .
-	go fmt ../internal/observability/... .
 	go fmt ../internal/service/... .
 
 integration:
