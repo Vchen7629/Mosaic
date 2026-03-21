@@ -1,0 +1,22 @@
+FROM golang:1.25.6-alpine AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN go build -o server ./cmd/main.go
+
+FROM alpine
+
+WORKDIR /app
+
+COPY --from=builder /app/server .
+
+ENV ProdMode=True
+
+EXPOSE 30030 9090
+
+CMD ["./server"]
+
