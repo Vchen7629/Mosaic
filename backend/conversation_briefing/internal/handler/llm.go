@@ -66,7 +66,6 @@ func GenerateBriefings(
 			Stream: false,
 		}
 
-
 		bodyBytes, err := json.Marshal(reqBody)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal request for visitor %d: %w", conv.VisitorID, err)

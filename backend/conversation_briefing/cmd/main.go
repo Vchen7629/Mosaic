@@ -27,10 +27,10 @@ import (
 
 type Config struct {
 	ServerPort  string `envconfig:"SERVER_PORT" default:"30030"`
-	MetricsPort  string `envconfig:"METRICS_PORT" default:"9090"`
+	MetricsPort string `envconfig:"METRICS_PORT" default:"9090"`
 	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
 	LLMBaseURL  string `envconfig:"OLLAMA_BASE_URL" default:""`
-	ProdMode 	bool   `envconfig:"PROD_MODE" default:"false"`
+	ProdMode    bool   `envconfig:"PROD_MODE" default:"false"`
 }
 
 func gRPCServer(logger *slog.Logger, cfg *Config, pool *pgxpool.Pool) (*grpc.Server, error) {
@@ -54,7 +54,7 @@ func gRPCServer(logger *slog.Logger, cfg *Config, pool *pgxpool.Pool) (*grpc.Ser
 		logger.Info("conversation briefing gRPC server listening on", "port", cfg.ServerPort)
 		err = gRPCServer.Serve(lis)
 		if err != nil {
-			logger.Error("failed to serve gRPC server", "err", err,)
+			logger.Error("failed to serve gRPC server", "err", err)
 			os.Exit(1)
 		}
 	}()
@@ -93,7 +93,7 @@ func main() {
 	if cfg.ProdMode {
 		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
 	} else {
-		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})		
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
 	}
 	logger := slog.New(handler).With("service", "conversation_briefing")
 
