@@ -82,7 +82,12 @@ func GenerateBriefings(
 		}
 
 		logger.Debug("sent request to llm with prompt", "visitor_id", conv.VisitorID)
-		defer resp.Body.Close()
+		defer func() {
+			err := resp.Body.Close()
+			if err != nil {
+				logger.Warn("error closing the db resp body", "err", err)
+			}
+		}()
 
 		if resp.StatusCode != http.StatusOK {
 			return nil, fmt.Errorf("LLM returned status %d for visitor %d", resp.StatusCode, conv.VisitorID)

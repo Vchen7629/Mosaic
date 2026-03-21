@@ -8,10 +8,8 @@ coverage:
 
 lint: 
 	go fmt . 
-	go fmt ../internal/db/... .
-	go fmt ../internal/handler/... .
+	go fmt ${PKGS} .
 	go fmt ../internal/observability/... .
-	go fmt ../internal/service/... .
 
 integration:
 	go test -tags integration ${PKGS}
