@@ -16,6 +16,7 @@ var (
 	audioBuffer []float32
 	bufferMutex sync.Mutex
 	Wg          sync.WaitGroup
+	SleepFn     = time.Sleep
 )
 
 const (
@@ -63,7 +64,7 @@ func SaveTranscriptWithRetry(
 		}
 
 		wait := time.Duration(1<<attempt) * time.Second // 1s, 2s, 4s
-		time.Sleep(wait)
+		SleepFn(wait)
 	}
 
 	return fmt.Errorf("save transcript failed after 3 attempts: %w", lastErr)
@@ -97,7 +98,7 @@ func transcribeWithRetry(
 			err = fmt.Errorf("transcription returned success=false")
 		}
 		wait := time.Duration(1<<attempt) * time.Second // 1s, 2s, 4s
-		time.Sleep(wait)
+		SleepFn(wait)
 	}
 
 	return fmt.Errorf("transcription failed after 3 attempts: %w", err)
