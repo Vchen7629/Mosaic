@@ -5,16 +5,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     libdlib-dev \
     libblas-dev \
+    libatlas-base-dev \
     liblapack-dev \
-    libopenblas-dev \
+    libjpeg-turbo8-dev \
     pkg-config \
     gcc \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-RUN wget -q https://go.dev/dl/go1.24.1.linux-amd64.tar.gz \
-    && tar -C /usr/local -xzf go1.24.1.linux-amd64.tar.gz \
-    && rm go1.24.1.linux-amd64.tar.gz
+RUN wget -q https://go.dev/dl/go1.25.6.linux-amd64.tar.gz \
+    && tar -C /usr/local -xzf go1.25.6.linux-amd64.tar.gz \
+    && rm go1.25.6.linux-amd64.tar.gz
 
 ENV PATH="/usr/local/go/bin:${PATH}"
 
@@ -32,12 +33,19 @@ FROM ubuntu:24.04
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libdlib19.1 \
-    libopenblas0 \
+    libblas3 \
+    libatlas3-base \
+    liblapack3 \
+    libjpeg-turbo8 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
+ENV PROD_MODE=true
+
 COPY --from=builder /app/face-detection .
-COPY internal/models ./models
+COPY --from=builder /app/internal/models ./models
+
+EXPOSE 40040 9092
 
 CMD ["./face-detection"]

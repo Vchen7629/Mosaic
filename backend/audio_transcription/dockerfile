@@ -1,0 +1,31 @@
+FROM python:3.12-slim as builder
+
+WORKDIR /app
+
+# install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# for dependency files
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
+
+COPY . .
+
+FROM python:3.12-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# for source code
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/src ./src
+
+ENV UV_PROJECT_ENVIRONMENT=/app/.venv
+
+EXPOSE 50051 9091
+
+CMD ["uv", "run", "-m", "src.server"]
