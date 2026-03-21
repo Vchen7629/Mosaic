@@ -33,7 +33,7 @@ pub fn start_backend_api(state: State<BackendProcesses>, app_handle: tauri::AppH
 
         // Check and clean up ports if needed
         if port_utils::ports_in_use() {
-            println!("[Rust] Port 8000 in use by untracked process, cleaning up...");
+            println!("[Rust] Port 8080 in use by untracked process, cleaning up...");
             port_utils::kill_processes_on_ports();
             port_utils::wait_for_ports_free(std::time::Duration::from_secs(5));
         }

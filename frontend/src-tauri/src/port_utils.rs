@@ -1,7 +1,7 @@
 use std::process::Command;
 
 pub fn kill_processes_on_ports() {
-    let port = "8000";
+    let port = "8080";
     #[cfg(target_os = "windows")]
     {
         use std::os::windows::process::CommandExt;
@@ -84,13 +84,13 @@ pub fn wait_for_ports_free(timeout: std::time::Duration) {
         }
         std::thread::sleep(std::time::Duration::from_millis(200));
     }
-    println!("[Rust] Warning: port 8000 still in use after wait; start may fail");
+    println!("[Rust] Warning: port 8080 still in use after wait; start may fail");
 }
 
 // Helpers for port checks and platform-specific kills. Kept small and
 // private to keep the main functions concise while preserving behavior.
 pub fn ports_in_use() -> bool {
-    let port = "8000";
+    let port = "8080";
     #[cfg(target_os = "windows")]
     {
         let cmd = format!("netstat -ano | findstr :{}", port);
