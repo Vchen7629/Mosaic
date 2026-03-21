@@ -66,25 +66,7 @@ func ProcessVisitorImage(
 	}
 
 	if len(resp.Faces) > 0 {
-		for _, faceData := range resp.Faces {
-			if !faceData.IsKnown {
-				conn.WriteJSON(UnknownVisitorResponse{
-					Type: "new_visitor_register",
-					FaceEmbedding: faceData.FaceEmbedding,
-				})
-			// only send data to the frontend if the visitor hasnt
-			// been sent to the frontend.
-			} else if !HasSeenVisitor(faceData.VisitorId) {
-				logger.Debug("[ProcessVisitorFace] This visitor briefing hasnt been sent to frontend, sending")
-				conn.WriteJSON(KnownVisitorResponse{
-					Type: "visitor_briefing_response",
-					VisitorName: faceData.Name,
-					Briefing: faceData.Briefing,
-					VisitorID: faceData.VisitorId,
-				})
-				AddSeenVisitor(faceData.VisitorId)
-			}
-		}
+		processFaceResults(logger, resp.Faces, conn)
 	}
 
 	return nil
