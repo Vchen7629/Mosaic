@@ -1,5 +1,6 @@
 from .db.connection_pool import create_connection_pool
 from .core.metrics import _process, process_cpu_seconds_total, process_resident_memory_bytes
+from .transcription.handler import TranscriptionHandler
 from psycopg_pool import ConnectionPool
 from prometheus_client import make_wsgi_app
 from wsgiref.simple_server import make_server
@@ -51,9 +52,10 @@ def serve():
         ThreadPoolExecutor(max_workers=settings.max_workers)
     )
     db_pool = create_connection_pool()
+    transcription_handler = TranscriptionHandler()
 
     audio_transcription_pb2_grpc.add_AudioTranscriptionServiceServicer_to_server(
-        AudioTranscriptionServicer(db_pool), server
+        AudioTranscriptionServicer(db_pool, transcription_handler), server
     )
     health_servicer = grpc_health.HealthServicer()
     health_pb2_grpc.add_HealthServicer_to_server(health_servicer, server)
