@@ -175,8 +175,8 @@ func TestInsertBriefing(t *testing.T) {
 		invalidVisitorID := int32(99999)
 
 		err := dbPool.InsertBriefing(profileID, map[int32]string{
-			visitorID1:      "briefing for visitor 1",
-			visitorID2:      "briefing for visitor 2",
+			visitorID1:       "briefing for visitor 1",
+			visitorID2:       "briefing for visitor 2",
 			invalidVisitorID: "briefing for invalid visitor",
 		})
 

@@ -81,7 +81,7 @@ func TestRetryWithBackoff(t *testing.T) {
 		}
 		transient := &pgconn.PgError{Code: "40001"}
 
-		err := db.RetryWithBackoff(logger,ctx, slowConfig, func() error { return transient })
+		err := db.RetryWithBackoff(logger, ctx, slowConfig, func() error { return transient })
 
 		assert.Equal(t, context.DeadlineExceeded, err)
 	})

@@ -10,7 +10,7 @@ import (
 )
 
 type DBPool struct {
-	pool *pgxpool.Pool
+	pool   *pgxpool.Pool
 	logger *slog.Logger
 }
 

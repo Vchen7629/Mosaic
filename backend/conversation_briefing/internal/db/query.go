@@ -55,9 +55,9 @@ func (db *DBPool) FetchRecentConversations(profileID int32, visitorIDs []int32) 
 	}
 
 	db.logger.Debug(
-		"Fetched recent conversations", 
-		"profile_id", profileID, 
-		"visitor_ids", visitorIDs, 
+		"Fetched recent conversations",
+		"profile_id", profileID,
+		"visitor_ids", visitorIDs,
 		"convo_count", len(convoMap),
 	)
 
