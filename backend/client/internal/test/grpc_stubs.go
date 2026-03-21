@@ -8,12 +8,15 @@ import (
 
 	"google.golang.org/grpc"
 	at "mosaic-client.com/gen/audio_transcription"
+	cb "mosaic-client.com/gen/conversation_briefing"
 	fd "mosaic-client.com/gen/face_detection"
 )
 
 type StubFaceClient struct {
-	Mu                  sync.Mutex
-	ProcessVisitorCalls []*fd.ProcessVisitorFacesRequest
+	Mu                    sync.Mutex
+	ProcessVisitorCalls   []*fd.ProcessVisitorFacesRequest
+	SyncProfileCalled     int
+	RegisterVisitorCalled int
 }
 
 func (s *StubFaceClient) ProcessVisitorFaces(
@@ -33,6 +36,9 @@ func (s *StubFaceClient) SyncProfile(
 	_ *fd.SyncProfileRequest,
 	_ ...grpc.CallOption,
 ) (*fd.SyncProfileResponse, error) {
+	s.Mu.Lock()
+	s.SyncProfileCalled++
+	s.Mu.Unlock()
 	return &fd.SyncProfileResponse{Success: true}, nil
 }
 
@@ -41,6 +47,9 @@ func (s *StubFaceClient) RegisterVisitorFace(
 	_ *fd.RegisterVisitorFaceRequest,
 	_ ...grpc.CallOption,
 ) (*fd.RegisterVisitorFaceResponse, error) {
+	s.Mu.Lock()
+	s.RegisterVisitorCalled++
+	s.Mu.Unlock()
 	return &fd.RegisterVisitorFaceResponse{Success: true}, nil
 }
 
@@ -52,7 +61,11 @@ func (s *StubFaceClient) RegisterProfileFace(
 	return &fd.RegisterProfileFaceResponse{Success: true}, nil
 }
 
-type StubAudioClient struct{}
+type StubAudioClient struct {
+	Mu                   sync.Mutex
+	SaveTranscriptCalled int
+	SaveTranscriptErr    error
+}
 
 func (s *StubAudioClient) TranscribeAudio(
 	_ context.Context,
@@ -67,5 +80,28 @@ func (s *StubAudioClient) SaveTranscript(
 	_ *at.SaveTranscriptRequest,
 	_ ...grpc.CallOption,
 ) (*at.SaveTranscriptResponse, error) {
+	s.Mu.Lock()
+	s.SaveTranscriptCalled++
+	err := s.SaveTranscriptErr
+	s.Mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
 	return &at.SaveTranscriptResponse{Success: true}, nil
+}
+
+type StubBriefingClient struct {
+	Mu                                 sync.Mutex
+	GenerateConversationBriefingCalled int
+}
+
+func (s *StubBriefingClient) GenerateConversationBriefing(
+	_ context.Context,
+	_ *cb.GenerateConversationBriefingRequest,
+	_ ...grpc.CallOption,
+) (*cb.GenerateConversationBriefingResponse, error) {
+	s.Mu.Lock()
+	s.GenerateConversationBriefingCalled++
+	s.Mu.Unlock()
+	return &cb.GenerateConversationBriefingResponse{Success: true}, nil
 }
