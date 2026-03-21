@@ -2,6 +2,7 @@ package test
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -39,7 +40,14 @@ func NewWSCapture(t *testing.T) *WSCapture {
 		if err != nil {
 			return
 		}
-		defer serverConn.Close()
+
+		defer func() {
+			err := serverConn.Close()
+			if err != nil {
+				log.Printf("error closing server websocket: %v", err)
+			}
+		}()
+
 		for {
 			_, msg, err := serverConn.ReadMessage()
 			if err != nil {
@@ -57,7 +65,10 @@ func NewWSCapture(t *testing.T) *WSCapture {
 	c.Conn = conn
 
 	t.Cleanup(func() {
-		conn.Close()
+		err := conn.Close()
+		if err != nil {
+			log.Println("error closing connection")
+		}
 		c.srv.Close()
 	})
 

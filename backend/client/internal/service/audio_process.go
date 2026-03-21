@@ -12,12 +12,15 @@ import (
 
 func ProcessAudio(
 	logger *slog.Logger,
-	audioData string, 
+	audioData string,
 	profileID string,
 	client at.AudioTranscriptionServiceClient,
 ) error {
 	ctx := context.Background()
 	id64, err := strconv.ParseInt(profileID, 10, 32)
+	if err != nil {
+		return fmt.Errorf("converting string to int error: %w", err)
+	}
 
 	// Decode base64
 	audioBytes, err := base64.StdEncoding.DecodeString(audioData)
@@ -47,7 +50,7 @@ func ProcessAudio(
 
 		err := transcribeWithRetry(ctx, client, batch, int32(id64))
 		if err != nil {
-			return fmt.Errorf("Error processing audio: %v", err)
+			return fmt.Errorf("error processing audio: %v", err)
 		}
 	}
 
@@ -61,10 +64,13 @@ func ProcessAudio(
 func FlushAudio(
 	logger *slog.Logger,
 	ctx context.Context,
-	profileID string, 
+	profileID string,
 	client at.AudioTranscriptionServiceClient,
 ) error {
 	id64, err := strconv.ParseInt(profileID, 10, 32)
+	if err != nil {
+		return fmt.Errorf("error converting string to int: %w", err)
+	}
 
 	Wg.Wait()
 
@@ -80,7 +86,7 @@ func FlushAudio(
 
 	err = transcribeWithRetry(ctx, client, remaining, int32(id64))
 	if err != nil {
-		return fmt.Errorf("Error flushing audio: %v", err)
+		return fmt.Errorf("error flushing audio: %v", err)
 	}
 
 	return nil

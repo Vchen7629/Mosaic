@@ -11,22 +11,22 @@ import (
 )
 
 type UnknownVisitorResponse struct {
-	Type			string `json:"type"`
-	FaceEmbedding 	[]float32 `json:"face_embedding"`
+	Type          string    `json:"type"`
+	FaceEmbedding []float32 `json:"face_embedding"`
 }
 
 type KnownVisitorResponse struct {
-	Type			string `json:"type"`
-	VisitorName 	string `json:"visitor_name"`
-	Briefing		string `json:"briefing"`
-	VisitorID		int32  `json:"visitor_id"`
+	Type        string `json:"type"`
+	VisitorName string `json:"visitor_name"`
+	Briefing    string `json:"briefing"`
+	VisitorID   int32  `json:"visitor_id"`
 }
 
 // Process images for potential visitor
 func ProcessVisitorImage(
 	logger *slog.Logger,
-	frameData string, 
-	profileID string, 
+	frameData string,
+	profileID string,
 	conn *SafeConn,
 	client fd.FaceDetectionServiceClient,
 ) error {
@@ -34,12 +34,12 @@ func ProcessVisitorImage(
 	// Decode base64
 	faceBytes, err := base64.StdEncoding.DecodeString(frameData)
 	if err != nil {
-		return fmt.Errorf("Frame decode error: %w", err)
+		return fmt.Errorf("frame decode error: %w", err)
 	}
 
 	id64, err := strconv.ParseInt(profileID, 10, 32)
 	if err != nil {
-		return fmt.Errorf("Error converting string to int64: %w", err)
+		return fmt.Errorf("error converting string to int64: %w", err)
 	}
 
 	//log.Printf("[ProcessFace] Recieved face_data: %s", frameData)
@@ -73,15 +73,15 @@ func ProcessVisitorImage(
 }
 
 type RegisterVisitorRes struct {
-	Type 			string `json:"type"`
-	VisitorID		int32  `json:"visitor_id"`
-	Success			bool   `json:"success"`
+	Type      string `json:"type"`
+	VisitorID int32  `json:"visitor_id"`
+	Success   bool   `json:"success"`
 }
 
 // Register a new visitor face
 func RegisterNewVisitorFace(
-	faceEmbedding string, 
-	profileID string, 
+	faceEmbedding string,
+	profileID string,
 	visitorName string,
 	conn *SafeConn,
 	client fd.FaceDetectionServiceClient,
@@ -90,22 +90,22 @@ func RegisterNewVisitorFace(
 
 	id64, err := strconv.ParseInt(profileID, 10, 32)
 	if err != nil {
-		return fmt.Errorf("Error converting string to int64: %w", err)
+		return fmt.Errorf("error converting string to int64: %w", err)
 	}
 
 	faceEmb, err := ParseEmbedding(faceEmbedding)
 	if err != nil {
 		return err
 	}
-	
+
 	resp, err := client.RegisterVisitorFace(ctx, &fd.RegisterVisitorFaceRequest{
 		FaceEmbedding: faceEmb,
-		ProfileId: int32(id64),
-		VisitorName: visitorName,
+		ProfileId:     int32(id64),
+		VisitorName:   visitorName,
 	})
 
 	if err != nil {
-		return fmt.Errorf("RegisterVisitorFace gRPC error: %w", err)
+		return fmt.Errorf("registerVisitorFace gRPC error: %w", err)
 	}
 
 	// Todo: Implement retry with exponential backoff
@@ -113,6 +113,9 @@ func RegisterNewVisitorFace(
 		return nil
 	}
 
-	conn.WriteJSON(RegisterVisitorRes{Type: "register_visitor_resp", VisitorID: resp.VisitorId, Success: resp.Success})
+	err = conn.WriteJSON(RegisterVisitorRes{Type: "register_visitor_resp", VisitorID: resp.VisitorId, Success: resp.Success})
+	if err != nil {
+		return fmt.Errorf("registerVisitorFace error writing to frontend: %w", err)
+	}
 	return nil
 }
