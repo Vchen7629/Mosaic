@@ -28,19 +28,10 @@ def transcribe_handler(chunk: np.ndarray) -> Optional[str]:
 
     try:
         whisper_start = time.monotonic()
-        result = get_model().transcribe(
-            chunk,
-            language="en",
-            task="transcribe",
-            beam_size=1,
-            best_of=1,
-            logprob_threshold=None,
-            no_speech_threshold=0.9,
-            fp16=False,
-        )
+        segments, _ = get_model().transcribe(chunk, language="en", vad_filter=False)
         WhisperDuration.observe((time.monotonic() - whisper_start) * 1000)
-        text = result.get("text")
-        return text.strip() or None if isinstance(text, str) else None
+        text = " ".join(seg.text for seg in segments).strip()
+        return text or None
     except Exception as e:
         ErrorsTotal.labels(operation="whisper_transcribe").inc()
         logger.error("Transcription error", err=str(e))
