@@ -235,4 +235,3 @@ func TestRegisterNewVisitorFace(t *testing.T) {
 		assert.Error(t, err, "invalid embedding should return a parse error")
 	})
 }
-

@@ -14,22 +14,22 @@ import (
 )
 
 type Message struct {
-	Type 			string `json:"type"`
-	FaceBytes 		string `json:"face_bytes,omitempty"` // base64 encoded
-	AudioData		string `json:"audio_data,omitempty"`
-	FaceEmbedding	string `json:"face_embedding,omitempty"`
-	ProfileID		string `json:"profile_id,omitempty"`
-	VisitorID		string `json:"visitor_id,omitempty"`
+	Type          string   `json:"type"`
+	FaceBytes     string   `json:"face_bytes,omitempty"` // base64 encoded
+	AudioData     string   `json:"audio_data,omitempty"`
+	FaceEmbedding string   `json:"face_embedding,omitempty"`
+	ProfileID     string   `json:"profile_id,omitempty"`
+	VisitorID     string   `json:"visitor_id,omitempty"`
 	VisitorIDList []string `json:"visitor_id_list,omitempty"`
-	VisitorName		string `json:"visitor_name,omitempty"`
-	Frames		  []string `json:"frames,omitempty"`
+	VisitorName   string   `json:"visitor_name,omitempty"`
+	Frames        []string `json:"frames,omitempty"`
 }
 
 type WebSocketHandler struct {
-	Logger 			*slog.Logger
-	AudioClient 	at.AudioTranscriptionServiceClient
-	FaceClient  	fd.FaceDetectionServiceClient
-	BriefingClient 	cb.ConversationBriefingServiceClient
+	Logger         *slog.Logger
+	AudioClient    at.AudioTranscriptionServiceClient
+	FaceClient     fd.FaceDetectionServiceClient
+	BriefingClient cb.ConversationBriefingServiceClient
 }
 
 var upgrader = websocket.Upgrader{
@@ -50,7 +50,12 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			h.Logger.Warn("error closing websocket connection", "err", err)
+		}
+	}()
 
 	safe := &service.SafeConn{Conn: conn}
 
@@ -125,14 +130,14 @@ func (h *WebSocketHandler) handleSaveAudioTranscript(m Message) {
 	if err != nil {
 		h.Logger.Error("[save_audio_transcript] error flushing audio", "err", err)
 	}
-	
+
 	err = service.SaveTranscriptWithRetry(ctx, m.ProfileID, m.VisitorIDList, h.AudioClient)
 	if err != nil {
 		h.Logger.Error("[save_audio_transcript] error saving transcript", "err", err)
 	} else {
 		visitorIDs := service.GetSeenVisitors()
 		go func(m Message) {
-			err = service.GenerateConversationBriefing(m.ProfileID, visitorIDs, h.BriefingClient)		
+			err = service.GenerateConversationBriefing(m.ProfileID, visitorIDs, h.BriefingClient)
 			if err != nil {
 				h.Logger.Error("[save_audio_transcript] error generating convo briefing", "err", err)
 			}

@@ -12,7 +12,7 @@ func isAudioValid(audioBytes []float32) bool {
 	if rms < silenceThreshold || rms > loudThreshold {
 		return false
 	}
-	
+
 	return true
 }
 
@@ -27,15 +27,15 @@ func calculateRMS(audioBytes []float32) float64 {
 	for _, sample := range audioBytes {
 		sumSquares += float64(sample) * float64(sample)
 	}
-	
+
 	return math.Sqrt(sumSquares / float64(len(audioBytes)))
 }
 
 func bytesToFloat32(data []byte) []float32 {
 	samples := make([]float32, len(data)/4)
 	for i := range samples {
-			bits := binary.LittleEndian.Uint32(data[i*4:])
-			samples[i] = math.Float32frombits(bits)
+		bits := binary.LittleEndian.Uint32(data[i*4:])
+		samples[i] = math.Float32frombits(bits)
 	}
 	return samples
 }
