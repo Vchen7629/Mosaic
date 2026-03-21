@@ -40,9 +40,10 @@ class TranscriptionHandler:
         chunk = self._normalize(chunk)
         fut: Future = Future()
         try:
-            self._work_queue.put_nowait((chunk, fut))
             TranscribeQueueDepth.inc()
+            self._work_queue.put_nowait((chunk, fut))
         except queue.Full:
+            TranscribeQueueDepth.dec()
             ErrorsTotal.labels(operation="whisper_queue_full").inc()
             logger.warning("Transcription queue full, rejecting chunk")
             raise QueueFullError("Transcription queue is full")
@@ -54,7 +55,6 @@ class TranscriptionHandler:
         Serial execution ensures ctranslate2/CUDA is never called concurrently."""
         while True:
             chunk, fut = self._work_queue.get()
-            TranscribeQueueDepth.dec()
             try:
                 text = self._run_inference(chunk)
                 fut.set_result(text)
@@ -62,6 +62,8 @@ class TranscriptionHandler:
                 ErrorsTotal.labels(operation="whisper_transcribe").inc()
                 logger.error("Transcription error", err=str(e))
                 fut.set_result(None)
+            finally:
+                TranscribeQueueDepth.dec()
     
     def _run_inference(self, chunk: np.ndarray) -> Optional[str]:
         """Runs Whisper inference on the chunk. Called only from _gpu_worker."""
