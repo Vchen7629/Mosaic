@@ -17,6 +17,7 @@ jobs:
     outputs:
         frontend: ${{ steps.changes.outputs.frontend }}
         audio_transcription: ${{ steps.changes.outputs.audio_transcription }}
+        client: ${{ steps.changes.outputs.client }}
         conversation_briefing: ${{ steps.changes.outputs.conversation_briefing }}
         face_detection: ${{ steps.changes.outputs.face_detection }}
     steps:
@@ -29,6 +30,8 @@ jobs:
               - 'frontend/**'
             audio_transcription:
               - 'backend/audio_transcription/src/**'
+            client:
+            - 'backend/client/**'
             conversation_briefing:
               - 'backend/conversation_briefing/**'
             face_detection:
@@ -93,6 +96,34 @@ jobs:
       - name: Run Unit/Integration Tests
         run: make test_all
         working-directory: ./backend/audio_transcription
+
+  client-ci:
+    needs: path-filter
+    if: ${{ needs.path-filter.outputs.client == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: v1.25.6
+          cache: 'true'
+      
+      - name: Download Go modules
+        working-directory: ./backend/client
+        run: go mod download
+      
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.6
+          working-directory: ./backend/client
+      
+      - name: run tests
+        working-directory: ./backend/client
+        run: make test_all
 
   conversation-briefing-ci:
     needs: path-filter
