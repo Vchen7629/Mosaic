@@ -6,8 +6,10 @@ from ..core.metrics import ConvoSaveDuration
 from ..gen import audio_transcription_pb2
 from ..gen import audio_transcription_pb2_grpc
 from ..db.queries import save_conversation
-from ..transcription.log import ConvoLogHandler
-from ..transcription.handler import transcribe_handler
+from ..transcription.convo_log import ConvoLogHandler
+from ..transcription.handler import QueueFullError
+from ..transcription.handler import TranscriptionHandler
+import grpc
 import time
 import threading
 import numpy as np
@@ -16,15 +18,20 @@ import numpy as np
 class AudioTranscriptionServicer(
     audio_transcription_pb2_grpc.AudioTranscriptionServiceServicer
 ):
-    def __init__(self, db_pool: ConnectionPool) -> None:
+    def __init__(self, db_pool: ConnectionPool, transcription_handler: TranscriptionHandler) -> None:
         self._convo_loggers: dict[str, ConvoLogHandler] = {}
         self._lock = threading.Lock()
         self._db_pool: ConnectionPool = db_pool
+        self._transcription_handler = transcription_handler
 
-    def TranscribeAudio(self, request, context):  # noqa: ARG002
+    def TranscribeAudio(self, request, context):
         chunk = np.array(request.audio_bytes, dtype=np.float32)
         logger.debug("got audio chunk to transcribe", chunk_size=len(chunk))
-        text = transcribe_handler(chunk)
+        try:
+            text = self._transcription_handler.transcribe(chunk)
+        except QueueFullError:
+            context.abort(grpc.StatusCode.RESOURCE_EXHAUSTED, "Transcription queue is full, retry later")
+            return
         if text:
             logger.debug("writing audio transcribe to text to internal log", text=text)
             self._get_log_writer(request.profile_id).write(text)

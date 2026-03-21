@@ -25,7 +25,9 @@ class Settings(BaseSettings):
     metrics_server_port: int = 9091
 
     # --- Audio Settings ---
-    whisper_mode: str = "small"
+    whisper_model: str = "medium"
+    whisper_compute_type: str = "float16"
+    transcribe_queue_max_size: int = 50
 
     # --- db connection cfg ---
     DB_HOST: str = "localhost"

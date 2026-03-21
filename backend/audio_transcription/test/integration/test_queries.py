@@ -12,7 +12,7 @@ def test_insert_one_valid_convo(
     profileID = seed_profile_table(db_connection)
     visitorID = seed_visitor_face_embeddings_table(db_connection, profileID, "visitor")
 
-    save_conversation(db_connection, profileID, "placeholdText", visitorID)
+    save_conversation(db_connection, profileID, "placeholdText", [visitorID])
 
     with db_connection.cursor() as cursor:
         query = """
@@ -38,7 +38,7 @@ def test_insert_multiple_convo_for_same_profile_visitor_no_issues(
     visitorID = seed_visitor_face_embeddings_table(db_connection, profileID, "visitor")
 
     for i in range(5):
-        save_conversation(db_connection, profileID, f"placeholdText{i}", visitorID)
+        save_conversation(db_connection, profileID, f"placeholdText{i}", [visitorID])
 
     with db_connection.cursor() as cursor:
         query = """

@@ -5,12 +5,12 @@ from prometheus_client import Counter, Gauge, Histogram
 _process = psutil.Process(os.getpid())
 
 process_cpu_seconds_total = Gauge(
-    "process_cpu_seconds_total",
+    "process_cpu_service_seconds_total",
     "Total user and system CPU time spent in seconds",
 )
 
 process_resident_memory_bytes = Gauge(
-    "process_resident_memory_bytes",
+    "process_resident_service_memory_bytes",
     "Resident memory size in bytes",
 )
 
@@ -36,5 +36,10 @@ ErrorsTotal = Counter(
     "audio_transcription_errors_total",
     "Total errors by Operation",
     ["operation"],
+)
+
+TranscribeQueueDepth = Gauge(
+    "audio_transcription_queue_depth",
+    "Number of audio chunks waiting to be transcribed",
 )
 
