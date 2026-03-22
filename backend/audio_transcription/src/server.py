@@ -1,6 +1,4 @@
-from .db.connection_pool import create_connection_pool
-from .core.metrics import _process, process_cpu_seconds_total, process_resident_memory_bytes
-from .transcription.handler import TranscriptionHandler
+from typing import Any
 from psycopg_pool import ConnectionPool
 from prometheus_client import make_wsgi_app
 from wsgiref.simple_server import make_server
@@ -11,27 +9,38 @@ from .grpc.servicer import AudioTranscriptionServicer
 from .core.logging import logger
 from .core.settings import settings
 from .gen import audio_transcription_pb2_grpc
+from .db.connection_pool import create_connection_pool
+from .core.metrics import _process, process_cpu_seconds_total
+from .core.metrics import process_resident_memory_bytes
+from .transcription.handler import TranscriptionHandler
+import time
 import grpc
+import types
 import signal
 import threading
-import time
 
 
-def _collect_process_metrics():
+def _collect_process_metrics() -> None:
     while True:
         cpu = _process.cpu_times()
         process_cpu_seconds_total.set(cpu.user + cpu.system)
         process_resident_memory_bytes.set(_process.memory_info().rss)
         time.sleep(15)
 
-def handle_shutdown(server, _sig, _frame):
+
+def handle_shutdown(
+    server: grpc.Server,  # pyrefly: ignore
+    _sig: int,
+    _frame: types.FrameType | None,
+) -> None:
     server.stop(grace=5)
+
 
 def start_metrics_server(port: int, db_pool: ConnectionPool) -> None:
     """Seperate wsgi server that handles metrics and ready endpoint"""
     metrics_app = make_wsgi_app()
 
-    def app(environ, start_response):
+    def app(environ: dict[str, Any], start_response: Any) -> list[bytes]:
         if environ["PATH_INFO"] == "/ready":
             try:
                 with db_pool.connection() as conn:
@@ -39,16 +48,19 @@ def start_metrics_server(port: int, db_pool: ConnectionPool) -> None:
                 start_response("200 OK", [("Content-Type", "text/plain")])
                 return [b"ok"]
             except Exception:
-                start_response("503 Service Unavailable", [("Content-Type", "text/plain")])
+                start_response(
+                    "503 Service Unavailable", [("Content-Type", "text/plain")]
+                )
                 return [b"db not ready"]
         return metrics_app(environ, start_response)
 
     server = make_server("", port, app)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     threading.Thread(target=_collect_process_metrics, daemon=True).start()
-    
-def serve():
-    server = grpc.server( # pyrefly: ignore
+
+
+def serve() -> None:
+    server = grpc.server(  # pyrefly: ignore
         ThreadPoolExecutor(max_workers=settings.max_workers)
     )
     db_pool = create_connection_pool()

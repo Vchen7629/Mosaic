@@ -35,18 +35,18 @@ func (s *ConvoBriefingServer) GenerateConversationBriefing(
 ) (*cb.GenerateConversationBriefingResponse, error) {
 	s.logger.Debug("GenerateConversationBriefing called", "profile_id", req.ProfileId, "visitor_ids", req.VisitorIds)
 	if req.ProfileId <= 0 {
-		s.logger.Error("Invalid profile id in the req, less than or equal to 0")
+		s.logger.Error("invalid profile id in the req, less than or equal to 0")
 		return &cb.GenerateConversationBriefingResponse{
 			Success: false,
-		}, errors.New("Invalid profile id in the req, less than or equal to 0")
+		}, errors.New("invalid profile id in the req, less than or equal to 0")
 	}
 
 	for _, visitorID := range req.VisitorIds {
 		if visitorID <= 0 {
-			s.logger.Error("Invalid visitor id in the req, less than or equal to 0")
+			s.logger.Error("invalid visitor id in the req, less than or equal to 0")
 			return &cb.GenerateConversationBriefingResponse{
 				Success: false,
-			}, errors.New("Invalid visitor id in the req, less than or equal to 0")
+			}, errors.New("invalid visitor id in the req, less than or equal to 0")
 		}
 	}
 

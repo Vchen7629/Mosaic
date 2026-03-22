@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	at "mosaic-client.com/gen/audio_transcription"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	at "mosaic-client.com/gen/audio_transcription"
 )
 
 var (
@@ -20,11 +20,11 @@ var (
 )
 
 const (
-	silenceThreshold = 0.02 // lower bound, prevents silence
-	loudThreshold    = 0.5 // upper bound, prevents loud noises
-	sampleRate		 = 16000 // 16khz required for whisper
-	batchDuration	 = 2.5 // seconds
-	batchSize 		 = sampleRate * batchDuration
+	silenceThreshold = 0.02  // lower bound, prevents silence
+	loudThreshold    = 0.5   // upper bound, prevents loud noises
+	sampleRate       = 16000 // 16khz required for whisper
+	batchDuration    = 2.5   // seconds
+	batchSize        = sampleRate * batchDuration
 )
 
 // Method for sending gRPC request to save the transcript for the
@@ -37,21 +37,21 @@ func SaveTranscriptWithRetry(
 ) error {
 	profileID64, err := strconv.ParseInt(profileID, 10, 32)
 	if err != nil {
-		return fmt.Errorf("Error converting profileID string to int64: %w", err)
+		return fmt.Errorf("error converting profileID string to int64: %w", err)
 	}
 	visitorIDList := make([]int32, 0, len(visitorIDs))
 	for _, visitorID := range visitorIDs {
 		visitorID64, err := strconv.ParseInt(visitorID, 10, 32)
 		if err != nil {
-			return fmt.Errorf("Error converting profileID string to int64: %w", err)
+			return fmt.Errorf("error converting profileID string to int64: %w", err)
 		}
 		visitorIDList = append(visitorIDList, int32(visitorID64))
 	}
-	
+
 	var lastErr error
 	for attempt := range 3 {
-		resp, rpcErr := client.SaveTranscript(ctx, &at.SaveTranscriptRequest{ 
-			ProfileId: int32(profileID64), 
+		resp, rpcErr := client.SaveTranscript(ctx, &at.SaveTranscriptRequest{
+			ProfileId:  int32(profileID64),
 			VisitorIds: visitorIDList,
 		})
 		if rpcErr == nil && resp.Success {
@@ -73,7 +73,7 @@ func SaveTranscriptWithRetry(
 // Helper function that sends the audio batch to whisper service for transcription
 // handles retries with exponential backoff
 func transcribeWithRetry(
-	ctx context.Context, 
+	ctx context.Context,
 	client at.AudioTranscriptionServiceClient,
 	batch []float32,
 	profileID int32,
@@ -83,7 +83,7 @@ func transcribeWithRetry(
 	for attempt := range 3 {
 		resp, rpcErr := client.TranscribeAudio(ctx, &at.TranscribeAudioRequest{
 			AudioBytes: batch,
-			ProfileId: profileID,
+			ProfileId:  profileID,
 		})
 		if rpcErr == nil && resp.Success {
 			return nil

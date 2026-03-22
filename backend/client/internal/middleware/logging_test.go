@@ -49,13 +49,13 @@ func TestWriteHeader(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, wrapped.StatusCode, "It start as status ok")
 	})
-} 
+}
 
 // unit tests for logging function
 func TestLogging(t *testing.T) {
 	t.Run("Handler is called", func(t *testing.T) {
 		handlerCalled := false
-		mockHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)  {
+		mockHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			handlerCalled = true
 			w.WriteHeader(http.StatusOK)
 		})
@@ -95,7 +95,7 @@ func TestLogging(t *testing.T) {
 		log.SetOutput(&logBuffer)
 		defer log.SetOutput(originalOutput)
 
-		mockHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)  {
+		mockHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 		})
 
@@ -113,6 +113,5 @@ func TestLogging(t *testing.T) {
 		assert.Contains(t, logOutput, "/test-path", "Log should contain request path")
 		assert.True(t, strings.Contains(logOutput, "ns") || strings.Contains(logOutput, "µs") || strings.Contains(logOutput, "ms") || strings.Contains(logOutput, "s"), "Log should contain timing information")
 	})
-
 
 }

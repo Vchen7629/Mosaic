@@ -8,16 +8,15 @@ import (
 	fd "mosaic-client.com/gen/face_detection"
 )
 
-
 type ProfileSyncRes struct {
-	Type 			string `json:"type"`
-	ProfileId		int32 `json:"profile_id"`
+	Type      string `json:"type"`
+	ProfileId int32  `json:"profile_id"`
 }
 
 // Process an array of face frames for profile sync
 // matches against existing profiles or registers a new one
 func SyncProfile(
-	frames []string, 
+	frames []string,
 	conn *SafeConn,
 	client fd.FaceDetectionServiceClient,
 ) error {
@@ -29,14 +28,14 @@ func SyncProfile(
 		decoded, err := base64.StdEncoding.DecodeString(frameData)
 		if err != nil {
 			return fmt.Errorf("frame decode error: %w", err)
-		}		
+		}
 
 		faceBytes = append(faceBytes, decoded)
 	}
 
 	resp, err := client.SyncProfile(ctx, &fd.SyncProfileRequest{FaceBytes: faceBytes})
 	if err != nil {
-		return fmt.Errorf("Sync gRPC error: %w", err)
+		return fmt.Errorf("sync gRPC error: %w", err)
 	}
 
 	if !resp.FaceDetected {
@@ -44,7 +43,10 @@ func SyncProfile(
 	}
 
 	if !resp.NewFace {
-		conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", ProfileId: resp.ProfileId})
+		err = conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", ProfileId: resp.ProfileId})
+		if err != nil {
+			return fmt.Errorf("error sending face same as profile face res to frontend: %w", err)
+		}
 		return nil
 	}
 
@@ -55,6 +57,9 @@ func SyncProfile(
 		return fmt.Errorf("RegisterProfileFace gRPC error: %w", err)
 	}
 
-	conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", ProfileId: regResp.ProfileId})
+	err = conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", ProfileId: regResp.ProfileId})
+	if err != nil {
+		return fmt.Errorf("syncProfile error writing to frontend: %w", err)
+	}
 	return nil
 }

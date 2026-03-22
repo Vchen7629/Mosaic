@@ -42,4 +42,3 @@ TranscribeQueueDepth = Gauge(
     "audio_transcription_queue_depth",
     "Number of audio chunks waiting to be transcribed",
 )
-
