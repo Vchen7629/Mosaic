@@ -186,7 +186,6 @@ jobs:
         working-directory: ./backend/face_detection/cmd
         run: make test_all
 
-<<<<<<< HEAD
   coverage:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -195,23 +194,11 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
-=======
-  coverage:                                                                                                    
-    runs-on: ubuntu-latest                                                                                     
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'                                         
-    steps:                                                                                                     
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5      
->>>>>>> f56a8d75c616eb0c9309b2f8d0780acd74f2393e
 
       - name: Run audio_transcription coverage
         working-directory: ./backend/audio_transcription
         run: make coverage
 
-<<<<<<< HEAD
-=======
-      - uses: actions/checkout@v4
->>>>>>> f56a8d75c616eb0c9309b2f8d0780acd74f2393e
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'backend/client/go.mod'
