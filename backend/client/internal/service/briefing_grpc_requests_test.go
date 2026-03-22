@@ -33,7 +33,7 @@ func TestGenerateConversationBriefing(t *testing.T) {
 
 		err := GenerateConversationBriefing("1", []int32{10}, client)
 
-		assert.ErrorContains(t, err, "GenerateConversationBriefing gRPC error", "gRPC error should be propagated")
+		assert.ErrorContains(t, err, "generateConversationBriefing gRPC error", "gRPC error should be propagated")
 	})
 
 	t.Run("Returns error when resp.Success is false", func(t *testing.T) {
@@ -45,7 +45,7 @@ func TestGenerateConversationBriefing(t *testing.T) {
 
 		err := GenerateConversationBriefing("1", []int32{10}, client)
 
-		assert.ErrorContains(t, err, "GenerateConversationBriefing processing error", "success=false should return an error")
+		assert.ErrorContains(t, err, "generateConversationBriefing processing error", "success=false should return an error")
 	})
 
 	t.Run("Sends correct profile ID and visitor IDs in request", func(t *testing.T) {
@@ -81,6 +81,6 @@ func TestGenerateConversationBriefing(t *testing.T) {
 
 		err := GenerateConversationBriefing("1", []int32{10}, client)
 
-		assert.ErrorContains(t, err, "GenerateConversationBriefing gRPC error", "unavailable error should be propagated")
+		assert.ErrorContains(t, err, "generateConversationBriefing gRPC error", "unavailable error should be propagated")
 	})
 }

@@ -34,7 +34,7 @@ func ProcessVisitorImage(
 	// Decode base64
 	faceBytes, err := base64.StdEncoding.DecodeString(frameData)
 	if err != nil {
-		return fmt.Errorf("frame decode error: %w", err)
+		return fmt.Errorf("Frame decode error: %w", err)
 	}
 
 	id64, err := strconv.ParseInt(profileID, 10, 32)
@@ -105,7 +105,7 @@ func RegisterNewVisitorFace(
 	})
 
 	if err != nil {
-		return fmt.Errorf("registerVisitorFace gRPC error: %w", err)
+		return fmt.Errorf("RegisterVisitorFace gRPC error: %w", err)
 	}
 
 	// Todo: Implement retry with exponential backoff

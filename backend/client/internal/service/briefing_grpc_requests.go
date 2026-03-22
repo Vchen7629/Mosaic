@@ -30,7 +30,7 @@ func GenerateConversationBriefing(
 	}
 
 	if !resp.Success {
-		return errors.New("GenerateConversationBriefing processing error")
+		return errors.New("generateConversationBriefing processing error")
 	}
 
 	return nil
