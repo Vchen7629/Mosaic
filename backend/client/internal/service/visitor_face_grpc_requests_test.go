@@ -44,7 +44,7 @@ func TestProcessVisitorImage(t *testing.T) {
 
 		err := ProcessVisitorImage(slog.Default(), "not-valid-base64!!!", "1", conn, client)
 
-		assert.ErrorContains(t, err, "Frame decode error", "invalid base64 should return a decode error")
+		assert.ErrorContains(t, err, "frame decode error", "invalid base64 should return a decode error")
 	})
 
 	t.Run("Returns nil and no WriteJSON when no face detected", func(t *testing.T) {

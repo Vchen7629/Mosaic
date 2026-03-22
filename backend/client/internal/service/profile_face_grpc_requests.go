@@ -35,7 +35,7 @@ func SyncProfile(
 
 	resp, err := client.SyncProfile(ctx, &fd.SyncProfileRequest{FaceBytes: faceBytes})
 	if err != nil {
-		return fmt.Errorf("Sync gRPC error: %w", err)
+		return fmt.Errorf("sync gRPC error: %w", err)
 	}
 
 	if !resp.FaceDetected {

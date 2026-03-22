@@ -50,7 +50,7 @@ func ProcessAudio(
 
 		err := transcribeWithRetry(ctx, client, batch, int32(id64))
 		if err != nil {
-			return fmt.Errorf("Error processing audio: %v", err)
+			return fmt.Errorf("error processing audio: %v", err)
 		}
 	}
 
@@ -86,7 +86,7 @@ func FlushAudio(
 
 	err = transcribeWithRetry(ctx, client, remaining, int32(id64))
 	if err != nil {
-		return fmt.Errorf("Error flushing audio: %v", err)
+		return fmt.Errorf("error flushing audio: %v", err)
 	}
 
 	return nil

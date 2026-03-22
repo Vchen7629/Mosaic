@@ -35,7 +35,7 @@ func TestSyncProfile(t *testing.T) {
 		frame := base64.StdEncoding.EncodeToString([]byte("frame"))
 		err := SyncProfile([]string{frame}, conn, client)
 
-		assert.ErrorContains(t, err, "Sync gRPC error", "gRPC error should be propagated")
+		assert.ErrorContains(t, err, "sync gRPC error", "gRPC error should be propagated")
 	})
 
 	t.Run("Returns nil and no WriteJSON when no face detected", func(t *testing.T) {
