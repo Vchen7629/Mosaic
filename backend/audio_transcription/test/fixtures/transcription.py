@@ -4,19 +4,16 @@ import numpy as np
 import pytest
 
 
-@pytest.fixture
 def make_chunk(size: int = 40000) -> np.ndarray:
     return np.random.default_rng(0).uniform(-0.5, 0.5, size).astype(np.float32)
 
 
-@pytest.fixture
 def make_segment(text: str) -> MagicMock:
     seg = MagicMock()
     seg.text = text
     return seg
 
 
-@pytest.fixture
 def _handler_with_queue_size(mock_model: MagicMock, queue_size: int):
     with (
         patch("src.transcription.handler.settings") as mock_settings,

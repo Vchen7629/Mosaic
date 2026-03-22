@@ -1,7 +1,8 @@
 from psycopg_pool import ConnectionPool
 from typing import Optional, Any, TYPE_CHECKING
+
 if TYPE_CHECKING:
-    from grpc import ServicerContext
+    from grpc import ServicerContext  # pyrefly: ignore
 from ..core.logging import logger
 from ..core.settings import _LOGS_DIR
 from ..core.metrics import ErrorsTotal

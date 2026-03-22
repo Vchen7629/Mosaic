@@ -8,7 +8,6 @@ import grpc
 import pytest
 
 
-@pytest.fixture
 def _start_server(mock_model, queue_size: int, tmp_path):
     with (
         patch("src.transcription.handler.settings") as mock_settings,

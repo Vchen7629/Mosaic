@@ -4,9 +4,10 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 from src.transcription.handler import QueueFullError
+from test.fixtures.transcription import make_chunk, make_segment
 
 
-def test_concurrent_requests_all_complete(handler, make_chunk):
+def test_concurrent_requests_all_complete(handler):
     results = [None] * 10
 
     def call(i):
@@ -21,9 +22,7 @@ def test_concurrent_requests_all_complete(handler, make_chunk):
     assert all(r == "hello" for r in results)
 
 
-def test_worker_never_runs_inference_concurrently(
-    handler, mock_model, make_segment, make_chunk
-) -> None:
+def test_worker_never_runs_inference_concurrently(handler, mock_model) -> None:
     active = []
     overlap = []
     lock = threading.Lock()
@@ -52,9 +51,7 @@ def test_worker_never_runs_inference_concurrently(
     assert not overlap
 
 
-def test_results_not_mixed_between_callers(
-    handler, mock_model, make_segment, make_chunk
-) -> None:
+def test_results_not_mixed_between_callers(handler, mock_model) -> None:
     call_count = 0
     lock = threading.Lock()
 
@@ -84,9 +81,7 @@ def test_results_not_mixed_between_callers(
     assert len(set(results)) == 5
 
 
-def test_raises_when_queue_saturated(
-    small_queue_handler, mock_model, make_segment, make_chunk
-) -> None:
+def test_raises_when_queue_saturated(small_queue_handler, mock_model) -> None:
     blocked = threading.Event()
     unblock = threading.Event()
 
@@ -132,9 +127,7 @@ def test_leaves_valid_audio_unchanged(handler):
     np.testing.assert_array_almost_equal(handler._normalize(chunk), chunk)
 
 
-def test_returns_none_on_empty_transcription(
-    handler, mock_model, make_segment, make_chunk
-) -> None:
+def test_returns_none_on_empty_transcription(handler, mock_model) -> None:
     mock_model.transcribe.side_effect = lambda *a, **kw: (
         iter([make_segment("   ")]),
         MagicMock(),
@@ -142,12 +135,12 @@ def test_returns_none_on_empty_transcription(
     assert handler.transcribe(make_chunk()) is None
 
 
-def test_returns_none_on_inference_exception(handler, mock_model, make_chunk) -> None:
+def test_returns_none_on_inference_exception(handler, mock_model) -> None:
     mock_model.transcribe.side_effect = RuntimeError("GPU error")
     assert handler.transcribe(make_chunk()) is None
 
 
-def test_joins_multiple_segments(handler, mock_model, make_segment, make_chunk) -> None:
+def test_joins_multiple_segments(handler, mock_model) -> None:
     mock_model.transcribe.side_effect = lambda *a, **kw: (
         iter([make_segment("hello"), make_segment("world")]),
         MagicMock(),
