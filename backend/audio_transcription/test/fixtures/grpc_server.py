@@ -8,13 +8,16 @@ import grpc
 import pytest
 
 
+@pytest.fixture
 def _start_server(mock_model, queue_size: int, tmp_path):
-    with patch("src.transcription.handler.settings") as mock_settings, \
-         patch("src.transcription.handler.get_model", return_value=mock_model), \
-         patch("src.transcription.handler.WhisperDuration"), \
-         patch("src.transcription.handler.TranscribeQueueDepth"), \
-         patch("src.transcription.handler.ErrorsTotal"), \
-         patch("src.grpc.servicer._LOGS_DIR", tmp_path):
+    with (
+        patch("src.transcription.handler.settings") as mock_settings,
+        patch("src.transcription.handler.get_model", return_value=mock_model),
+        patch("src.transcription.handler.WhisperDuration"),
+        patch("src.transcription.handler.TranscribeQueueDepth"),
+        patch("src.transcription.handler.ErrorsTotal"),
+        patch("src.grpc.servicer._LOGS_DIR", tmp_path),
+    ):
         mock_settings.transcribe_queue_max_size = queue_size
 
         handler = TranscriptionHandler()

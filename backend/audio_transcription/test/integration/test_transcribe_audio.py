@@ -6,12 +6,12 @@ import grpc
 
 from src.gen.audio_transcription_pb2 import TranscribeAudioRequest
 from src.gen import audio_transcription_pb2_grpc
-from test.fixtures.transcription import make_chunk, make_segment, mock_model
-from test.fixtures.grpc_server import grpc_server, grpc_client, small_queue_grpc_server
 
 
-def _request(profile_id: int = 1) -> TranscribeAudioRequest:
-    return TranscribeAudioRequest(audio_bytes=make_chunk().tolist(), profile_id=profile_id)
+def _request(make_chunk, profile_id: int = 1) -> TranscribeAudioRequest:
+    return TranscribeAudioRequest(
+        audio_bytes=make_chunk().tolist(), profile_id=profile_id
+    )
 
 
 def test_concurrent_requests_all_succeed(grpc_client):
@@ -27,6 +27,7 @@ def test_concurrent_requests_all_succeed(grpc_client):
         t.join(timeout=15)
 
     assert all(r is not None and r.success for r in results)
+
 
 def test_concurrent_requests_from_different_profiles(grpc_client):
     results = {}
@@ -48,7 +49,9 @@ def test_concurrent_requests_from_different_profiles(grpc_client):
     assert all(r.success for r in results.values())
 
 
-def test_returns_resource_exhausted_when_queue_full(mock_model, small_queue_grpc_server):
+def test_returns_resource_exhausted_when_queue_full(
+    mock_model, make_segment, small_queue_grpc_server
+) -> None:
     blocked = threading.Event()
     unblock = threading.Event()
 
