@@ -1,10 +1,14 @@
-# Mosaic
+![Project Banner](./banner.svg)
+
+<div align="center">
 
 [![CI](https://github.com/Vchen7629/Mosaic/actions/workflows/ci.yaml/badge.svg)](https://github.com/Vchen7629/Mosaic/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/Vchen7629/Mosaic/branch/main/graph/badge.svg?token=4H6BHLIW4Y)](https://codecov.io/gh/Vchen7629/Mosaic)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Go](https://img.shields.io/badge/Go-1.24-00ADD8)](https://go.dev/)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB)](https://www.python.org/)
+
+</div>
 
 Mosaic is a desktop application designed to assist people with memory loss. It identifies visitors via webcam and displays an AI-generated briefing about who they are and what you last talked about — so users always have context before a conversation begins. Originally built for HackMerced XI ([Devpost](https://devpost.com/software/mosaic-ulzfj9)).
 
