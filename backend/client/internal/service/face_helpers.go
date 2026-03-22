@@ -20,7 +20,7 @@ func ParseEmbedding(embString string) ([]float32, error) {
 	for i, p := range parts {
 		val, err := strconv.ParseFloat(strings.TrimSpace(p), 32)
 		if err != nil {
-			return nil, fmt.Errorf("Invalid embedding val at index %d: %w", i, err)
+			return nil, fmt.Errorf("invalid embedding val at index %d: %w", i, err)
 		}
 		res[i] = float32(val)
 	}
@@ -31,20 +31,30 @@ func ParseEmbedding(embString string) ([]float32, error) {
 func processFaceResults(logger *slog.Logger, faces []*fd.FaceResult, conn *SafeConn) {
 	for _, faceData := range faces {
 		if !faceData.IsKnown {
-			conn.WriteJSON(UnknownVisitorResponse{
-				Type: "new_visitor_register",
+			err := conn.WriteJSON(UnknownVisitorResponse{
+				Type:          "new_visitor_register",
 				FaceEmbedding: faceData.FaceEmbedding,
 			})
-		// only send data to the frontend if the visitor hasnt
-		// been sent to the frontend.
+			if err != nil {
+				logger.Error(
+					"error sending request to register new visitor face to frontend",
+					"err", err,
+				)
+			}
+			// only send data to the frontend if the visitor hasnt
+			// been sent to the frontend.
 		} else if !HasSeenVisitor(faceData.VisitorId) {
 			logger.Debug("[ProcessVisitorFace] This visitor briefing hasnt been sent to frontend, sending")
-			conn.WriteJSON(KnownVisitorResponse{
-				Type: "visitor_briefing_response",
+			err := conn.WriteJSON(KnownVisitorResponse{
+				Type:        "visitor_briefing_response",
 				VisitorName: faceData.Name,
-				Briefing: faceData.Briefing,
-				VisitorID: faceData.VisitorId,
+				Briefing:    faceData.Briefing,
+				VisitorID:   faceData.VisitorId,
 			})
+			if err != nil {
+				logger.Error("error sending visitor briefing to frontend", "err", err)
+			}
+
 			AddSeenVisitor(faceData.VisitorId)
 		}
 	}

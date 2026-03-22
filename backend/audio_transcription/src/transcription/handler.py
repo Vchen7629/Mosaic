@@ -12,13 +12,17 @@ import time
 import numpy as np
 import torch
 
+
 class QueueFullError(Exception):
     pass
+
 
 class TranscriptionHandler:
     def __init__(self) -> None:
         """Starts the background GPU worker thread and initializes the bounded work queue."""
-        self._work_queue: queue.Queue[tuple[np.ndarray, Future]] = queue.Queue(maxsize=settings.transcribe_queue_max_size)
+        self._work_queue: queue.Queue[tuple[np.ndarray, Future[Optional[str]]]] = (
+            queue.Queue(maxsize=settings.transcribe_queue_max_size)
+        )
         self._worker_thread = threading.Thread(target=self._gpu_worker, daemon=True)
         self._worker_thread.start()
 
@@ -38,7 +42,7 @@ class TranscriptionHandler:
             transcribed text, or None if the audio was silent/unintelligible
         """
         chunk = self._normalize(chunk)
-        fut: Future = Future()
+        fut: Future[Optional[str]] = Future()
         try:
             TranscribeQueueDepth.inc()
             self._work_queue.put_nowait((chunk, fut))
@@ -64,7 +68,7 @@ class TranscriptionHandler:
                 fut.set_result(None)
             finally:
                 TranscribeQueueDepth.dec()
-    
+
     def _run_inference(self, chunk: np.ndarray) -> Optional[str]:
         """Runs Whisper inference on the chunk. Called only from _gpu_worker."""
         with torch.no_grad():
@@ -72,7 +76,7 @@ class TranscriptionHandler:
             segments, _ = get_model().transcribe(chunk, language="en", vad_filter=False)
             text = " ".join(seg.text for seg in segments).strip()
             WhisperDuration.observe((time.monotonic() - whisper_start) * 1000)
-        
+
         return text or None
 
     def _normalize(self, chunk: np.ndarray) -> np.ndarray:

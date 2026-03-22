@@ -137,7 +137,7 @@ func TestProcessAudio(t *testing.T) {
 		audio := encodeFloat32(makeSamples(testBatchSize, 0.1))
 		err := service.ProcessAudio(slog.Default(), audio, "1", client)
 
-		assert.ErrorContains(t, err, "Error processing audio", "gRPC error should be propagated")
+		assert.ErrorContains(t, err, "error processing audio", "gRPC error should be propagated")
 	})
 
 	t.Run("Concurrent writes do not produce data races", func(t *testing.T) {
@@ -225,7 +225,7 @@ func TestFlushAudio(t *testing.T) {
 
 		err := service.FlushAudio(slog.Default(), context.Background(), "1", client)
 
-		assert.ErrorContains(t, err, "Error flushing audio", "gRPC error should be propagated")
+		assert.ErrorContains(t, err, "error flushing audio", "gRPC error should be propagated")
 	})
 
 	t.Run("Concurrent ProcessAudio and FlushAudio calls do not produce data races", func(t *testing.T) {

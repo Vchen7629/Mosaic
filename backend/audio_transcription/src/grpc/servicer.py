@@ -1,4 +1,8 @@
 from psycopg_pool import ConnectionPool
+from typing import Optional, Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from grpc import ServicerContext  # pyrefly: ignore
 from ..core.logging import logger
 from ..core.settings import _LOGS_DIR
 from ..core.metrics import ErrorsTotal
@@ -18,19 +22,29 @@ import numpy as np
 class AudioTranscriptionServicer(
     audio_transcription_pb2_grpc.AudioTranscriptionServiceServicer
 ):
-    def __init__(self, db_pool: ConnectionPool, transcription_handler: TranscriptionHandler) -> None:
-        self._convo_loggers: dict[str, ConvoLogHandler] = {}
+    def __init__(
+        self, db_pool: ConnectionPool, transcription_handler: TranscriptionHandler
+    ) -> None:
+        self._convo_loggers: dict[int, ConvoLogHandler] = {}
         self._lock = threading.Lock()
         self._db_pool: ConnectionPool = db_pool
         self._transcription_handler = transcription_handler
 
-    def TranscribeAudio(self, request, context):
+    def TranscribeAudio(
+        self,
+        request: audio_transcription_pb2.TranscribeAudioRequest,
+        context: "ServicerContext[Any, Any]",  # pyrefly: ignore
+    ) -> Optional[audio_transcription_pb2.TranscribeAudioResponse]:
+        """gRPC handler to take in requests to this server, process and send response"""
         chunk = np.array(request.audio_bytes, dtype=np.float32)
         logger.debug("got audio chunk to transcribe", chunk_size=len(chunk))
         try:
             text = self._transcription_handler.transcribe(chunk)
         except QueueFullError:
-            context.abort(grpc.StatusCode.RESOURCE_EXHAUSTED, "Transcription queue is full, retry later")
+            context.abort(
+                grpc.StatusCode.RESOURCE_EXHAUSTED,  # pyrefly: ignore
+                "Transcription queue is full, retry later",
+            )
             return
         if text:
             logger.debug("writing audio transcribe to text to internal log", text=text)
@@ -38,7 +52,11 @@ class AudioTranscriptionServicer(
 
         return audio_transcription_pb2.TranscribeAudioResponse(success=text is not None)
 
-    def SaveTranscript(self, request, context):  # noqa: ARG002
+    def SaveTranscript(
+        self,
+        request: audio_transcription_pb2.SaveTranscriptRequest,
+        context: "ServicerContext[Any, Any]",  # pyrefly: ignore  # noqa: ARG002
+    ) -> Optional[audio_transcription_pb2.SaveTranscriptResponse]:
         """gRPC handler that saves the current transcript to db"""
         logger.debug(
             "called savetranscript to save transcript", profile_id=request.profile_id
@@ -71,7 +89,7 @@ class AudioTranscriptionServicer(
 
         return audio_transcription_pb2.SaveTranscriptResponse(success=True)
 
-    def _get_log_writer(self, profile_id: str) -> ConvoLogHandler:
+    def _get_log_writer(self, profile_id: int) -> ConvoLogHandler:
         """
         Creates the log file with profile_id specific name
         and registers the log writer for the patient to dict

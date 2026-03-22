@@ -37,10 +37,9 @@ func AddNewVisitor(
 	return profileID, visitorID
 }
 
-
 func CheckVisitorEmbeddings(
-	t *testing.T, 
-	pool *pgxpool.Pool, 
+	t *testing.T,
+	pool *pgxpool.Pool,
 	profileID int32,
 	visitor_name string,
 ) face.Descriptor {
@@ -66,8 +65,8 @@ func CheckVisitorEmbeddings(
 
 // Create a visitor row in the database and return id of the newly created row
 func SeedVisitor(
-	t *testing.T, 
-	pool *pgxpool.Pool, 
+	t *testing.T,
+	pool *pgxpool.Pool,
 	profileID int32,
 	visitorName string,
 	faceEmbedding []float32,

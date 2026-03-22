@@ -15,11 +15,13 @@ def make_segment(text: str) -> MagicMock:
 
 
 def _handler_with_queue_size(mock_model: MagicMock, queue_size: int):
-    with patch("src.transcription.handler.settings") as mock_settings, \
-         patch("src.transcription.handler.get_model", return_value=mock_model), \
-         patch("src.transcription.handler.WhisperDuration"), \
-         patch("src.transcription.handler.TranscribeQueueDepth"), \
-         patch("src.transcription.handler.ErrorsTotal"):
+    with (
+        patch("src.transcription.handler.settings") as mock_settings,
+        patch("src.transcription.handler.get_model", return_value=mock_model),
+        patch("src.transcription.handler.WhisperDuration"),
+        patch("src.transcription.handler.TranscribeQueueDepth"),
+        patch("src.transcription.handler.ErrorsTotal"),
+    ):
         mock_settings.transcribe_queue_max_size = queue_size
         yield TranscriptionHandler()
 
@@ -27,7 +29,10 @@ def _handler_with_queue_size(mock_model: MagicMock, queue_size: int):
 @pytest.fixture
 def mock_model() -> MagicMock:
     model = MagicMock()
-    model.transcribe.side_effect = lambda *a, **kw: (iter([make_segment("hello")]), MagicMock())
+    model.transcribe.side_effect = lambda *a, **kw: (
+        iter([make_segment("hello")]),
+        MagicMock(),
+    )
     return model
 
 

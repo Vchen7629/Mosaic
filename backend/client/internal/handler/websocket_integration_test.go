@@ -126,7 +126,7 @@ func TestHandleWebSocket_SaveAudioTranscript_RouteToSaveTranscript(t *testing.T)
 	audioStub := &test.StubAudioClient{}
 	briefingStub := &test.StubBriefingClient{}
 	h := &handler.WebSocketHandler{
-		Logger:      slog.Default(),
+		Logger:         slog.Default(),
 		AudioClient:    audioStub,
 		FaceClient:     &test.StubFaceClient{},
 		BriefingClient: briefingStub,
@@ -205,7 +205,7 @@ func TestHandleWebSocket_SaveAudioTranscript_Success_CallsBriefing(t *testing.T)
 	audioStub := &test.StubAudioClient{}
 	briefingStub := &test.StubBriefingClient{}
 	h := &handler.WebSocketHandler{
-		Logger:      slog.Default(),
+		Logger:         slog.Default(),
 		AudioClient:    audioStub,
 		FaceClient:     &test.StubFaceClient{},
 		BriefingClient: briefingStub,
@@ -241,7 +241,7 @@ func TestHandleWebSocket_SaveAudioTranscript_SaveFails_SkipsBriefing(t *testing.
 	briefingStub := &test.StubBriefingClient{}
 	faceStub := &test.StubFaceClient{}
 	h := &handler.WebSocketHandler{
-		Logger:      slog.Default(),
+		Logger:         slog.Default(),
 		AudioClient:    audioStub,
 		FaceClient:     faceStub,
 		BriefingClient: briefingStub,
@@ -289,7 +289,7 @@ func TestHandleWebSocket_UnknownMessageType_NoHandlerInvoked(t *testing.T) {
 	faceStub := &test.StubFaceClient{}
 	briefingStub := &test.StubBriefingClient{}
 	h := &handler.WebSocketHandler{
-		Logger:      slog.Default(),
+		Logger:         slog.Default(),
 		AudioClient:    audioStub,
 		FaceClient:     faceStub,
 		BriefingClient: briefingStub,

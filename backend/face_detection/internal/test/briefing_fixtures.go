@@ -6,10 +6,11 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 )
+
 // Create a product and return the product ID
 func SeedBriefing(
-	t *testing.T, 
-	pool *pgxpool.Pool, 
+	t *testing.T,
+	pool *pgxpool.Pool,
 	profileID, visitorID int32,
 	briefingText string,
 ) {
