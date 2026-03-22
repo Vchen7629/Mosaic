@@ -38,7 +38,7 @@ jobs:
               - 'backend/face_detection/**'
   frontend-ci:
     needs: path-filter
-    if: ${{ needs.path-filter.outputs.frontend == 'true' }}
+    if: ${{ github.event_name == 'pull_request' && needs.path-filter.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -63,7 +63,7 @@ jobs:
   
   audio-transcription-ci:
     needs: path-filter
-    if: ${{ needs.path-filter.outputs.audio_transcription == 'true' }}
+    if: ${{ github.event_name == 'pull_request' && needs.path-filter.outputs.audio_transcription == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -99,7 +99,7 @@ jobs:
 
   client-ci:
     needs: path-filter
-    if: ${{ needs.path-filter.outputs.client == 'true' }}
+    if: ${{ github.event_name == 'pull_request' && needs.path-filter.outputs.client == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -127,7 +127,7 @@ jobs:
 
   conversation-briefing-ci:
     needs: path-filter
-    if: ${{ needs.path-filter.outputs.conversation_briefing == 'true' }}
+    if: ${{ github.event_name == 'pull_request' && needs.path-filter.outputs.conversation_briefing == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -155,7 +155,7 @@ jobs:
   
   face-detection-ci:
     needs: path-filter
-    if: ${{ needs.path-filter.outputs.face_detection == 'true' }}
+    if: ${{ github.event_name == 'pull_request' && needs.path-filter.outputs.face_detection == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -187,8 +187,15 @@ jobs:
         run: make test_all
 
   coverage:
+    needs: path-filter
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: |
+      github.event_name == 'push' && (
+        needs.path-filter.outputs.audio_transcription == 'true' ||
+        needs.path-filter.outputs.client == 'true' ||
+        needs.path-filter.outputs.conversation_briefing == 'true' ||
+        needs.path-filter.outputs.face_detection == 'true'
+      )
     steps:
       - uses: actions/checkout@v4
 
