@@ -1,5 +1,7 @@
 # Mosaic - Basic Info
 
+[![codecov](https://codecov.io/gh/Vchen7629/Mosaic/branch/main/graph/badge.svg?token=4H6BHLIW4Y)](https://codecov.io/gh/Vchen7629/Mosaic)
+
 Mosaic is a health application that helps people with memory loss. It does this by recording conversations and the peoples faces associated with each conversation. It then displays an AI overview of what they last talked about, as to remind the user who they are and what they said.
 
 # Dev Post
