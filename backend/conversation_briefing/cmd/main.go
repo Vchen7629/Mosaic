@@ -89,13 +89,7 @@ func main() {
 		log.Fatalf("failed to load config values: %v", err)
 	}
 
-	var handler slog.Handler
-	if cfg.ProdMode {
-		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
-	} else {
-		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
-	}
-	logger := slog.New(handler).With("service", "conversation_briefing")
+	logger := observability.StructuredLogger(cfg.ProdMode)
 
 	logger.Info("Starting gRPC server...")
 
