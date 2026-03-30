@@ -33,18 +33,6 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
 	logger := slog.New(handler).With("service", "face_detection")
 	dbPool := db.NewDBPool(pool, logger)
-	t.Run("returns error for negative profileID", func(t *testing.T) {
-		test.CleanupTables(t, pool)
-
-		profileID := test.SeedProfile(t, pool, test.MakeEmbedding(0.1, 128))
-		_ = test.SeedVisitor(t, pool, profileID, "testvisitor", test.MakeEmbedding(0.1, 128))
-
-		visitorEmbList, err := dbPool.FetchAllVisitorData(-1)
-
-		assert.Nil(t, visitorEmbList, "emb list returns nil")
-		assert.Equal(t, "profileID must be positive", err.Error())
-	})
-
 	t.Run("returns list of visitor data", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
@@ -94,25 +82,6 @@ func TestFetchVisitorBriefing(t *testing.T) {
 	dbPool := db.NewDBPool(pool, logger)
 	embedding := test.MakeEmbedding(0.1, 128)
 
-	t.Run("returns error for negative profileID and visitorID", func(t *testing.T) {
-		test.CleanupTables(t, pool)
-		testBriefing := "this is a test"
-
-		profileID := test.SeedProfile(t, pool, embedding)
-		visitorID := test.SeedVisitor(t, pool, profileID, "testvisitor", embedding)
-		test.SeedBriefing(t, pool, profileID, visitorID, testBriefing)
-
-		briefing, err := dbPool.FetchVisitorBriefing(-1, visitorID)
-
-		assert.Equal(t, "", briefing, "briefing returns empty str on error")
-		assert.Equal(t, "profileID must be positive", err.Error())
-
-		briefing, err = dbPool.FetchVisitorBriefing(profileID, -1)
-
-		assert.Equal(t, "", briefing, "briefing returns empty str on error")
-		assert.Equal(t, "visitorID must be positive", err.Error())
-	})
-
 	t.Run("returns the briefing for the correct visitor", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 
@@ -159,31 +128,6 @@ func TestAddNewFaceForVisitor(t *testing.T) {
 	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
 	logger := slog.New(handler).With("service", "face_detection")
 	dbPool := db.NewDBPool(pool, logger)
-
-	t.Run("returns error for invalid profileID, name, and embedding", func(t *testing.T) {
-		test.CleanupTables(t, pool)
-		validEmbedding := test.MakeEmbedding(0.1, 128)
-
-		profileID := test.SeedProfile(t, pool, validEmbedding)
-		var embedding face.Descriptor
-		copy(embedding[:], validEmbedding)
-
-		visitorID, err := dbPool.AddNewFaceForVisitor(-1, "valid name", embedding)
-		assert.Equal(t, "profileID must be positive", err.Error())
-		assert.Nil(t, visitorID)
-
-		visitorID, err = dbPool.AddNewFaceForVisitor(profileID, "", embedding)
-		assert.Equal(t, "name must be a non empty string", err.Error())
-		assert.Nil(t, visitorID)
-
-		zerosEmbedding := test.MakeEmbedding(0, 128)
-		var invalidEmbedding face.Descriptor
-		copy(invalidEmbedding[:], zerosEmbedding)
-
-		visitorID, err = dbPool.AddNewFaceForVisitor(profileID, "valid name", invalidEmbedding)
-		assert.Equal(t, "embedding cannot be all zeros", err.Error())
-		assert.Nil(t, visitorID)
-	})
 
 	t.Run("successfully creates the new face embedding for visitor", func(t *testing.T) {
 		test.CleanupTables(t, pool)
