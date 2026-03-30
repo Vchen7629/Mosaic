@@ -7,6 +7,7 @@ import (
 
 	"github.com/Kagami/go-face"
 	fd "mosaic-face-detection.com/gen"
+	"mosaic-face-detection.com/internal/cache"
 	"mosaic-face-detection.com/internal/db"
 	"mosaic-face-detection.com/internal/observability"
 	"mosaic-face-detection.com/internal/service"
@@ -44,7 +45,7 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 		return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, fmt.Errorf("invalid session token")
 	}
 
-	currentProfileEmbs, err := service.FetchProfileFaceEmbForIDWithCache(
+	currentProfileEmbs, err := cache.FetchProfileFaceEmbForIDWithCache(
 		ctx, profileID, s.cache, s.logger,
 		func() ([]service.ProfileFaces, error) {
 			return db.RetryDB(s.logger, ctx, func() ([]service.ProfileFaces, error) {
@@ -68,7 +69,7 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 	var knownVisitors []service.VisitorFaces
 	if profileID > 0 {
 		visitorFetchStart := time.Now()
-		knownVisitors, err = service.FetchAllVisitorDataWithCache(
+		knownVisitors, err = cache.FetchAllVisitorDataWithCache(
 			ctx, profileID, s.cache, s.logger,
 			func() ([]service.VisitorFaces, error) {
 				return db.RetryDB(s.logger, ctx, func() ([]service.VisitorFaces, error) {
@@ -141,7 +142,7 @@ func (s *FaceDetectionServer) RegisterVisitorFace(
 	}
 
 	newEntry := service.VisitorFaces{ID: *visitorID, Name: req.VisitorName, Embedding: embedding}
-	service.AppendToVisitorDataCache(ctx, profileID, s.cache, newEntry)
+	cache.AppendToVisitorDataCache(ctx, profileID, s.cache, newEntry)
 
 	return &fd.RegisterVisitorFaceResponse{Success: true, VisitorId: *visitorID}, nil
 }
