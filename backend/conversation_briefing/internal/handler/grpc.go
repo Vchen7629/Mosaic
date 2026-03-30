@@ -51,7 +51,7 @@ func (s *ConvoBriefingServer) GenerateConversationBriefing(
 		var profileIDPtr *int32
 		dbErr := db.RetryWithBackoff(s.logger, ctx, db.DefaultRetryConfig(), func() error {
 			var err error
-			profileIDPtr, err = s.pool.FetchProfileIDWithSession(req.SessionToken)
+			profileIDPtr, err = s.pool.FetchProfileIDWithSession(ctx, req.SessionToken)
 			return err
 		})
 		if dbErr != nil {
