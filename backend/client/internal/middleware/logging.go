@@ -36,7 +36,7 @@ func Logging(next http.Handler) http.Handler {
 
 		wrapped := &WrappedWriter{
 			ResponseWriter: w,
-			StatusCode: http.StatusOK,
+			StatusCode:     http.StatusOK,
 		}
 
 		next.ServeHTTP(wrapped, r)

@@ -12,8 +12,8 @@ import (
 )
 
 func AddNewProfile(
-	t *testing.T, 
-	recPool *service.RecognizerPool, 
+	t *testing.T,
+	recPool *service.RecognizerPool,
 	imgBytes []byte,
 	testDB *TestDBContainer,
 ) int32 {
@@ -57,7 +57,6 @@ func SeedProfile(t *testing.T, pool *pgxpool.Pool, faceEmbedding []float32) int3
 
 	return profileID
 }
-
 
 func CheckProfileEmbeddings(
 	t *testing.T,
@@ -104,4 +103,3 @@ func CheckAllProfileEmbeddings(
 
 	return descriptors
 }
-

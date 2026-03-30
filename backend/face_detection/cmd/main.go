@@ -30,7 +30,7 @@ import (
 type Config struct {
 	ServerPort  string `envconfig:"SERVER_PORT" default:"40040"`
 	MetricsPort string `envconfig:"METRICS_PORT" default:"9092"`
-	CachePort   string `envconfig:"CACHE_PORT" default:"6379"`
+	CacheURL    string `envconfig:"CACHE_URL" default:""`
 	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
 	ModelsDir   string `envconfig:"MODELS_DIR" default:"models"`
 	RecPoolSize int    `envconfig:"REC_POOL_SIZE" default:"5"`
@@ -121,9 +121,7 @@ func main() {
 
 	defer recPool.Close()
 
-	client, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{
-		fmt.Sprintf("127.0.0.1:%s", cfg.CachePort),
-	}})
+	client, err := valkey.NewClient(valkey.ClientOption{InitAddress: []string{cfg.CacheURL}})
 	if err != nil {
 		logger.Warn("error initializing caching client", "err", err)
 	}
@@ -158,10 +156,13 @@ func main() {
 
 // method to load config values
 func loadConfig() (*Config, error) {
-	godotenv.Load("../.env")
+	err := godotenv.Load("../.env")
+	if err != nil {
+		return nil, err
+	}
 	var cfg Config
 
-	err := envconfig.Process("", &cfg)
+	err = envconfig.Process("", &cfg)
 	if err != nil {
 		return nil, err
 	}

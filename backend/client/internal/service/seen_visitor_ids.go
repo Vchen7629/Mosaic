@@ -8,7 +8,7 @@ import "sync"
 // fetched briefings for a visitor
 var (
 	seenFaceMap = map[int32]bool{}
-	seenMu		sync.Mutex
+	seenMu      sync.Mutex
 )
 
 func GetSeenVisitors() []int32 {
@@ -32,7 +32,7 @@ func HasSeenVisitor(visitorID int32) bool {
 func AddSeenVisitor(visitorID int32) {
 	seenMu.Lock()
 	defer seenMu.Unlock()
-	
+
 	seenFaceMap[visitorID] = true
 }
 

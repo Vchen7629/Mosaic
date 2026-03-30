@@ -17,6 +17,7 @@ dependencies = [
     "prometheus-client>=0.24.1",
     "psutil>=7.0.0",
     "faster-whisper>=1.2.1",
+    "ctranslate2>=4.5.0",
 ]
 
 [[tool.uv.index]]
@@ -46,6 +47,7 @@ dev = [
     "psycopg[binary]>=3.3.3",
     "pyrefly>=0.56.0",
     "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
     "ruff>=0.15.6",
     "testcontainers[postgres]>=4.14.1",
 ]
@@ -62,3 +64,12 @@ exclude = [
 
 [tool.pyrefly]
 project-excludes = ["src/gen/**", "test/**"]
+python-version = "3.12"
+untyped-def-behavior = "check-and-infer-return-any"
+search-path = ["."] # so pyrefly knows we are running from ingestion folder not ingestion/src
+
+[tool.pyrefly.errors]
+unannotated-parameter = "error"
+unannotated-return = "error"
+unannotated-attribute = "error"
+implicit-any = "error"
