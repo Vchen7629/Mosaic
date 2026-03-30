@@ -151,6 +151,7 @@ func CleanupTables(t *testing.T, pool *pgxpool.Pool) {
 		"visitor_face_embeddings",
 		"conversation_records",
 		"briefings",
+		"sessions",
 		"profiles",
 	}
 

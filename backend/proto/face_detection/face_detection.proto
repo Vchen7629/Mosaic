@@ -22,7 +22,7 @@ service FaceDetectionService {
 // The request containing the face image in bytes and profile_id
 message ProcessVisitorFacesRequest {
     bytes face_bytes = 1;
-    int32 profile_id = 2;
+    string session_token = 2;
 }
 
 // single face message containing the metadata and if we should register name for it
@@ -46,7 +46,7 @@ message ProcessVisitorFacesResponse {
 // Response containing data to register a new unknown visitor face
 message RegisterVisitorFaceRequest {
     repeated float face_embedding = 1; // 128 dim embedding
-    int32 profile_id = 2;
+    string session_token = 2;
     string visitor_name = 3;
 }
 
@@ -70,7 +70,7 @@ message FaceEmbedding {
 message SyncProfileResponse {
     bool face_detected = 1; // used so can prompt the frontend to maybe get a clearer view?
     bool success = 2; // used for retry logic
-    int32 profile_id = 3;
+    string session_token = 3;
     bool new_face = 4;
     repeated FaceEmbedding face_embedding = 5;
 }
@@ -83,5 +83,5 @@ message RegisterProfileFaceRequest {
 // Response with register profile response
 message RegisterProfileFaceResponse {
     bool success = 1; // used for retry logic
-    int32 profile_id = 2; // sent back to frontend to save
+    string session_token = 2; // sent back to frontend to save
 }

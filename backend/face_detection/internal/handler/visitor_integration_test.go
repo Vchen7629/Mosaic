@@ -12,6 +12,7 @@ import (
 	"github.com/Kagami/go-face"
 	"github.com/stretchr/testify/assert"
 	fd "mosaic-face-detection.com/gen"
+	"mosaic-face-detection.com/internal/cache"
 	"mosaic-face-detection.com/internal/db"
 	"mosaic-face-detection.com/internal/handler"
 	"mosaic-face-detection.com/internal/service"
@@ -53,10 +54,11 @@ func TestProcessVisitorFaces(t *testing.T) {
 
 		profileFaceEmb := test.GetEmbedding(t, rec, "man1.jpg")
 		profileID := test.SeedProfile(t, pool, profileFaceEmb[:])
+		sessionToken := test.SeedSession(t, pool, profileID)
 
 		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
-			FaceBytes: imgBytes,
-			ProfileId: profileID,
+			FaceBytes:    imgBytes,
+			SessionToken: sessionToken,
 		})
 
 		assert.NoError(t, err)
@@ -78,10 +80,11 @@ func TestProcessVisitorFaces(t *testing.T) {
 		nonMatchingFaceEmb := test.GetEmbedding(t, rec, "man1.jpg")
 		reqProfileID := test.SeedProfile(t, pool, nonMatchingFaceEmb[:])
 		visitorID := test.SeedVisitor(t, pool, reqProfileID, "visitor1", matchingFaceEmb[:])
+		sessionToken := test.SeedSession(t, pool, reqProfileID)
 
 		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
-			FaceBytes: imgBytes,
-			ProfileId: reqProfileID,
+			FaceBytes:    imgBytes,
+			SessionToken: sessionToken,
 		})
 
 		assert.NoError(t, err)
@@ -92,6 +95,47 @@ func TestProcessVisitorFaces(t *testing.T) {
 		assert.Equal(t, "", res.Faces[0].Briefing, "briefing should be just empty since the visitor was just created")
 	})
 
+	t.Run("Session resolved from cache when token not in db", func(t *testing.T) {
+		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
+
+		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
+		assert.NoError(t, err)
+
+		profileFaceEmb := test.GetEmbedding(t, rec, "man1.jpg")
+		profileID := test.SeedProfile(t, pool, profileFaceEmb[:])
+
+		// seed session only in cache, not in db sessions table
+		sessionToken := "cache-only-token"
+		cacheErr := cache.CreateNewProfileSession(context.Background(), profileID, cacheClient, sessionToken)
+		assert.NoError(t, cacheErr)
+
+		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
+			FaceBytes:    imgBytes,
+			SessionToken: sessionToken,
+		})
+
+		assert.NoError(t, err)
+		assert.True(t, res.FaceDetected)
+		assert.True(t, res.Success)
+	})
+
+	t.Run("Invalid session token not in cache or db returns error", func(t *testing.T) {
+		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
+
+		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
+		assert.NoError(t, err)
+
+		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
+			FaceBytes:    imgBytes,
+			SessionToken: "invalid-token",
+		})
+
+		assert.Error(t, err)
+		assert.False(t, res.FaceDetected)
+	})
+
 	t.Run("Visitor Face matching currently synced profile face should return the NonVisitorFace = true and face_detected = true", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 		test.FlushCache(t, cacheClient)
@@ -100,10 +144,11 @@ func TestProcessVisitorFaces(t *testing.T) {
 		assert.NoError(t, err)
 
 		profileID := test.AddNewProfile(t, recPool, imgBytes, testDB)
+		sessionToken := test.SeedSession(t, pool, profileID)
 
 		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
-			FaceBytes: imgBytes,
-			ProfileId: profileID,
+			FaceBytes:    imgBytes,
+			SessionToken: sessionToken,
 		})
 
 		assert.NoError(t, err)
@@ -132,10 +177,11 @@ func TestRegisterVisitorFace(t *testing.T) {
 		copy(embedding[:], validEmbedding)
 
 		profileID := test.SeedProfile(t, pool, validEmbedding)
+		sessionToken := test.SeedSession(t, pool, profileID)
 
 		res, err := server.RegisterVisitorFace(context.Background(), &fd.RegisterVisitorFaceRequest{
 			FaceEmbedding: embedding[:],
-			ProfileId:     profileID,
+			SessionToken:  sessionToken,
 			VisitorName:   "test_visitor",
 		})
 
@@ -147,28 +193,43 @@ func TestRegisterVisitorFace(t *testing.T) {
 		assert.Equal(t, int32(1), res.VisitorId, "should also return the visitor id")
 	})
 
-	t.Run("Return error on invalid embedding length", func(t *testing.T) {
+	t.Run("Session resolved from cache when token not in db", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 		test.FlushCache(t, cacheClient)
 
-		invalidEmbedding := test.MakeEmbedding(0.5, 256)
+		validEmbedding := test.MakeEmbedding(0.5, 128)
+		var embedding face.Descriptor
+		copy(embedding[:], validEmbedding)
 
-		_, err := server.RegisterVisitorFace(context.Background(), &fd.RegisterVisitorFaceRequest{
-			FaceEmbedding: invalidEmbedding,
-			ProfileId:     1,
-			VisitorName:   "test_visitor",
+		profileID := test.SeedProfile(t, pool, validEmbedding)
+
+		// seed session only in cache, not in db sessions table
+		sessionToken := "cache-only-token"
+		cacheErr := cache.CreateNewProfileSession(context.Background(), profileID, cacheClient, sessionToken)
+		assert.NoError(t, cacheErr)
+
+		res, err := server.RegisterVisitorFace(context.Background(), &fd.RegisterVisitorFaceRequest{
+			FaceEmbedding: embedding[:],
+			SessionToken:  sessionToken,
+			VisitorName:   "cache_visitor",
 		})
 
-		assert.Error(t, err)
+		assert.NoError(t, err)
+		assert.True(t, res.Success)
+		assert.NotZero(t, res.VisitorId)
 	})
 
-	t.Run("Empty embeddings slice should return error", func(t *testing.T) {
+	t.Run("Invalid session token not in cache or db returns error", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 		test.FlushCache(t, cacheClient)
 
+		validEmbedding := test.MakeEmbedding(0.5, 128)
+		var embedding face.Descriptor
+		copy(embedding[:], validEmbedding)
+
 		_, err := server.RegisterVisitorFace(context.Background(), &fd.RegisterVisitorFaceRequest{
-			FaceEmbedding: []float32{},
-			ProfileId:     1,
+			FaceEmbedding: embedding[:],
+			SessionToken:  "invalid-token",
 			VisitorName:   "test_visitor",
 		})
 

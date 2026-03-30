@@ -20,7 +20,7 @@ func BuildPrompt(convos []string) (*string, error) {
 		sb.WriteString(fmt.Sprintf("Conversation %d:\n%s\n\n", i+1, convo))
 	}
 
-	sb.WriteString("Provide a 3-4 sentence summary of the key topics, and conversation starters")
+	sb.WriteString("Provide a 3-4 sentence summary of the key topics")
 
 	result := sb.String()
 	return &result, nil

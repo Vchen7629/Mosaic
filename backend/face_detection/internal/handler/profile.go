@@ -2,11 +2,13 @@ package handler
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"time"
 
 	"github.com/Kagami/go-face"
 	fd "mosaic-face-detection.com/gen"
+	"mosaic-face-detection.com/internal/cache"
 	"mosaic-face-detection.com/internal/db"
 	"mosaic-face-detection.com/internal/observability"
 	"mosaic-face-detection.com/internal/service"
@@ -70,9 +72,24 @@ func (s *FaceDetectionServer) SyncProfile(
 		}, nil
 	}
 
+	sessionToken := rand.Text()
+
+	err = cache.CreateNewProfileSession(ctx, matchingProfileID, s.cache, sessionToken)
+	if err != nil {
+		s.logger.Warn("failed to store session in cache", "err", err)
+	}
+
+	_, err = db.RetryDB(s.logger, ctx, func() (struct{}, error) {
+		return struct{}{}, s.pool.UpsertSession(matchingProfileID, sessionToken)
+	})
+	if err != nil {
+		s.logger.Error("failed to store session in db", "err", err)
+		return nil, err
+	}
+
 	return &fd.SyncProfileResponse{
 		FaceDetected: true,
-		ProfileId:    matchingProfileID,
+		SessionToken: sessionToken,
 		Success:      true,
 	}, nil
 }
@@ -98,7 +115,7 @@ func (s *FaceDetectionServer) RegisterProfileFace(
 
 	profileRegisterStart := time.Now()
 	profileID, err := db.RetryDB(s.logger, ctx, func() (*int32, error) {
-		return s.pool.AddNewFaceForUser(embeddings)
+		return s.pool.AddNewFaceForProfile(embeddings)
 	})
 	observability.ProfileRegisterDuration.Observe(float64(time.Since(profileRegisterStart).Milliseconds()))
 	if err != nil {
@@ -107,5 +124,18 @@ func (s *FaceDetectionServer) RegisterProfileFace(
 		return &fd.RegisterProfileFaceResponse{Success: false}, nil
 	}
 
-	return &fd.RegisterProfileFaceResponse{ProfileId: *profileID, Success: true}, nil
+	sessionToken := rand.Text()
+
+	_, err = db.RetryDB(s.logger, ctx, func() (struct{}, error) {
+		return struct{}{}, s.pool.UpsertSession(*profileID, sessionToken)
+	})
+	if err != nil {
+		observability.ErrorsTotal.WithLabelValues("upsert_session").Inc()
+		s.logger.Error("failed to store session in db", "err", err)
+		return nil, err
+	}
+
+	s.logger.Debug("created new profile session", "profile_id", profileID, "session_token", sessionToken)
+
+	return &fd.RegisterProfileFaceResponse{SessionToken: sessionToken, Success: true}, nil
 }

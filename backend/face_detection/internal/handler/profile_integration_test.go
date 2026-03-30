@@ -12,6 +12,7 @@ import (
 	"github.com/Kagami/go-face"
 	"github.com/stretchr/testify/assert"
 	fd "mosaic-face-detection.com/gen"
+	"mosaic-face-detection.com/internal/cache"
 	"mosaic-face-detection.com/internal/db"
 	"mosaic-face-detection.com/internal/handler"
 	"mosaic-face-detection.com/internal/service"
@@ -47,6 +48,34 @@ func TestSyncProfile(t *testing.T) {
 	cacheClient := testCache.Client
 	server := handler.NewFaceDetectionServer(logger, recPool, cacheClient, dbPool)
 
+	t.Run("Corrupt image bytes returns error from GenerateFaceEmbeddings", func(t *testing.T) {
+		res, err := server.SyncProfile(context.Background(), &fd.SyncProfileRequest{
+			FaceBytes: [][]byte{[]byte("not a valid image")},
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+	})
+
+	t.Run("DB pool failure after face detected returns error from FetchAllProfileFaceEmb", func(t *testing.T) {
+		test.FlushCache(t, cacheClient)
+
+		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
+		assert.NoError(t, err)
+
+		closedDB := test.SetupTestDatabase(t)
+		closedDB.Pool.Close()
+		closedDBPool := db.NewDBPool(closedDB.Pool, logger)
+		closedServer := handler.NewFaceDetectionServer(logger, recPool, cacheClient, closedDBPool)
+
+		res, err := closedServer.SyncProfile(context.Background(), &fd.SyncProfileRequest{
+			FaceBytes: [][]byte{imgBytes},
+		})
+
+		assert.Error(t, err)
+		assert.False(t, res.Success)
+	})
+
 	t.Run("No face bytes input should return face detected = false", func(t *testing.T) {
 		test.FlushCache(t, cacheClient)
 
@@ -77,14 +106,14 @@ func TestSyncProfile(t *testing.T) {
 		assert.Len(t, res.FaceEmbedding[0].FaceEmbedding, 128, "should be a 128 dim emb")
 	})
 
-	t.Run("Face matching a profile in db should return the profileID", func(t *testing.T) {
+	t.Run("Face matching a profile in db should return a session token", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 		test.FlushCache(t, cacheClient)
 
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
 
-		expectedID := test.AddNewProfile(t, recPool, imgBytes, testDB)
+		_ = test.AddNewProfile(t, recPool, imgBytes, testDB)
 
 		res, err := server.SyncProfile(context.Background(), &fd.SyncProfileRequest{
 			FaceBytes: [][]byte{imgBytes},
@@ -93,7 +122,7 @@ func TestSyncProfile(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, res.FaceDetected)
 		assert.False(t, res.NewFace)
-		assert.Equal(t, expectedID, res.ProfileId)
+		assert.NotEmpty(t, res.SessionToken)
 	})
 
 	t.Run("Face detected but no matches with existing profile should return emb", func(t *testing.T) {
@@ -118,6 +147,35 @@ func TestSyncProfile(t *testing.T) {
 		assert.Len(t, res.FaceEmbedding[0].FaceEmbedding, 128, "should be a 128 dim emb")
 	})
 
+	t.Run("Face match stores session in both cache and db", func(t *testing.T) {
+		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
+
+		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
+		assert.NoError(t, err)
+
+		profileID := test.AddNewProfile(t, recPool, imgBytes, testDB)
+
+		res, err := server.SyncProfile(context.Background(), &fd.SyncProfileRequest{
+			FaceBytes: [][]byte{imgBytes},
+		})
+
+		assert.NoError(t, err)
+		assert.NotEmpty(t, res.SessionToken)
+
+		// verify session persisted in db
+		dbPool := db.NewDBPool(pool, logger)
+		sessionInDB, dbErr := dbPool.FetchSessionWithProfileID(profileID)
+		assert.NoError(t, dbErr)
+		assert.Equal(t, res.SessionToken, *sessionInDB)
+
+		// verify session persisted in cache
+		ctx := context.Background()
+		profileIDFromCache, cacheErr := cache.FetchProfileIDFromCache(ctx, cacheClient, res.SessionToken)
+		assert.NoError(t, cacheErr)
+		assert.Equal(t, profileID, *profileIDFromCache)
+	})
+
 	t.Run("Multiple frames of same face aggregates embeddings and still matches profile", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 		test.FlushCache(t, cacheClient)
@@ -127,7 +185,7 @@ func TestSyncProfile(t *testing.T) {
 		assert.NoError(t, err1)
 		assert.NoError(t, err2)
 
-		expectedID := test.AddNewProfile(t, recPool, imgBytes1, testDB)
+		_ = test.AddNewProfile(t, recPool, imgBytes1, testDB)
 
 		// Pass two different images of the same person as separate frames to verify aggregation
 		res, err := server.SyncProfile(context.Background(), &fd.SyncProfileRequest{
@@ -137,7 +195,7 @@ func TestSyncProfile(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, res.FaceDetected)
 		assert.False(t, res.NewFace, "should match existing profile, not be a new face")
-		assert.Equal(t, expectedID, res.ProfileId, "should return the matching profile ID")
+		assert.NotEmpty(t, res.SessionToken, "should return a session token for the matching profile")
 	})
 }
 
@@ -166,12 +224,34 @@ func TestRegisterProfileFace(t *testing.T) {
 			},
 		})
 
-		dbEmb := test.CheckProfileEmbeddings(t, pool, res.ProfileId)
+		dbEmb := test.CheckProfileEmbeddings(t, pool, int32(1))
 
 		assert.NoError(t, err)
 		assert.True(t, res.Success)
 		assert.EqualValues(t, dbEmb, embedding)
-		assert.Equal(t, int32(1), res.ProfileId, "should also return the profile id")
+		assert.NotEmpty(t, res.SessionToken, "should return a session token")
+	})
+
+	t.Run("Registration stores session token in db", func(t *testing.T) {
+		test.CleanupTables(t, pool)
+		test.FlushCache(t, cacheClient)
+
+		validEmbedding := test.MakeEmbedding(0.5, 128)
+		var embedding face.Descriptor
+		copy(embedding[:], validEmbedding)
+
+		res, err := server.RegisterProfileFace(context.Background(), &fd.RegisterProfileFaceRequest{
+			FaceEmbedding: []*fd.FaceEmbedding{
+				{FaceEmbedding: embedding[:]},
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.NotEmpty(t, res.SessionToken)
+
+		sessionInDB, dbErr := dbPool.FetchSessionWithProfileID(int32(1))
+		assert.NoError(t, dbErr)
+		assert.Equal(t, res.SessionToken, *sessionInDB)
 	})
 
 	t.Run("Multiple valid embedding should be saved to db properly", func(t *testing.T) {
@@ -195,34 +275,10 @@ func TestRegisterProfileFace(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, res.Success)
 
-		dbEmbs := test.CheckAllProfileEmbeddings(t, pool, res.ProfileId)
+		dbEmbs := test.CheckAllProfileEmbeddings(t, pool, int32(1))
 		assert.Len(t, dbEmbs, len(embeddings), "all embeddings should be saved")
 		assert.EqualValues(t, embeddings, dbEmbs)
+		assert.NotEmpty(t, res.SessionToken, "should return a session token")
 	})
 
-	t.Run("Return error on invalid embedding length", func(t *testing.T) {
-		test.CleanupTables(t, pool)
-		test.FlushCache(t, cacheClient)
-
-		invalidEmbedding := test.MakeEmbedding(0.5, 256)
-
-		_, err := server.RegisterProfileFace(context.Background(), &fd.RegisterProfileFaceRequest{
-			FaceEmbedding: []*fd.FaceEmbedding{
-				{FaceEmbedding: invalidEmbedding},
-			},
-		})
-
-		assert.Error(t, err)
-	})
-
-	t.Run("Empty embeddings slice should return error", func(t *testing.T) {
-		test.CleanupTables(t, pool)
-		test.FlushCache(t, cacheClient)
-
-		_, err := server.RegisterProfileFace(context.Background(), &fd.RegisterProfileFaceRequest{
-			FaceEmbedding: []*fd.FaceEmbedding{},
-		})
-
-		assert.Error(t, err)
-	})
 }

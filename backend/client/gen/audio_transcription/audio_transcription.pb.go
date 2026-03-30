@@ -25,7 +25,7 @@ const (
 type TranscribeAudioRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AudioBytes    []float32              `protobuf:"fixed32,1,rep,packed,name=audio_bytes,json=audioBytes,proto3" json:"audio_bytes,omitempty"`
-	ProfileId     int32                  `protobuf:"varint,2,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
+	SessionToken  string                 `protobuf:"bytes,2,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -67,11 +67,11 @@ func (x *TranscribeAudioRequest) GetAudioBytes() []float32 {
 	return nil
 }
 
-func (x *TranscribeAudioRequest) GetProfileId() int32 {
+func (x *TranscribeAudioRequest) GetSessionToken() string {
 	if x != nil {
-		return x.ProfileId
+		return x.SessionToken
 	}
-	return 0
+	return ""
 }
 
 // Response containing success to indicate if its successful or not
@@ -122,7 +122,7 @@ func (x *TranscribeAudioResponse) GetSuccess() bool {
 // Request containing profile_id to save transcript for
 type SaveTranscriptRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProfileId     int32                  `protobuf:"varint,1,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
+	SessionToken  string                 `protobuf:"bytes,1,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"`
 	VisitorIds    []int32                `protobuf:"varint,2,rep,packed,name=visitor_ids,json=visitorIds,proto3" json:"visitor_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -158,11 +158,11 @@ func (*SaveTranscriptRequest) Descriptor() ([]byte, []int) {
 	return file_audio_transcription_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *SaveTranscriptRequest) GetProfileId() int32 {
+func (x *SaveTranscriptRequest) GetSessionToken() string {
 	if x != nil {
-		return x.ProfileId
+		return x.SessionToken
 	}
-	return 0
+	return ""
 }
 
 func (x *SaveTranscriptRequest) GetVisitorIds() []int32 {
@@ -221,17 +221,15 @@ var File_audio_transcription_proto protoreflect.FileDescriptor
 
 const file_audio_transcription_proto_rawDesc = "" +
 	"\n" +
-	"\x19audio_transcription.proto\x12\x19proto.audio_transcription\"X\n" +
+	"\x19audio_transcription.proto\x12\x19proto.audio_transcription\"^\n" +
 	"\x16TranscribeAudioRequest\x12\x1f\n" +
 	"\vaudio_bytes\x18\x01 \x03(\x02R\n" +
-	"audioBytes\x12\x1d\n" +
-	"\n" +
-	"profile_id\x18\x02 \x01(\x05R\tprofileId\"3\n" +
+	"audioBytes\x12#\n" +
+	"\rsession_token\x18\x02 \x01(\tR\fsessionToken\"3\n" +
 	"\x17TranscribeAudioResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"W\n" +
-	"\x15SaveTranscriptRequest\x12\x1d\n" +
-	"\n" +
-	"profile_id\x18\x01 \x01(\x05R\tprofileId\x12\x1f\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"]\n" +
+	"\x15SaveTranscriptRequest\x12#\n" +
+	"\rsession_token\x18\x01 \x01(\tR\fsessionToken\x12\x1f\n" +
 	"\vvisitor_ids\x18\x02 \x03(\x05R\n" +
 	"visitorIds\"2\n" +
 	"\x16SaveTranscriptResponse\x12\x18\n" +
