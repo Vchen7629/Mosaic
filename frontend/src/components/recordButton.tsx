@@ -32,7 +32,7 @@ export const RecordButton = ({
   ws, syncState, isRecording, sessionToken, visitorIds, 
   onSyncStart, onSyncCancel, onSyncComplete, onRecordingStart, onRecordingStop
 }: RecordButtonProps) => {
-  useSyncProfileProcess(ws, syncState === "scanning", (_profileId) => { onSyncComplete() });
+  useSyncProfileProcess(ws, syncState === "scanning", () => { onSyncComplete() });
 
   function handleStopRecording() {
     if (ws?.readyState === WebSocket.OPEN && visitorIds.length > 0) {
