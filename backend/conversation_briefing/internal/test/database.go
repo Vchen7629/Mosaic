@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -161,4 +162,23 @@ func CleanupTables(t *testing.T, pool *pgxpool.Pool) {
 			t.Fatalf("Failed to truncate table %s: %v", table, err)
 		}
 	}
+}
+
+// SeedSession inserts a session row into the sessions table and returns the token
+func SeedSession(t *testing.T, pool *pgxpool.Pool, profileID int32) string {
+	t.Helper()
+
+	sessionToken := rand.Text()
+	_, err := pool.Exec(
+		context.Background(),
+		`INSERT INTO sessions (profile_id, session_token)
+		 VALUES ($1, $2)
+		 ON CONFLICT (profile_id) DO UPDATE SET session_token = EXCLUDED.session_token`,
+		profileID, sessionToken,
+	)
+	if err != nil {
+		t.Fatalf("Failed to seed session: %v", err)
+	}
+
+	return sessionToken
 }
