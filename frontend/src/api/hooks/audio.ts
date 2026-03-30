@@ -3,13 +3,13 @@ import { useAudioCapture } from "../../hooks/useAudioCapture";
 
 /**
  * @description custom hook to handle websocket connection to send audio to backend for processing 
- * @param profileID the synced profile id used for 
+ * @param sessionToken the synced profile id used for 
  * @param isRecording 
  */
 export function useBackendAudioProcess(
     ws: WebSocket | null, 
     isRecording: boolean,
-    profileID: string | null
+    sessionToken: string | null
 ) {
     const onAudioData = useCallback((samples: Float32Array) => {
         if (!ws || ws.readyState !== WebSocket.OPEN) return
@@ -23,10 +23,10 @@ export function useBackendAudioProcess(
         const base64 = btoa(binary)
         console.log(`[Audio Capture] Sending...`)
         ws.send(JSON.stringify({ 
-            type: "audio", audio_data: base64, profile_id: profileID
+            type: "audio", audio_data: base64, session_token: sessionToken
         }))
         console.log(`[Audio Capture] Sent websocket`)
-    }, [ws, profileID])
+    }, [ws, sessionToken])
 
     useAudioCapture({ enabled: isRecording, onAudioData })
 }

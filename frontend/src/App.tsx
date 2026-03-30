@@ -19,10 +19,8 @@ function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [isFaceCapture, setIsFaceCapture] = useState<boolean>(false);
   const [isSyncProfile, setIsSyncProfile] = useState<boolean>(false);
-  const profileId = localStorage.getItem("profile_id");
-  const [syncState, setSyncState] = useState<SyncState>(() => profileId ? "active" : "idle");
-  /*const decoder = false
-  const ws = useWebSocketConnection(decoder || isSyncProfile)*/
+  const sessionToken = localStorage.getItem("session_token");
+  const [syncState, setSyncState] = useState<SyncState>(() => sessionToken ? "active" : "idle");
   const ws = useWebSocketConnection(isRecording || isSyncProfile)
   const [briefingList1, setBriefingList] = useState<BriefingComponent[]>([])
   const [newFaceDetected, setNewFaceDetected] = useState<boolean>(false)
@@ -32,12 +30,12 @@ function App() {
   useSetWindowPosition()
   useAutoResizeWindow()
   useBackendLifecycle()
-  useBackendAudioProcess(ws, isRecording, profileId)
+  useBackendAudioProcess(ws, isRecording, sessionToken)
   useVisitorFace(
     ws,
     isFaceCapture,
-    profileId,
-    (_profileId, faceEmbedding) => { setNewFaceDetected(true); setPendingFaceEmbedding(faceEmbedding) },
+    sessionToken,
+    (_sessionToken, faceEmbedding) => { setNewFaceDetected(true); setPendingFaceEmbedding(faceEmbedding) },
     (visitorId) => { setVisitorIds(prev => prev.includes(visitorId) ? prev : [...prev, visitorId]) },
     (briefing) => setBriefingList(prev => [...prev, briefing])
   )
@@ -62,7 +60,7 @@ function App() {
           ws={ws}
           syncState={syncState}
           isRecording={isRecording}
-          profileId={profileId ?? ""}
+          sessionToken={sessionToken ?? ""}
           visitorIds={visitorIds}
           onSyncStart={() => { setSyncState("scanning"); setIsSyncProfile(true); }}
           onSyncCancel={() => { setSyncState("idle"); setIsSyncProfile(false); }}
@@ -80,7 +78,7 @@ function App() {
                 <NewFaceInput 
                   ws={ws} 
                   faceEmbedding={pendingFaceEmbedding} 
-                  profileId={profileId ?? ""}
+                  sessionToken={sessionToken ?? ""}
                   onVisitorRegistered={(visitorId => {
                     setVisitorIds(prev => prev.includes(visitorId) ? prev : [...prev, visitorId])
                     setNewFaceDetected(false)
