@@ -3,10 +3,13 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
+	"github.com/valkey-io/valkey-go"
 	cb "mosaic-conversation-briefing.com/gen"
+	"mosaic-conversation-briefing.com/internal/cache"
 	"mosaic-conversation-briefing.com/internal/db"
 	"mosaic-conversation-briefing.com/internal/observability"
 )
@@ -14,15 +17,17 @@ import (
 type ConvoBriefingServer struct {
 	cb.UnimplementedConversationBriefingServiceServer
 	logger     *slog.Logger
+	cache      valkey.Client
 	llmBaseURL string
 	pool       *db.DBPool
 }
 
 func NewConvoBriefingServer(
-	logger *slog.Logger, dbPool *db.DBPool, llmBaseUrl string,
+	logger *slog.Logger, cacheClient valkey.Client, dbPool *db.DBPool, llmBaseUrl string,
 ) *ConvoBriefingServer {
 	return &ConvoBriefingServer{
 		logger:     logger,
+		cache:      cacheClient,
 		pool:       dbPool,
 		llmBaseURL: llmBaseUrl,
 	}
@@ -33,12 +38,28 @@ func (s *ConvoBriefingServer) GenerateConversationBriefing(
 	ctx context.Context,
 	req *cb.GenerateConversationBriefingRequest,
 ) (*cb.GenerateConversationBriefingResponse, error) {
-	s.logger.Debug("GenerateConversationBriefing called", "profile_id", req.ProfileId, "visitor_ids", req.VisitorIds)
-	if req.ProfileId <= 0 {
-		s.logger.Error("invalid profile id in the req, less than or equal to 0")
+	s.logger.Debug("GenerateConversationBriefing called", "session_token", req.SessionToken, "visitor_ids", req.VisitorIds)
+	if req.SessionToken == "" {
+		s.logger.Error("invalid empty session token in the req")
 		return &cb.GenerateConversationBriefingResponse{
 			Success: false,
-		}, errors.New("invalid profile id in the req, less than or equal to 0")
+		}, errors.New("invalid empty session token in the req")
+	}
+
+	profileID, err := cache.FetchProfileIDFromCache(ctx, s.cache, req.SessionToken)
+	if err != nil {
+		var profileIDPtr *int32
+		dbErr := db.RetryWithBackoff(s.logger, ctx, db.DefaultRetryConfig(), func() error {
+			var err error
+			profileIDPtr, err = s.pool.FetchProfileIDWithSession(req.SessionToken)
+			return err
+		})
+		if dbErr != nil {
+			observability.ErrorsTotal.WithLabelValues("fetch_profile_id_with_session").Inc()
+			s.logger.Error("session token not found", "session_token", req.SessionToken)
+			return &cb.GenerateConversationBriefingResponse{Success: false}, fmt.Errorf("invalid session token")
+		}
+		profileID = profileIDPtr
 	}
 
 	for _, visitorID := range req.VisitorIds {
@@ -52,9 +73,9 @@ func (s *ConvoBriefingServer) GenerateConversationBriefing(
 
 	fetchConvoStart := time.Now()
 	var conversationList []db.Conversations
-	err := db.RetryWithBackoff(s.logger, ctx, db.DefaultRetryConfig(), func() error {
+	err = db.RetryWithBackoff(s.logger, ctx, db.DefaultRetryConfig(), func() error {
 		var err error
-		conversationList, err = s.pool.FetchRecentConversations(req.ProfileId, req.VisitorIds)
+		conversationList, err = s.pool.FetchRecentConversations(*profileID, req.VisitorIds)
 		return err
 	})
 	observability.ConvoFetchDuration.Observe(float64(time.Since(fetchConvoStart).Milliseconds()))
@@ -83,7 +104,7 @@ func (s *ConvoBriefingServer) GenerateConversationBriefing(
 
 	insertBriefingStart := time.Now()
 	err = db.RetryWithBackoff(s.logger, ctx, db.DefaultRetryConfig(), func() error {
-		err = s.pool.InsertBriefing(req.ProfileId, briefingMap)
+		err = s.pool.InsertBriefing(*profileID, briefingMap)
 		return err
 	})
 	observability.BriefingInsertDuration.Observe(float64(time.Since(insertBriefingStart).Milliseconds()))
@@ -97,7 +118,7 @@ func (s *ConvoBriefingServer) GenerateConversationBriefing(
 
 	s.logger.Info(
 		"Saved Conversation briefing",
-		"profile_id", req.ProfileId,
+		"profile_id", profileID,
 		"visitor_id", req.VisitorIds,
 	)
 	return &cb.GenerateConversationBriefingResponse{
