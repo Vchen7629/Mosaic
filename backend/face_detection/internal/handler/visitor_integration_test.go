@@ -47,14 +47,13 @@ func TestProcessVisitorFaces(t *testing.T) {
 	t.Run("Trying to process a face that matches no visitors in the db should return isKnown false and face embedding", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 		test.FlushCache(t, cacheClient)
-		service.ClearSessions()
 
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
 
 		profileFaceEmb := test.GetEmbedding(t, rec, "man1.jpg")
 		profileID := test.SeedProfile(t, pool, profileFaceEmb[:])
-		sessionToken := test.SeedSession(t, profileID)
+		sessionToken := test.SeedSession(t, pool, profileID)
 
 		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
 			FaceBytes:    imgBytes,
@@ -72,7 +71,6 @@ func TestProcessVisitorFaces(t *testing.T) {
 	t.Run("Face matching a visitor in db and not the current profile should return isKnown true with briefing", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 		test.FlushCache(t, cacheClient)
-		service.ClearSessions()
 
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
@@ -81,7 +79,7 @@ func TestProcessVisitorFaces(t *testing.T) {
 		nonMatchingFaceEmb := test.GetEmbedding(t, rec, "man1.jpg")
 		reqProfileID := test.SeedProfile(t, pool, nonMatchingFaceEmb[:])
 		visitorID := test.SeedVisitor(t, pool, reqProfileID, "visitor1", matchingFaceEmb[:])
-		sessionToken := test.SeedSession(t, reqProfileID)
+		sessionToken := test.SeedSession(t, pool, reqProfileID)
 
 		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
 			FaceBytes:    imgBytes,
@@ -99,13 +97,12 @@ func TestProcessVisitorFaces(t *testing.T) {
 	t.Run("Visitor Face matching currently synced profile face should return the NonVisitorFace = true and face_detected = true", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 		test.FlushCache(t, cacheClient)
-		service.ClearSessions()
 
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
 
 		profileID := test.AddNewProfile(t, recPool, imgBytes, testDB)
-		sessionToken := test.SeedSession(t, profileID)
+		sessionToken := test.SeedSession(t, pool, profileID)
 
 		res, err := server.ProcessVisitorFaces(context.Background(), &fd.ProcessVisitorFacesRequest{
 			FaceBytes:    imgBytes,
@@ -132,14 +129,13 @@ func TestRegisterVisitorFace(t *testing.T) {
 	t.Run("One valid embedding should be saved to db properly", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 		test.FlushCache(t, cacheClient)
-		service.ClearSessions()
 
 		validEmbedding := test.MakeEmbedding(0.5, 128)
 		var embedding face.Descriptor
 		copy(embedding[:], validEmbedding)
 
 		profileID := test.SeedProfile(t, pool, validEmbedding)
-		sessionToken := test.SeedSession(t, profileID)
+		sessionToken := test.SeedSession(t, pool, profileID)
 
 		res, err := server.RegisterVisitorFace(context.Background(), &fd.RegisterVisitorFaceRequest{
 			FaceEmbedding: embedding[:],

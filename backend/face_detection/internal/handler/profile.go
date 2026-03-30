@@ -8,6 +8,7 @@ import (
 
 	"github.com/Kagami/go-face"
 	fd "mosaic-face-detection.com/gen"
+	"mosaic-face-detection.com/internal/cache"
 	"mosaic-face-detection.com/internal/db"
 	"mosaic-face-detection.com/internal/observability"
 	"mosaic-face-detection.com/internal/service"
@@ -71,12 +72,19 @@ func (s *FaceDetectionServer) SyncProfile(
 		}, nil
 	}
 
-	sessionToken := service.FetchSessionToken(matchingProfileID)
-	// Todo: add a test to check that this is reached when service crashes
-	if sessionToken == "" {
-		s.logger.Debug("sessionToken not found for profileID", "profile_id", matchingProfileID)
-		sessionToken = rand.Text()
-		service.AddNewProfileSession(sessionToken, matchingProfileID)
+	sessionToken := rand.Text()
+
+	err = cache.CreateNewProfileSession(ctx, matchingProfileID, s.cache, sessionToken)
+	if err != nil {
+		s.logger.Warn("failed to store session in cache", "err", err)
+	}
+
+	_, err = db.RetryDB(s.logger, ctx, func() (struct{}, error) {
+		return struct{}{}, s.pool.UpsertSession(matchingProfileID, sessionToken)
+	})
+	if err != nil {
+		s.logger.Error("failed to store session in db", "err", err)
+		return nil, err
 	}
 
 	return &fd.SyncProfileResponse{
@@ -107,7 +115,7 @@ func (s *FaceDetectionServer) RegisterProfileFace(
 
 	profileRegisterStart := time.Now()
 	profileID, err := db.RetryDB(s.logger, ctx, func() (*int32, error) {
-		return s.pool.AddNewFaceForUser(embeddings)
+		return s.pool.AddNewFaceForProfile(embeddings)
 	})
 	observability.ProfileRegisterDuration.Observe(float64(time.Since(profileRegisterStart).Milliseconds()))
 	if err != nil {
@@ -118,7 +126,14 @@ func (s *FaceDetectionServer) RegisterProfileFace(
 
 	sessionToken := rand.Text()
 
-	service.AddNewProfileSession(sessionToken, *profileID)
+	_, err = db.RetryDB(s.logger, ctx, func() (struct{}, error) {
+		return struct{}{}, s.pool.UpsertSession(*profileID, sessionToken)
+	})
+	if err != nil {
+		s.logger.Error("failed to store session in db", "err", err)
+		return nil, err
+	}
+
 	s.logger.Debug("created new profile session", "profile_id", profileID, "session_token", sessionToken)
 
 	return &fd.RegisterProfileFaceResponse{SessionToken: sessionToken, Success: true}, nil

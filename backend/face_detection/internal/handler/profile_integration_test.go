@@ -80,7 +80,6 @@ func TestSyncProfile(t *testing.T) {
 	t.Run("Face matching a profile in db should return a session token", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 		test.FlushCache(t, cacheClient)
-		service.ClearSessions()
 
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
@@ -129,7 +128,6 @@ func TestSyncProfile(t *testing.T) {
 		assert.NoError(t, err2)
 
 		_ = test.AddNewProfile(t, recPool, imgBytes1, testDB)
-		service.ClearSessions()
 
 		// Pass two different images of the same person as separate frames to verify aggregation
 		res, err := server.SyncProfile(context.Background(), &fd.SyncProfileRequest{

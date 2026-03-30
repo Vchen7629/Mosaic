@@ -37,12 +37,16 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 		return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, nil
 	}
 
-	profileID, exists := service.FetchProfileIDWithSession(req.SessionToken)
-	if !exists {
-		// todo: maybe implement logic in the frontend to ask the user to resync if this error is raised
-		// end the recording and go back to not logged in state
-		s.logger.Error("session token not found while processing visitor face", "session_token", req.SessionToken)
-		return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, fmt.Errorf("invalid session token")
+	profileID, err := cache.FetchProfileIDFromCache(ctx, s.cache, req.SessionToken)
+	if err != nil {
+		profileIDPtr, dbErr := db.RetryDB(s.logger, ctx, func() (*int32, error) {
+			return s.pool.FetchProfileIDWithSession(req.SessionToken)
+		})
+		if dbErr != nil {
+			s.logger.Error("session token not found", "session_token", req.SessionToken)
+			return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, fmt.Errorf("invalid session token")
+		}
+		profileID = *profileIDPtr
 	}
 
 	currentProfileEmbs, err := cache.FetchProfileFaceEmbForIDWithCache(
@@ -122,12 +126,16 @@ func (s *FaceDetectionServer) RegisterVisitorFace(
 	var embedding face.Descriptor
 	copy(embedding[:], req.FaceEmbedding)
 
-	profileID, exists := service.FetchProfileIDWithSession(req.SessionToken)
-	if !exists {
-		// todo: maybe implement logic in the frontend to ask the user to resync if this error is raised
-		// end the recording and go back to not logged in state
-		s.logger.Error("session token not found while registering new visitor face", "session_token", req.SessionToken)
-		return &fd.RegisterVisitorFaceResponse{Success: false}, fmt.Errorf("invalid session token")
+	profileID, err := cache.FetchProfileIDFromCache(ctx, s.cache, req.SessionToken)
+	if err != nil {
+		profileIDPtr, dbErr := db.RetryDB(s.logger, ctx, func() (*int32, error) {
+			return s.pool.FetchProfileIDWithSession(req.SessionToken)
+		})
+		if dbErr != nil {
+			s.logger.Error("session token not found", "session_token", req.SessionToken)
+			return &fd.RegisterVisitorFaceResponse{Success: false}, fmt.Errorf("invalid session token")
+		}
+		profileID = *profileIDPtr
 	}
 
 	visitorRegisterStart := time.Now()
