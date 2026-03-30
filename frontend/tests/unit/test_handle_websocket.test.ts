@@ -14,7 +14,7 @@ describe("useWebSocketConnection - websocket handling", () => {
     it("Opens a websocket to the correct URL when active", () => {
         renderHook(() => useWebSocketConnection(true))
 
-        expect(mockWebSocket).toHaveBeenCalledWith("ws://localhost:8000/api/v1/ws")
+        expect(mockWebSocket).toHaveBeenCalledWith("ws://localhost:8080/api/v1/ws")
     })
 
     it("does not open a websocket when inactive", () => {

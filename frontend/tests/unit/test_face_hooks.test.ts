@@ -44,9 +44,9 @@ describe("useVisitorFace - message handling", () => {
 
         renderHook(() => useVisitorFace(ws, true, "profile1", onNewFaceDetected, vi.fn(), vi.fn()))
 
-        dispatch({ type: "new_visitor_register", profile_id: 42, face_embedding: [0.1, 0.2] })
+        dispatch({ type: "new_visitor_register", session_token: "tok_42", face_embedding: [0.1, 0.2] })
 
-        expect(onNewFaceDetected).toHaveBeenCalledWith(42, JSON.stringify([0.1, 0.2]))
+        expect(onNewFaceDetected).toHaveBeenCalledWith("tok_42", JSON.stringify([0.1, 0.2]))
     })
 
     it("calls onExistingVisitorDetected and onBriefingRecieved for visitor_briefing_response", () => {
@@ -100,7 +100,7 @@ describe("useVisitorFace - message handling", () => {
 
         renderHook(() => useVisitorFace(ws, false, "profile1", onNewFaceDetected, vi.fn(), vi.fn()))
 
-        dispatch({ type: "new_visitor_register", profile_id: 1, face_embedding: [] })
+        dispatch({ type: "new_visitor_register", session_token: "tok_1", face_embedding: [] })
 
         expect(onNewFaceDetected).not.toHaveBeenCalled()
     })
@@ -128,7 +128,7 @@ describe("useVisitorFace - message handling", () => {
         expect(ws.send).toHaveBeenCalledWith(JSON.stringify({
             type: "visitor_face",
             face_bytes: "base64frame",
-            profile_id: "profile1",
+            session_token: "profile1",
         }))
     })
 
@@ -154,7 +154,7 @@ describe("useNewVisitorFaceRegister", () => {
         expect(ws.send).toHaveBeenCalledWith(JSON.stringify({
             type: "new_visitor_face",
             face_embedding: "emb123",
-            profile_id: "profile1",
+            session_token: "profile1",
             visitor_name: "Alice",
         }))
     })
@@ -258,16 +258,16 @@ describe("useSyncProfileProcess", () => {
         expect(ws.send).toHaveBeenCalledTimes(2)
     })
 
-    it("calls onProfileSynced and saves profile_id to localStorage on profile_face_response", () => {
+    it("calls onProfileSynced and saves session_token to localStorage on profile_face_response", () => {
         const { ws, dispatch } = makeWs()
         const onProfileSynced = vi.fn()
 
         renderHook(() => useSyncProfileProcess(ws, true, onProfileSynced))
 
-        dispatch({ type: "profile_face_response", profile_id: 7 })
+        dispatch({ type: "profile_face_response", session_token: "tok_abc" })
 
-        expect(onProfileSynced).toHaveBeenCalledWith(7)
-        expect(localStorage.getItem("profile_id")).toBe("7")
+        expect(onProfileSynced).toHaveBeenCalledWith("tok_abc")
+        expect(localStorage.getItem("session_token")).toBe("tok_abc")
     })
 
     it("ignores messages that are not profile_face_response", () => {
@@ -276,7 +276,7 @@ describe("useSyncProfileProcess", () => {
 
         renderHook(() => useSyncProfileProcess(ws, true, onProfileSynced))
 
-        dispatch({ type: "other_type", profile_id: 7 })
+        dispatch({ type: "other_type", session_token: "tok_abc" })
 
         expect(onProfileSynced).not.toHaveBeenCalled()
     })

@@ -11,7 +11,7 @@ const defaultProps = {
   ws: null,
   syncState: "idle" as SyncState,
   isRecording: false,
-  profileId: "profile123",
+  sessionToken: "profile123",
   visitorIds: [],
   onSyncStart: vi.fn(),
   onSyncCancel: vi.fn(),
@@ -86,15 +86,15 @@ describe("RecordButton - Websocket message on stop", () => {
             ws={mockWs}                                                                                                                                                     
             syncState="active"                                                                                                                                              
             isRecording={true}                                                                                                                                              
-            profileId="profile123"                                                                                                                                          
-            visitorIds={["visitor1"]}                                                                                                                                       
-        />)                                                                                                                                                                 
-        fireEvent.click(screen.getByText("Stop"))                                                                                                                           
-        
-        expect(mockSend).toHaveBeenCalledWith(JSON.stringify({                                                                                                              
-            type: "save_audio_transcript",                                                                                                                                  
-            profile_id: "profile123",                                                                                                                                       
-            visitor_id: "visitor1",                                                                                                                                         
+            sessionToken="profile123"
+            visitorIds={["visitor1"]}
+        />)
+        fireEvent.click(screen.getByText("Stop"))
+
+        expect(mockSend).toHaveBeenCalledWith(JSON.stringify({
+            type: "save_audio_transcript",
+            session_token: "profile123",
+            visitor_id_list: ["visitor1"],
         }))                                                                                                                                                                 
     })
 
