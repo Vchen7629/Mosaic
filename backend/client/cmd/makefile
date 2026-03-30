@@ -5,7 +5,7 @@ PKGS := ../internal/handler/... ../internal/middleware/... ../internal/service/.
 coverage:
 	go test -tags=unit,integration ${PKGS} -v -coverprofile=coverage.out -covermode=atomic
 
-lint: 
+format: 
 	go fmt . 
 	go fmt ../internal/middleware/... .
 	go fmt ../internal/handler/... .
