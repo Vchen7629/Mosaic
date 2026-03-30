@@ -24,7 +24,7 @@ const (
 // Request to generate a new conversation briefing
 type GenerateConversationBriefingRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ProfileId     int32                  `protobuf:"varint,1,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
+	SessionToken  string                 `protobuf:"bytes,1,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"`
 	VisitorIds    []int32                `protobuf:"varint,2,rep,packed,name=visitor_ids,json=visitorIds,proto3" json:"visitor_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -60,11 +60,11 @@ func (*GenerateConversationBriefingRequest) Descriptor() ([]byte, []int) {
 	return file_conversation_briefing_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GenerateConversationBriefingRequest) GetProfileId() int32 {
+func (x *GenerateConversationBriefingRequest) GetSessionToken() string {
 	if x != nil {
-		return x.ProfileId
+		return x.SessionToken
 	}
-	return 0
+	return ""
 }
 
 func (x *GenerateConversationBriefingRequest) GetVisitorIds() []int32 {
@@ -123,10 +123,9 @@ var File_conversation_briefing_proto protoreflect.FileDescriptor
 
 const file_conversation_briefing_proto_rawDesc = "" +
 	"\n" +
-	"\x1bconversation_briefing.proto\x12\x15conversation_briefing\"e\n" +
-	"#GenerateConversationBriefingRequest\x12\x1d\n" +
-	"\n" +
-	"profile_id\x18\x01 \x01(\x05R\tprofileId\x12\x1f\n" +
+	"\x1bconversation_briefing.proto\x12\x15conversation_briefing\"k\n" +
+	"#GenerateConversationBriefingRequest\x12#\n" +
+	"\rsession_token\x18\x01 \x01(\tR\fsessionToken\x12\x1f\n" +
 	"\vvisitor_ids\x18\x02 \x03(\x05R\n" +
 	"visitorIds\"@\n" +
 	"$GenerateConversationBriefingResponse\x12\x18\n" +

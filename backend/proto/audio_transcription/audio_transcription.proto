@@ -16,7 +16,7 @@ service AudioTranscriptionService {
 // Request containing the 10 second audio chunk and name to be processed
 message TranscribeAudioRequest {
     repeated float audio_bytes = 1;
-    int32 profile_id = 2;
+    string session_token = 2;
 }
 
 // Response containing success to indicate if its successful or not
@@ -26,7 +26,7 @@ message TranscribeAudioResponse {
 
 // Request containing profile_id to save transcript for
 message SaveTranscriptRequest {
-    int32 profile_id = 1;
+   string session_token = 1;
     repeated int32 visitor_ids = 2;
 }
 

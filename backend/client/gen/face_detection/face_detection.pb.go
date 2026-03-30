@@ -25,7 +25,7 @@ const (
 type ProcessVisitorFacesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FaceBytes     []byte                 `protobuf:"bytes,1,opt,name=face_bytes,json=faceBytes,proto3" json:"face_bytes,omitempty"`
-	ProfileId     int32                  `protobuf:"varint,2,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
+	SessionToken  string                 `protobuf:"bytes,2,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -67,11 +67,11 @@ func (x *ProcessVisitorFacesRequest) GetFaceBytes() []byte {
 	return nil
 }
 
-func (x *ProcessVisitorFacesRequest) GetProfileId() int32 {
+func (x *ProcessVisitorFacesRequest) GetSessionToken() string {
 	if x != nil {
-		return x.ProfileId
+		return x.SessionToken
 	}
-	return 0
+	return ""
 }
 
 // single face message containing the metadata and if we should register name for it
@@ -225,7 +225,7 @@ func (x *ProcessVisitorFacesResponse) GetNonVisitorFace() bool {
 type RegisterVisitorFaceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FaceEmbedding []float32              `protobuf:"fixed32,1,rep,packed,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // 128 dim embedding
-	ProfileId     int32                  `protobuf:"varint,2,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
+	SessionToken  string                 `protobuf:"bytes,2,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"`
 	VisitorName   string                 `protobuf:"bytes,3,opt,name=visitor_name,json=visitorName,proto3" json:"visitor_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -268,11 +268,11 @@ func (x *RegisterVisitorFaceRequest) GetFaceEmbedding() []float32 {
 	return nil
 }
 
-func (x *RegisterVisitorFaceRequest) GetProfileId() int32 {
+func (x *RegisterVisitorFaceRequest) GetSessionToken() string {
 	if x != nil {
-		return x.ProfileId
+		return x.SessionToken
 	}
-	return 0
+	return ""
 }
 
 func (x *RegisterVisitorFaceRequest) GetVisitorName() string {
@@ -430,7 +430,7 @@ type SyncProfileResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FaceDetected  bool                   `protobuf:"varint,1,opt,name=face_detected,json=faceDetected,proto3" json:"face_detected,omitempty"` // used so can prompt the frontend to maybe get a clearer view?
 	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`                               // used for retry logic
-	ProfileId     int32                  `protobuf:"varint,3,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
+	SessionToken  string                 `protobuf:"bytes,3,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"`
 	NewFace       bool                   `protobuf:"varint,4,opt,name=new_face,json=newFace,proto3" json:"new_face,omitempty"`
 	FaceEmbedding []*FaceEmbedding       `protobuf:"bytes,5,rep,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -481,11 +481,11 @@ func (x *SyncProfileResponse) GetSuccess() bool {
 	return false
 }
 
-func (x *SyncProfileResponse) GetProfileId() int32 {
+func (x *SyncProfileResponse) GetSessionToken() string {
 	if x != nil {
-		return x.ProfileId
+		return x.SessionToken
 	}
-	return 0
+	return ""
 }
 
 func (x *SyncProfileResponse) GetNewFace() bool {
@@ -550,8 +550,8 @@ func (x *RegisterProfileFaceRequest) GetFaceEmbedding() []*FaceEmbedding {
 // Response with register profile response
 type RegisterProfileFaceResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`                      // used for retry logic
-	ProfileId     int32                  `protobuf:"varint,2,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"` // sent back to frontend to save
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`                              // used for retry logic
+	SessionToken  string                 `protobuf:"bytes,2,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"` // sent back to frontend to save
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -593,23 +593,22 @@ func (x *RegisterProfileFaceResponse) GetSuccess() bool {
 	return false
 }
 
-func (x *RegisterProfileFaceResponse) GetProfileId() int32 {
+func (x *RegisterProfileFaceResponse) GetSessionToken() string {
 	if x != nil {
-		return x.ProfileId
+		return x.SessionToken
 	}
-	return 0
+	return ""
 }
 
 var File_face_detection_proto protoreflect.FileDescriptor
 
 const file_face_detection_proto_rawDesc = "" +
 	"\n" +
-	"\x14face_detection.proto\x12\x14proto.face_detection\"Z\n" +
+	"\x14face_detection.proto\x12\x14proto.face_detection\"`\n" +
 	"\x1aProcessVisitorFacesRequest\x12\x1d\n" +
 	"\n" +
-	"face_bytes\x18\x01 \x01(\fR\tfaceBytes\x12\x1d\n" +
-	"\n" +
-	"profile_id\x18\x02 \x01(\x05R\tprofileId\"\x9d\x01\n" +
+	"face_bytes\x18\x01 \x01(\fR\tfaceBytes\x12#\n" +
+	"\rsession_token\x18\x02 \x01(\tR\fsessionToken\"\x9d\x01\n" +
 	"\n" +
 	"FaceResult\x12\x19\n" +
 	"\bis_known\x18\x01 \x01(\bR\aisKnown\x12\x12\n" +
@@ -622,11 +621,10 @@ const file_face_detection_proto_rawDesc = "" +
 	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x126\n" +
 	"\x05faces\x18\x02 \x03(\v2 .proto.face_detection.FaceResultR\x05faces\x12\x18\n" +
 	"\asuccess\x18\x03 \x01(\bR\asuccess\x12(\n" +
-	"\x10non_visitor_face\x18\x04 \x01(\bR\x0enonVisitorFace\"\x85\x01\n" +
+	"\x10non_visitor_face\x18\x04 \x01(\bR\x0enonVisitorFace\"\x8b\x01\n" +
 	"\x1aRegisterVisitorFaceRequest\x12%\n" +
-	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\x12\x1d\n" +
-	"\n" +
-	"profile_id\x18\x02 \x01(\x05R\tprofileId\x12!\n" +
+	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\x12#\n" +
+	"\rsession_token\x18\x02 \x01(\tR\fsessionToken\x12!\n" +
 	"\fvisitor_name\x18\x03 \x01(\tR\vvisitorName\"V\n" +
 	"\x1bRegisterVisitorFaceResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
@@ -636,20 +634,18 @@ const file_face_detection_proto_rawDesc = "" +
 	"\n" +
 	"face_bytes\x18\x01 \x03(\fR\tfaceBytes\"6\n" +
 	"\rFaceEmbedding\x12%\n" +
-	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\"\xda\x01\n" +
+	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\"\xe0\x01\n" +
 	"\x13SyncProfileResponse\x12#\n" +
 	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x12\x18\n" +
-	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x1d\n" +
-	"\n" +
-	"profile_id\x18\x03 \x01(\x05R\tprofileId\x12\x19\n" +
+	"\asuccess\x18\x02 \x01(\bR\asuccess\x12#\n" +
+	"\rsession_token\x18\x03 \x01(\tR\fsessionToken\x12\x19\n" +
 	"\bnew_face\x18\x04 \x01(\bR\anewFace\x12J\n" +
 	"\x0eface_embedding\x18\x05 \x03(\v2#.proto.face_detection.FaceEmbeddingR\rfaceEmbedding\"h\n" +
 	"\x1aRegisterProfileFaceRequest\x12J\n" +
-	"\x0eface_embedding\x18\x01 \x03(\v2#.proto.face_detection.FaceEmbeddingR\rfaceEmbedding\"V\n" +
+	"\x0eface_embedding\x18\x01 \x03(\v2#.proto.face_detection.FaceEmbeddingR\rfaceEmbedding\"\\\n" +
 	"\x1bRegisterProfileFaceResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
-	"\n" +
-	"profile_id\x18\x02 \x01(\x05R\tprofileId2\xf6\x03\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12#\n" +
+	"\rsession_token\x18\x02 \x01(\tR\fsessionToken2\xf6\x03\n" +
 	"\x14FaceDetectionService\x12|\n" +
 	"\x13ProcessVisitorFaces\x120.proto.face_detection.ProcessVisitorFacesRequest\x1a1.proto.face_detection.ProcessVisitorFacesResponse\"\x00\x12|\n" +
 	"\x13RegisterVisitorFace\x120.proto.face_detection.RegisterVisitorFaceRequest\x1a1.proto.face_detection.RegisterVisitorFaceResponse\"\x00\x12d\n" +

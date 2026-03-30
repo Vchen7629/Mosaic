@@ -12,7 +12,7 @@ service ConversationBriefingService {
 
 // Request to generate a new conversation briefing
 message GenerateConversationBriefingRequest {
-    int32 profile_id = 1;
+    string session_token = 1;
     repeated int32 visitor_ids = 2;
 }
 
