@@ -12,6 +12,8 @@ import (
 	"time"
 
 	at "mosaic-client.com/gen/audio_transcription"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -24,7 +26,7 @@ const (
 	silenceThreshold = 0.02 // lower bound, prevents silence
 	loudThreshold    = 0.5 // upper bound, prevents loud noises
 	sampleRate		 = 16000 // 16khz required for whisper
-	batchDuration	 = 2.5 // seconds
+	batchDuration	 = 5 // seconds
 	batchSize 		 = sampleRate * batchDuration
 )
 
@@ -167,6 +169,10 @@ func transcribeWithRetry(
 			return nil
 		}
 		if rpcErr != nil {
+			code := status.Code(rpcErr)
+			if code != codes.ResourceExhausted && code != codes.Unavailable {
+				return fmt.Errorf("transcription failed (non-retryable): %w", rpcErr)
+			}
 			err = rpcErr
 		} else {
 			err = fmt.Errorf("transcription returned success=false")
