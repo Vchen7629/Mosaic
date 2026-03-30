@@ -6,7 +6,7 @@ PKGS := ../internal/db/... ../internal/cache/... ../internal/handler/... ../inte
 coverage:
 	go test -tags=unit,integration ${PKGS} -v -coverprofile=coverage.out -covermode=atomic
 
-lint: 
+format: 
 	go fmt . 
 	go fmt ${PKGS} .
 	go fmt ../internal/observability/... .
