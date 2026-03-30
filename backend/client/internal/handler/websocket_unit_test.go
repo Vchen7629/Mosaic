@@ -105,7 +105,10 @@ func TestHandleWebSocketRouting(t *testing.T) {
 
 			conn, cleanup := dialWS(t, http.HandlerFunc(newTestHandler(face, audio, briefing).HandleWebSocket))
 			defer cleanup()
-			defer conn.Close()
+			defer func() {
+				err := conn.Close()
+				assert.NoError(t, err)
+			}()
 
 			require.NoError(t, conn.WriteJSON(tc.msg))
 			assert.Eventually(t, checkFn, time.Second, 10*time.Millisecond, tc.name)
@@ -136,7 +139,10 @@ func TestHandleWebSocketUnknownTypeNoHandlerInvoked(t *testing.T) {
 
 	conn, cleanup := dialWS(t, http.HandlerFunc(newTestHandler(face, audio, briefing).HandleWebSocket))
 	defer cleanup()
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		assert.NoError(t, err)
+	}()
 
 	require.NoError(t, conn.WriteJSON(handler.Message{Type: "unknown_type", SessionToken: "tok"}))
 
@@ -215,7 +221,10 @@ func TestHandleWebSocketErrorPaths(t *testing.T) {
 
 			conn, cleanup := dialWS(t, http.HandlerFunc(newTestHandler(face, audio, briefing).HandleWebSocket))
 			defer cleanup()
-			defer conn.Close()
+			defer func() {
+				err := conn.Close()
+				assert.NoError(t, err)
+			}()
 
 			require.NoError(t, conn.WriteJSON(tc.msg))
 
