@@ -148,4 +148,3 @@ func (db *DBPool) AddNewFaceForVisitor(
 
 	return &visitor_id, nil
 }
-

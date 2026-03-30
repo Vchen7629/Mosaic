@@ -87,7 +87,6 @@ func TestFetchAllVisitorFaceEmbForPatient(t *testing.T) {
 	})
 }
 
-
 func TestFetchVisitorBriefing(t *testing.T) {
 	pool := testDB.Pool
 	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})

@@ -46,14 +46,14 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 			s.logger.Error("session token not found", "session_token", req.SessionToken)
 			return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, fmt.Errorf("invalid session token")
 		}
-		profileID = *profileIDPtr
+		profileID = profileIDPtr
 	}
 
 	currentProfileEmbs, err := cache.FetchProfileFaceEmbForIDWithCache(
-		ctx, profileID, s.cache, s.logger,
+		ctx, *profileID, s.cache, s.logger,
 		func() ([]service.ProfileFaces, error) {
 			return db.RetryDB(s.logger, ctx, func() ([]service.ProfileFaces, error) {
-				return s.pool.FetchProfileFaceEmbForID(profileID)
+				return s.pool.FetchProfileFaceEmbForID(*profileID)
 			})
 		},
 	)
@@ -71,13 +71,13 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 	}
 
 	var knownVisitors []service.VisitorFaces
-	if profileID > 0 {
+	if *profileID > 0 {
 		visitorFetchStart := time.Now()
 		knownVisitors, err = cache.FetchAllVisitorDataWithCache(
-			ctx, profileID, s.cache, s.logger,
+			ctx, *profileID, s.cache, s.logger,
 			func() ([]service.VisitorFaces, error) {
 				return db.RetryDB(s.logger, ctx, func() ([]service.VisitorFaces, error) {
-					return s.pool.FetchAllVisitorData(profileID)
+					return s.pool.FetchAllVisitorData(*profileID)
 				})
 			},
 		)
@@ -95,7 +95,7 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 
 	faceResults := make([]*fd.FaceResult, len(embeddings))
 	for i, match := range matchingFaceRes {
-		faceResults[i] = s.buildFaceResult(ctx, profileID, match, embeddings[i])
+		faceResults[i] = s.buildFaceResult(ctx, *profileID, match, embeddings[i])
 	}
 
 	return &fd.ProcessVisitorFacesResponse{
@@ -135,12 +135,12 @@ func (s *FaceDetectionServer) RegisterVisitorFace(
 			s.logger.Error("session token not found", "session_token", req.SessionToken)
 			return &fd.RegisterVisitorFaceResponse{Success: false}, fmt.Errorf("invalid session token")
 		}
-		profileID = *profileIDPtr
+		profileID = profileIDPtr
 	}
 
 	visitorRegisterStart := time.Now()
 	visitorID, err := db.RetryDB(s.logger, ctx, func() (*int32, error) {
-		return s.pool.AddNewFaceForVisitor(profileID, req.VisitorName, embedding)
+		return s.pool.AddNewFaceForVisitor(*profileID, req.VisitorName, embedding)
 	})
 	observability.VisitorRegisterDuration.Observe(float64(time.Since(visitorRegisterStart).Milliseconds()))
 	if err != nil {
@@ -150,7 +150,7 @@ func (s *FaceDetectionServer) RegisterVisitorFace(
 	}
 
 	newEntry := service.VisitorFaces{ID: *visitorID, Name: req.VisitorName, Embedding: embedding}
-	cache.AppendToVisitorDataCache(ctx, profileID, s.cache, newEntry)
+	cache.AppendToVisitorDataCache(ctx, *profileID, s.cache, newEntry)
 
 	return &fd.RegisterVisitorFaceResponse{Success: true, VisitorId: *visitorID}, nil
 }

@@ -52,7 +52,6 @@ func TestFetchAllProfileFaceEmb(t *testing.T) {
 	})
 }
 
-
 func TestAddNewFaceForProfile(t *testing.T) {
 	pool := testDB.Pool
 	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
