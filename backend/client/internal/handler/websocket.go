@@ -18,7 +18,7 @@ type Message struct {
 	FaceBytes     string   `json:"face_bytes,omitempty"` // base64 encoded
 	AudioData     string   `json:"audio_data,omitempty"`
 	FaceEmbedding string   `json:"face_embedding,omitempty"`
-	ProfileID     string   `json:"profile_id,omitempty"`
+	SessionToken  string   `json:"session_token,omitempty"`
 	VisitorID     string   `json:"visitor_id,omitempty"`
 	VisitorIDList []string `json:"visitor_id_list,omitempty"`
 	VisitorName   string   `json:"visitor_name,omitempty"`
@@ -99,7 +99,7 @@ func (h *WebSocketHandler) handleSyncProfile(m Message, safe *service.SafeConn) 
 // runs every 2.5 frames, checks the sent face frame against visitors and decides
 // whether to register a new face or fetch briefing for an existing face
 func (h *WebSocketHandler) handleProcessVisitorFace(m Message, safe *service.SafeConn) {
-	err := service.ProcessVisitorImage(h.Logger, m.FaceBytes, m.ProfileID, safe, h.FaceClient)
+	err := service.ProcessVisitorImage(h.Logger, m.FaceBytes, m.SessionToken, safe, h.FaceClient)
 	if err != nil {
 		h.Logger.Error("[visitor_face] error", "err", err)
 	}
@@ -108,7 +108,7 @@ func (h *WebSocketHandler) handleProcessVisitorFace(m Message, safe *service.Saf
 // if the visitor face doesnt match a face in the db, this allows us to register the face
 // as a new visitor face with the name
 func (h *WebSocketHandler) handleRegisterVisitorFace(m Message, safe *service.SafeConn) {
-	err := service.RegisterNewVisitorFace(m.FaceEmbedding, m.ProfileID, m.VisitorName, safe, h.FaceClient)
+	err := service.RegisterNewVisitorFace(m.FaceEmbedding, m.SessionToken, m.VisitorName, safe, h.FaceClient)
 	if err != nil {
 		h.Logger.Error("[new_visitor_face] error", "err", err)
 	}
@@ -117,7 +117,7 @@ func (h *WebSocketHandler) handleRegisterVisitorFace(m Message, safe *service.Sa
 // process the audio sent from use mic by transcribing it to text
 func (h *WebSocketHandler) handleAudio(m Message) {
 	defer service.Wg.Done()
-	err := service.ProcessAudio(h.Logger, m.AudioData, m.ProfileID, h.AudioClient)
+	err := service.ProcessAudio(h.Logger, m.AudioData, m.SessionToken, h.AudioClient)
 	if err != nil {
 		h.Logger.Error("[audio] error", "err", err)
 	}
@@ -126,18 +126,18 @@ func (h *WebSocketHandler) handleAudio(m Message) {
 // Saves the transcript to the db and calls a gRPC service to generate briefing
 func (h *WebSocketHandler) handleSaveAudioTranscript(m Message) {
 	ctx := context.Background()
-	err := service.FlushAudio(h.Logger, ctx, m.ProfileID, h.AudioClient)
+	err := service.FlushAudio(h.Logger, ctx, m.SessionToken, h.AudioClient)
 	if err != nil {
 		h.Logger.Error("[save_audio_transcript] error flushing audio", "err", err)
 	}
 
-	err = service.SaveTranscriptWithRetry(ctx, m.ProfileID, m.VisitorIDList, h.AudioClient)
+	err = service.SaveTranscriptWithRetry(ctx, m.SessionToken, m.VisitorIDList, h.AudioClient)
 	if err != nil {
 		h.Logger.Error("[save_audio_transcript] error saving transcript", "err", err)
 	} else {
 		visitorIDs := service.GetSeenVisitors()
 		go func(m Message) {
-			err = service.GenerateConversationBriefing(m.ProfileID, visitorIDs, h.BriefingClient)
+			err = service.GenerateConversationBriefing(m.SessionToken, visitorIDs, h.BriefingClient)
 			if err != nil {
 				h.Logger.Error("[save_audio_transcript] error generating convo briefing", "err", err)
 			}

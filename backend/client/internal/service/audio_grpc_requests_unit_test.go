@@ -34,7 +34,7 @@ func TestSaveTranscriptWithRetry(t *testing.T) {
 		assert.Equal(t, 1, client.SaveCalls, "SaveTranscript should be called exactly once")
 	})
 
-	t.Run("Sends correct profile ID and visitor IDs in request", func(t *testing.T) {
+	t.Run("Sends correct session token and visitor IDs in request", func(t *testing.T) {
 		var captured *at.SaveTranscriptRequest
 		client := &test.MockAudioClient{
 			SaveFunc: func(req *at.SaveTranscriptRequest) (*at.SaveTranscriptResponse, error) {
@@ -46,7 +46,7 @@ func TestSaveTranscriptWithRetry(t *testing.T) {
 		err := SaveTranscriptWithRetry(context.Background(), "7", []string{"10", "20", "30"}, client)
 
 		assert.NoError(t, err)
-		assert.Equal(t, int32(7), captured.ProfileId, "profile ID should be forwarded to SaveTranscript")
+		assert.Equal(t, "7", captured.SessionToken, "session token should be forwarded to SaveTranscript")
 		assert.Equal(t, []int32{10, 20, 30}, captured.VisitorIds, "visitor IDs should be forwarded to SaveTranscript")
 	})
 

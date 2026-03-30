@@ -21,7 +21,7 @@ import (
 	at "mosaic-client.com/gen/audio_transcription"
 )
 
-const testBatchSize = 40000 // sampleRate (16000) * batchDuration (2.5), matches batchSize in audio_grpc_requests.go
+const testBatchSize = 80000 // sampleRate (16000) * batchDuration (5), matches batchSize in audio_process.go
 
 // encodeFloat32 converts float32 samples to a base64 string using little-endian
 // IEEE 754 encoding, matching the format expected by ProcessAudio.
@@ -107,22 +107,22 @@ func TestProcessAudio(t *testing.T) {
 		assert.Equal(t, 1, client.TranscribeCalls, "TranscribeAudio should be called exactly once at batch size")
 	})
 
-	t.Run("Sends correct profile ID in TranscribeAudio request", func(t *testing.T) {
+	t.Run("Sends correct session token in TranscribeAudio request", func(t *testing.T) {
 		t.Cleanup(func() { drainBuffer(t) })
 
-		var capturedID int32
+		var capturedToken string
 		client := &test.MockAudioClient{
 			TranscribeFunc: func(req *at.TranscribeAudioRequest) (*at.TranscribeAudioResponse, error) {
-				capturedID = req.ProfileId
+				capturedToken = req.SessionToken
 				return &at.TranscribeAudioResponse{Success: true}, nil
 			},
 		}
 
 		audio := encodeFloat32(makeSamples(testBatchSize, 0.1))
-		err := service.ProcessAudio(slog.Default(), audio, "42", client)
+		err := service.ProcessAudio(slog.Default(), audio, "test_session_token", client)
 
 		assert.NoError(t, err)
-		assert.Equal(t, int32(42), capturedID, "profile ID should be forwarded to TranscribeAudio")
+		assert.Equal(t, "test_session_token", capturedToken, "session token should be forwarded to TranscribeAudio")
 	})
 
 	t.Run("Propagates non-retryable gRPC error from TranscribeAudio", func(t *testing.T) {

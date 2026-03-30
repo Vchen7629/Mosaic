@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"sync"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -12,38 +11,21 @@ import (
 	at "mosaic-client.com/gen/audio_transcription"
 )
 
-var (
-	audioBuffer []float32
-	bufferMutex sync.Mutex
-	Wg          sync.WaitGroup
-	SleepFn     = time.Sleep
-)
-
-const (
-	silenceThreshold = 0.02  // lower bound, prevents silence
-	loudThreshold    = 0.5   // upper bound, prevents loud noises
-	sampleRate       = 16000 // 16khz required for whisper
-	batchDuration    = 2.5   // seconds
-	batchSize        = sampleRate * batchDuration
-)
+var SleepFn = time.Sleep
 
 // Method for sending gRPC request to save the transcript for the
-// profileID to the database, handles retries with exp backoff
+// sessionToken to the database, handles retries with exp backoff
 func SaveTranscriptWithRetry(
 	ctx context.Context,
-	profileID string,
+	sessionToken string,
 	visitorIDs []string,
 	client at.AudioTranscriptionServiceClient,
 ) error {
-	profileID64, err := strconv.ParseInt(profileID, 10, 32)
-	if err != nil {
-		return fmt.Errorf("error converting profileID string to int64: %w", err)
-	}
 	visitorIDList := make([]int32, 0, len(visitorIDs))
 	for _, visitorID := range visitorIDs {
 		visitorID64, err := strconv.ParseInt(visitorID, 10, 32)
 		if err != nil {
-			return fmt.Errorf("error converting profileID string to int64: %w", err)
+			return fmt.Errorf("error converting visitorID string to int64: %w", err)
 		}
 		visitorIDList = append(visitorIDList, int32(visitorID64))
 	}
@@ -51,8 +33,8 @@ func SaveTranscriptWithRetry(
 	var lastErr error
 	for attempt := range 3 {
 		resp, rpcErr := client.SaveTranscript(ctx, &at.SaveTranscriptRequest{
-			ProfileId:  int32(profileID64),
-			VisitorIds: visitorIDList,
+			SessionToken: sessionToken,
+			VisitorIds:   visitorIDList,
 		})
 		if rpcErr == nil && resp.Success {
 			return nil
@@ -76,14 +58,14 @@ func transcribeWithRetry(
 	ctx context.Context,
 	client at.AudioTranscriptionServiceClient,
 	batch []float32,
-	profileID int32,
+	sessionToken string,
 ) error {
 	var err error
 
 	for attempt := range 3 {
 		resp, rpcErr := client.TranscribeAudio(ctx, &at.TranscribeAudioRequest{
-			AudioBytes: batch,
-			ProfileId:  profileID,
+			AudioBytes:   batch,
+			SessionToken: sessionToken,
 		})
 		if rpcErr == nil && resp.Success {
 			return nil

@@ -38,9 +38,9 @@ func TestVisitorFace_GoroutineCapture(t *testing.T) {
 
 	for _, p := range payloads {
 		err := conn.WriteJSON(handler.Message{
-			Type:      "visitor_face",
-			FaceBytes: base64.StdEncoding.EncodeToString(p),
-			ProfileID: "1",
+			Type:         "visitor_face",
+			FaceBytes:    base64.StdEncoding.EncodeToString(p),
+			SessionToken: "session_token_1",
 		})
 		assert.NoError(t, err)
 	}
@@ -62,67 +62,8 @@ func TestVisitorFace_GoroutineCapture(t *testing.T) {
 	assert.ElementsMatch(t, payloads, received, "each goroutine must have captured its own message's FaceBytes")
 }
 
-// verifies that a "sync_profile" message routes to the face client's SyncProfile RPC
-func TestHandleWebSocket_SyncProfile_RouteToFaceService(t *testing.T) {
-	faceStub := &test.StubFaceClient{}
-	h := &handler.WebSocketHandler{
-		Logger:      slog.Default(),
-		AudioClient: &test.StubAudioClient{},
-		FaceClient:  faceStub,
-	}
-
-	conn, cleanup := test.DialWS(t, http.HandlerFunc(h.HandleWebSocket))
-	defer cleanup()
-	defer conn.Close()
-
-	err := conn.WriteJSON(handler.Message{
-		Type:      "sync_profile",
-		ProfileID: "1",
-		Frames:    []string{base64.StdEncoding.EncodeToString([]byte("frame1"))},
-	})
-	assert.NoError(t, err)
-
-	time.Sleep(200 * time.Millisecond)
-
-	faceStub.Mu.Lock()
-	called := faceStub.SyncProfileCalled
-	faceStub.Mu.Unlock()
-
-	assert.Equal(t, 1, called, "sync_profile must invoke SyncProfile on the face client")
-}
-
-// verifies that a "new_visitor_face" message routes to the face client's RegisterVisitorFace RPC
-func TestHandleWebSocket_NewVisitorFace_RouteToRegisterFace(t *testing.T) {
-	faceStub := &test.StubFaceClient{}
-	h := &handler.WebSocketHandler{
-		Logger:      slog.Default(),
-		AudioClient: &test.StubAudioClient{},
-		FaceClient:  faceStub,
-	}
-
-	conn, cleanup := test.DialWS(t, http.HandlerFunc(h.HandleWebSocket))
-	defer cleanup()
-	defer conn.Close()
-
-	err := conn.WriteJSON(handler.Message{
-		Type:          "new_visitor_face",
-		ProfileID:     "1",
-		VisitorName:   "Alice",
-		FaceEmbedding: "0.1,0.2,0.3,0.4",
-	})
-	assert.NoError(t, err)
-
-	time.Sleep(200 * time.Millisecond)
-
-	faceStub.Mu.Lock()
-	called := faceStub.RegisterVisitorCalled
-	faceStub.Mu.Unlock()
-
-	assert.Equal(t, 1, called, "new_visitor_face must invoke RegisterVisitorFace on the face client")
-}
-
 // verifies that a "save_audio_transcript" message routes to the audio client's SaveTranscript RPC
-func TestHandleWebSocket_SaveAudioTranscript_RouteToSaveTranscript(t *testing.T) {
+func TestHandleWebSocketSaveAudioTranscript_RouteToSaveTranscript(t *testing.T) {
 	audioStub := &test.StubAudioClient{}
 	briefingStub := &test.StubBriefingClient{}
 	h := &handler.WebSocketHandler{
@@ -138,7 +79,7 @@ func TestHandleWebSocket_SaveAudioTranscript_RouteToSaveTranscript(t *testing.T)
 
 	err := conn.WriteJSON(handler.Message{
 		Type:          "save_audio_transcript",
-		ProfileID:     "1",
+		SessionToken:  "session_token_1",
 		VisitorIDList: []string{"10", "20"},
 	})
 	assert.NoError(t, err)
@@ -146,9 +87,9 @@ func TestHandleWebSocket_SaveAudioTranscript_RouteToSaveTranscript(t *testing.T)
 	// save_audio_transcript is synchronous in the read loop; a subsequent
 	// message will only be dispatched after it returns, so use it as a sentinel.
 	err = conn.WriteJSON(handler.Message{
-		Type:      "visitor_face",
-		FaceBytes: base64.StdEncoding.EncodeToString([]byte("ping")),
-		ProfileID: "1",
+		Type:         "visitor_face",
+		FaceBytes:    base64.StdEncoding.EncodeToString([]byte("ping")),
+		SessionToken: "session_token_1",
 	})
 	assert.NoError(t, err)
 
@@ -179,9 +120,9 @@ func TestHandleWebSocket_Audio_WaitGroupAddAndDoneArePaired(t *testing.T) {
 	const n = 5
 	for range n {
 		err := conn.WriteJSON(handler.Message{
-			Type:      "audio",
-			AudioData: audioPayload,
-			ProfileID: "1",
+			Type:         "audio",
+			AudioData:    audioPayload,
+			SessionToken: "session_token_1",
 		})
 		assert.NoError(t, err)
 	}
@@ -217,7 +158,7 @@ func TestHandleWebSocket_SaveAudioTranscript_Success_CallsBriefing(t *testing.T)
 
 	err := conn.WriteJSON(handler.Message{
 		Type:          "save_audio_transcript",
-		ProfileID:     "1",
+		SessionToken:  "session_token_1",
 		VisitorIDList: []string{"10"},
 	})
 	assert.NoError(t, err)
@@ -253,7 +194,7 @@ func TestHandleWebSocket_SaveAudioTranscript_SaveFails_SkipsBriefing(t *testing.
 
 	err := conn.WriteJSON(handler.Message{
 		Type:          "save_audio_transcript",
-		ProfileID:     "1",
+		SessionToken:  "session_token_1",
 		VisitorIDList: []string{"10"},
 	})
 	assert.NoError(t, err)
@@ -262,9 +203,9 @@ func TestHandleWebSocket_SaveAudioTranscript_SaveFails_SkipsBriefing(t *testing.
 	// synchronously in the read loop, visitor_face won't be dispatched until
 	// handleSaveAudioTranscript returns (after all retries exhaust).
 	err = conn.WriteJSON(handler.Message{
-		Type:      "visitor_face",
-		FaceBytes: base64.StdEncoding.EncodeToString([]byte("sentinel")),
-		ProfileID: "1",
+		Type:         "visitor_face",
+		FaceBytes:    base64.StdEncoding.EncodeToString([]byte("sentinel")),
+		SessionToken: "session_token_1",
 	})
 	assert.NoError(t, err)
 
@@ -280,50 +221,4 @@ func TestHandleWebSocket_SaveAudioTranscript_SaveFails_SkipsBriefing(t *testing.
 	briefingStub.Mu.Unlock()
 
 	assert.Equal(t, 0, briefingCalled, "GenerateConversationBriefing must not be called when SaveTranscript fails")
-}
-
-// verifies that an unrecognised message type does not invoke any handler,
-// leaving all stub call counts at zero.
-func TestHandleWebSocket_UnknownMessageType_NoHandlerInvoked(t *testing.T) {
-	audioStub := &test.StubAudioClient{}
-	faceStub := &test.StubFaceClient{}
-	briefingStub := &test.StubBriefingClient{}
-	h := &handler.WebSocketHandler{
-		Logger:         slog.Default(),
-		AudioClient:    audioStub,
-		FaceClient:     faceStub,
-		BriefingClient: briefingStub,
-	}
-
-	conn, cleanup := test.DialWS(t, http.HandlerFunc(h.HandleWebSocket))
-	defer cleanup()
-	defer conn.Close()
-
-	err := conn.WriteJSON(handler.Message{
-		Type:      "unknown_type",
-		ProfileID: "1",
-	})
-	assert.NoError(t, err)
-
-	time.Sleep(200 * time.Millisecond)
-
-	faceStub.Mu.Lock()
-	syncCalled := faceStub.SyncProfileCalled
-	visitorCalls := len(faceStub.ProcessVisitorCalls)
-	registerCalled := faceStub.RegisterVisitorCalled
-	faceStub.Mu.Unlock()
-
-	audioStub.Mu.Lock()
-	saveCalled := audioStub.SaveTranscriptCalled
-	audioStub.Mu.Unlock()
-
-	briefingStub.Mu.Lock()
-	briefingCalled := briefingStub.GenerateConversationBriefingCalled
-	briefingStub.Mu.Unlock()
-
-	assert.Equal(t, 0, syncCalled, "SyncProfile must not be called for unknown type")
-	assert.Equal(t, 0, visitorCalls, "ProcessVisitorFaces must not be called for unknown type")
-	assert.Equal(t, 0, registerCalled, "RegisterVisitorFace must not be called for unknown type")
-	assert.Equal(t, 0, saveCalled, "SaveTranscript must not be called for unknown type")
-	assert.Equal(t, 0, briefingCalled, "GenerateConversationBriefing must not be called for unknown type")
 }

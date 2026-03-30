@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
-	"strconv"
 
 	fd "mosaic-client.com/gen/face_detection"
 )
@@ -26,7 +25,7 @@ type KnownVisitorResponse struct {
 func ProcessVisitorImage(
 	logger *slog.Logger,
 	frameData string,
-	profileID string,
+	sessionToken string,
 	conn *SafeConn,
 	client fd.FaceDetectionServiceClient,
 ) error {
@@ -37,19 +36,14 @@ func ProcessVisitorImage(
 		return fmt.Errorf("frame decode error: %w", err)
 	}
 
-	id64, err := strconv.ParseInt(profileID, 10, 32)
-	if err != nil {
-		return fmt.Errorf("error converting string to int64: %w", err)
-	}
-
 	//log.Printf("[ProcessFace] Recieved face_data: %s", frameData)
 
 	// Compress JPEG frame for better performance
 
 	// Send to face detection service via gRPC
 	resp, err := client.ProcessVisitorFaces(ctx, &fd.ProcessVisitorFacesRequest{
-		FaceBytes: faceBytes,
-		ProfileId: int32(id64),
+		FaceBytes:    faceBytes,
+		SessionToken: sessionToken,
 	})
 	if err != nil {
 		return fmt.Errorf("ProcessVisitorFace gRPC error: %w", err)
@@ -81,17 +75,12 @@ type RegisterVisitorRes struct {
 // Register a new visitor face
 func RegisterNewVisitorFace(
 	faceEmbedding string,
-	profileID string,
+	sessionToken string,
 	visitorName string,
 	conn *SafeConn,
 	client fd.FaceDetectionServiceClient,
 ) error {
 	ctx := context.Background()
-
-	id64, err := strconv.ParseInt(profileID, 10, 32)
-	if err != nil {
-		return fmt.Errorf("error converting string to int64: %w", err)
-	}
 
 	faceEmb, err := ParseEmbedding(faceEmbedding)
 	if err != nil {
@@ -100,7 +89,7 @@ func RegisterNewVisitorFace(
 
 	resp, err := client.RegisterVisitorFace(ctx, &fd.RegisterVisitorFaceRequest{
 		FaceEmbedding: faceEmb,
-		ProfileId:     int32(id64),
+		SessionToken:  sessionToken,
 		VisitorName:   visitorName,
 	})
 

@@ -48,7 +48,7 @@ func TestGenerateConversationBriefing(t *testing.T) {
 		assert.ErrorContains(t, err, "generateConversationBriefing processing error", "success=false should return an error")
 	})
 
-	t.Run("Sends correct profile ID and visitor IDs in request", func(t *testing.T) {
+	t.Run("Sends correct session token and visitor IDs in request", func(t *testing.T) {
 		var captured *cb.GenerateConversationBriefingRequest
 		client := &test.MockBriefingClient{
 			GenerateFunc: func(req *cb.GenerateConversationBriefingRequest) (*cb.GenerateConversationBriefingResponse, error) {
@@ -60,7 +60,7 @@ func TestGenerateConversationBriefing(t *testing.T) {
 		err := GenerateConversationBriefing("7", []int32{10, 20, 30}, client)
 
 		assert.NoError(t, err)
-		assert.Equal(t, int32(7), captured.ProfileId, "profile ID should be forwarded to gRPC request")
+		assert.Equal(t, "7", captured.SessionToken, "session token should be forwarded to gRPC request")
 		assert.Equal(t, []int32{10, 20, 30}, captured.VisitorIds, "visitor IDs should be forwarded to gRPC request")
 	})
 

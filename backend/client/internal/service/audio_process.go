@@ -5,22 +5,32 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
-	"strconv"
+	"sync"
 
 	at "mosaic-client.com/gen/audio_transcription"
+)
+
+var (
+	audioBuffer []float32
+	bufferMutex sync.Mutex
+	Wg          sync.WaitGroup
+)
+
+const (
+	silenceThreshold = 0.02  // lower bound, prevents silence
+	loudThreshold    = 0.5   // upper bound, prevents loud noises
+	sampleRate       = 16000 // 16khz required for whisper
+	batchDuration    = 5     // seconds
+	batchSize        = sampleRate * batchDuration
 )
 
 func ProcessAudio(
 	logger *slog.Logger,
 	audioData string,
-	profileID string,
+	sessionToken string,
 	client at.AudioTranscriptionServiceClient,
 ) error {
 	ctx := context.Background()
-	id64, err := strconv.ParseInt(profileID, 10, 32)
-	if err != nil {
-		return fmt.Errorf("converting string to int error: %w", err)
-	}
 
 	// Decode base64
 	audioBytes, err := base64.StdEncoding.DecodeString(audioData)
@@ -48,13 +58,12 @@ func ProcessAudio(
 
 		logger.Debug("[ProcessAudio] Sending batch", "batch_bytes", len(batch), "remaining_bytes", len(audioBuffer))
 
-		err := transcribeWithRetry(ctx, client, batch, int32(id64))
+		err := transcribeWithRetry(ctx, client, batch, sessionToken)
 		if err != nil {
 			return fmt.Errorf("error processing audio: %v", err)
 		}
 	}
 
-	// send to whisper for transcribing audio to text via gRPC
 	return nil
 }
 
@@ -64,14 +73,9 @@ func ProcessAudio(
 func FlushAudio(
 	logger *slog.Logger,
 	ctx context.Context,
-	profileID string,
+	sessionToken string,
 	client at.AudioTranscriptionServiceClient,
 ) error {
-	id64, err := strconv.ParseInt(profileID, 10, 32)
-	if err != nil {
-		return fmt.Errorf("error converting string to int: %w", err)
-	}
-
 	Wg.Wait()
 
 	bufferMutex.Lock()
@@ -84,7 +88,7 @@ func FlushAudio(
 		return nil
 	}
 
-	err = transcribeWithRetry(ctx, client, remaining, int32(id64))
+	err := transcribeWithRetry(ctx, client, remaining, sessionToken)
 	if err != nil {
 		return fmt.Errorf("error flushing audio: %v", err)
 	}
