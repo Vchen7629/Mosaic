@@ -32,7 +32,13 @@ CREATE TABLE IF NOT EXISTS briefings (
     briefing_text VARCHAR NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS sessions (
+    profile_id    INT PRIMARY KEY REFERENCES profiles(id),
+    session_token TEXT NOT NULL UNIQUE
+);
+
 CREATE UNIQUE INDEX ON visitor_face_embeddings(profile_id, visitor_name);
 CREATE UNIQUE INDEX ON briefings(profile_id, visitor_id);
+CREATE INDEX idx_sessions_session_token ON sessions(session_token);
 CREATE INDEX idx_visitor_face_embedding ON visitor_face_embeddings USING ivfflat (face_embedding vector_l2_ops);
 CREATE INDEX idx_patient_face_embedding ON profile_face_embeddings USING ivfflat (face_embedding vector_l2_ops);
