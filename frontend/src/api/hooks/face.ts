@@ -10,9 +10,9 @@ import { useStableRef } from "../../hooks/useStableRef"
 export function useVisitorFace(
     ws: WebSocket | null,
     isCapturingFace: boolean,
-    profileID: string | null,
+    sessionToken: string | null,
     onNewFaceDetected: (
-        profileID: number,
+        sessionToken: number,
         faceEmbedding: string,
     ) => void,
     onExistingVisitorDetected: (visitorID: string) => void,
@@ -40,7 +40,7 @@ export function useVisitorFace(
             if (data.type !== "new_visitor_register" && data.type !== "visitor_briefing_response") return
 
             if (data.type == "new_visitor_register") {
-                onNewFaceDetectedRef.current(data.profile_id, JSON.stringify(data.face_embedding))
+                onNewFaceDetectedRef.current(data.session_token, JSON.stringify(data.face_embedding))
             }
             if (data.type == "visitor_briefing_response") {
                 const visitorId = String(data.visitor_id)
@@ -54,6 +54,7 @@ export function useVisitorFace(
 
         ws.addEventListener("message", handleMessage)
         return () => ws.removeEventListener("message", handleMessage)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isCapturingFace, ws])
 
     const onFrame = useCallback(( frame: string ) => {
@@ -62,9 +63,9 @@ export function useVisitorFace(
         ws.send(JSON.stringify({
             type: "visitor_face",
             face_bytes: frame,
-            profile_id: profileID
+            session_token: sessionToken
         }))
-    }, [ws, profileID])
+    }, [ws, sessionToken])
 
     useFaceCapture({ enabled: isCapturingFace, onFrame, testMode: false })
 }
@@ -77,7 +78,7 @@ export function useNewVisitorFaceRegister(
     ws: WebSocket | null, 
     shouldRegister: boolean,
     faceEmbedding: string,
-    profileId: string | null,
+    sessionToken: string | null,
     visitorName: string,
     onSuccess: (visitorId: string) => void
 ) {
@@ -89,10 +90,10 @@ export function useNewVisitorFaceRegister(
         ws.send(JSON.stringify({
             type: "new_visitor_face",
             face_embedding: faceEmbedding,
-            profile_id: profileId,
+            session_token: sessionToken,
             visitor_name: visitorName
         }))
-    }, [shouldRegister, ws, faceEmbedding, profileId, visitorName])
+    }, [shouldRegister, ws, faceEmbedding, sessionToken, visitorName])
 
     useEffect(() => {
         if (!ws) return
@@ -105,6 +106,7 @@ export function useNewVisitorFaceRegister(
 
         ws.addEventListener("message", handleMessage)
         return () => ws.removeEventListener("message", handleMessage)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ws])
 }
 
@@ -118,7 +120,7 @@ export function useNewVisitorFaceRegister(
 export function useSyncProfileProcess(
     ws: WebSocket | null, 
     isCapturingFace: boolean,
-    onProfileSynced: (profileId: number) => void,
+    onProfileSynced: (sessionToken: string) => void,
     frameCount: number = 5
 ) {
     const framesRef = useRef<string[]>([])
@@ -137,12 +139,12 @@ export function useSyncProfileProcess(
 
         if (!ws) return
 
-        // saves the profile_id to localstorage for later use
+        // saves the session_token to localstorage for later use
         const handleMessage = (event: MessageEvent) => {
             const data = JSON.parse(event.data)
             if (data.type !== "profile_face_response") return
-            localStorage.setItem("profile_id", String(data.profile_id))
-            onProfileSyncedRef.current(data.profile_id)
+            localStorage.setItem("session_token", String(data.session_token))
+            onProfileSyncedRef.current(data.session_token)
         }
 
         ws.addEventListener("message", handleMessage)
@@ -150,6 +152,7 @@ export function useSyncProfileProcess(
             ws.removeEventListener("message", handleMessage)
             framesRef.current = []
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isCapturingFace, ws])
 
     const onFrame = useCallback((frame: string) => {

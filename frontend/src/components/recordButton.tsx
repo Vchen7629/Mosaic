@@ -6,7 +6,7 @@ type RecordButtonProps = {
   ws: WebSocket | null;
   syncState: SyncState;
   isRecording: boolean;
-  profileId: string;
+  sessionToken: string;
   visitorIds: string[];
   onSyncStart: () => void;
   onSyncCancel: () => void;
@@ -20,7 +20,7 @@ type RecordButtonProps = {
  * @param ws - the websocket connection
  * @param syncState -
  * @param isRecording -
- * @param profileID - currently synced profile id
+ * @param sessionToken - currently synced sessionToken
  * @param visitorIds - array of visitorIds strings to save transcripts with
  * @param onSyncStart -
  * @param onSyncCancel - 
@@ -29,16 +29,16 @@ type RecordButtonProps = {
  * @param onRecordingStop
  */
 export const RecordButton = ({ 
-  ws, syncState, isRecording, profileId, visitorIds, 
+  ws, syncState, isRecording, sessionToken, visitorIds, 
   onSyncStart, onSyncCancel, onSyncComplete, onRecordingStart, onRecordingStop
 }: RecordButtonProps) => {
-  useSyncProfileProcess(ws, syncState === "scanning", (_profileId) => { onSyncComplete() });
+  useSyncProfileProcess(ws, syncState === "scanning", () => { onSyncComplete() });
 
   function handleStopRecording() {
     if (ws?.readyState === WebSocket.OPEN && visitorIds.length > 0) {
       ws.send(JSON.stringify({
         type: "save_audio_transcript",
-        profile_id: profileId,
+        session_token: sessionToken,
         visitor_id_list: visitorIds,
       }))
     }

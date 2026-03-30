@@ -11,7 +11,7 @@ const defaultProps = {
   ws: null,
   syncState: "idle" as SyncState,
   isRecording: false,
-  profileId: "profile123",
+  sessionToken: "profile123",
   visitorIds: [],
   onSyncStart: vi.fn(),
   onSyncCancel: vi.fn(),
@@ -27,22 +27,22 @@ beforeEach(() => {
 describe("RecordButton - conditional rendering", () => {
     it("renders 'Sync Profile' button when syncState is idle", () => {
         render(<RecordButton {...defaultProps} syncState="idle"/>)
-        expect(screen.getByText("Sync Profile")).toBeTruthy
+        expect(screen.getByText("Sync Profile")).toBeTruthy()
     })
     
     it("renders 'Cancel' button when syncState is scanning", () => {
         render(<RecordButton {...defaultProps} syncState="scanning"/>)
-        expect(screen.getByText("Cancel")).toBeTruthy
+        expect(screen.getByText("Cancel")).toBeTruthy()
     })
 
     it("renders 'Start' button when synced and not recording", () => {
         render(<RecordButton {...defaultProps} syncState="active" isRecording={false}/>)
-        expect(screen.getByText("Start")).toBeTruthy
+        expect(screen.getByText("Start")).toBeTruthy()
     })
 
     it("renders 'Stop' button when synced and recording", () => {
         render(<RecordButton {...defaultProps} syncState="active" isRecording={true}/>)
-        expect(screen.getByText("Stop")).toBeTruthy
+        expect(screen.getByText("Stop")).toBeTruthy()
     })
 })
 
@@ -86,15 +86,15 @@ describe("RecordButton - Websocket message on stop", () => {
             ws={mockWs}                                                                                                                                                     
             syncState="active"                                                                                                                                              
             isRecording={true}                                                                                                                                              
-            profileId="profile123"                                                                                                                                          
-            visitorIds={["visitor1"]}                                                                                                                                       
-        />)                                                                                                                                                                 
-        fireEvent.click(screen.getByText("Stop"))                                                                                                                           
-        
-        expect(mockSend).toHaveBeenCalledWith(JSON.stringify({                                                                                                              
-            type: "save_audio_transcript",                                                                                                                                  
-            profile_id: "profile123",                                                                                                                                       
-            visitor_id: "visitor1",                                                                                                                                         
+            sessionToken="profile123"
+            visitorIds={["visitor1"]}
+        />)
+        fireEvent.click(screen.getByText("Stop"))
+
+        expect(mockSend).toHaveBeenCalledWith(JSON.stringify({
+            type: "save_audio_transcript",
+            session_token: "profile123",
+            visitor_id_list: ["visitor1"],
         }))                                                                                                                                                                 
     })
 

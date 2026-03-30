@@ -30,7 +30,7 @@ describe("useBackendAudioProcess - onAudioData callback", () => {
         expect(ws.send).toHaveBeenCalledOnce()
         const payload = JSON.parse((ws.send as ReturnType<typeof vi.fn>).mock.calls[0][0])
         expect(payload.type).toBe("audio")
-        expect(payload.profile_id).toBe("profile1")
+        expect(payload.session_token).toBe("profile1")
         expect(typeof payload.audio_data).toBe("string")
     })
 
@@ -50,13 +50,13 @@ describe("useBackendAudioProcess - onAudioData callback", () => {
         expect(ws.send).not.toHaveBeenCalled()
     })
 
-    it("includes the correct profile_id in the payload", () => {
+    it("includes the correct session_token in the payload", () => {
         const ws = makeOpenWs()
-        renderHook(() => useBackendAudioProcess(ws, true, "my-profile"))
+        renderHook(() => useBackendAudioProcess(ws, true, "my-session"))
 
         capturedOnAudioData!(new Float32Array([0.5]))
 
         const payload = JSON.parse((ws.send as ReturnType<typeof vi.fn>).mock.calls[0][0])
-        expect(payload.profile_id).toBe("my-profile")
+        expect(payload.session_token).toBe("my-session")
     })
 })

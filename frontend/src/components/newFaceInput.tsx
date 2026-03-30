@@ -5,7 +5,7 @@ import { useNewVisitorFaceRegister } from "../api/hooks/face"
 type NewFaceInputProps = {
     ws: WebSocket | null
     faceEmbedding: string
-    profileId: string
+    sessionToken: string
     onVisitorRegistered: (visitorId: string) => void
 }
 
@@ -15,13 +15,13 @@ type NewFaceInputProps = {
  * allows users to enter a name and click save to register
  * @param ws -
  * @param faceEmbedding - 
- * @param profileId - 
+ * @param sessionToken - 
  */
-const NewFaceInput = ({ ws, faceEmbedding, profileId, onVisitorRegistered }: NewFaceInputProps) => {
+const NewFaceInput = ({ ws, faceEmbedding, sessionToken, onVisitorRegistered }: NewFaceInputProps) => {
     const [newFaceName, setNewFaceName] = useState<string>("")
     const [shouldRegister, setShouldRegister] = useState<boolean>(false)
 
-    useNewVisitorFaceRegister(ws, shouldRegister, faceEmbedding, profileId, newFaceName, (visitorId) => {
+    useNewVisitorFaceRegister(ws, shouldRegister, faceEmbedding, sessionToken, newFaceName, (visitorId) => {
         onVisitorRegistered(visitorId)
         setShouldRegister(false)
         setNewFaceName("")

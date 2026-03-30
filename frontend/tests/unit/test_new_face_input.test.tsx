@@ -10,7 +10,7 @@ type NewVisitorFaceRegisterArgs = {
 let capturedArgs: NewVisitorFaceRegisterArgs = { shouldRegister: false, onSuccess: () => {} }
 
 vi.mock("../../src/api/hooks/face", () => ({
-    useNewVisitorFaceRegister: vi.fn((_ws, shouldRegister, _embedding, _profileId, _name, onSuccess) => {
+    useNewVisitorFaceRegister: vi.fn((_ws, shouldRegister, _embedding, _sessionToken, _name, onSuccess) => {
         capturedArgs = { shouldRegister, onSuccess }
     }),
 }))
@@ -18,7 +18,7 @@ vi.mock("../../src/api/hooks/face", () => ({
 const defaultProps = {
     ws: null,
     faceEmbedding: "abc123",
-    profileId: "profile1",
+    sessionToken: "tok_profile1",
     onVisitorRegistered: vi.fn(),
 }
 

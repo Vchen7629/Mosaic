@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 
 /**
  * Stable ref hook for callbacks inside effects. Don't need to add
@@ -8,6 +8,8 @@ import { useRef } from "react";
  */
 export function useStableRef<T>(value: T) {
     const ref = useRef(value)
-    ref.current = value
+    useLayoutEffect(() => {
+        ref.current = value    
+    })
     return ref
 }
