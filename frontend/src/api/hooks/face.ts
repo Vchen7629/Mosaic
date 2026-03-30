@@ -54,6 +54,7 @@ export function useVisitorFace(
 
         ws.addEventListener("message", handleMessage)
         return () => ws.removeEventListener("message", handleMessage)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isCapturingFace, ws])
 
     const onFrame = useCallback(( frame: string ) => {
@@ -105,6 +106,7 @@ export function useNewVisitorFaceRegister(
 
         ws.addEventListener("message", handleMessage)
         return () => ws.removeEventListener("message", handleMessage)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ws])
 }
 
@@ -150,6 +152,7 @@ export function useSyncProfileProcess(
             ws.removeEventListener("message", handleMessage)
             framesRef.current = []
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isCapturingFace, ws])
 
     const onFrame = useCallback((frame: string) => {

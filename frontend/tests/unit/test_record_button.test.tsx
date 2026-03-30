@@ -27,22 +27,22 @@ beforeEach(() => {
 describe("RecordButton - conditional rendering", () => {
     it("renders 'Sync Profile' button when syncState is idle", () => {
         render(<RecordButton {...defaultProps} syncState="idle"/>)
-        expect(screen.getByText("Sync Profile")).toBeTruthy
+        expect(screen.getByText("Sync Profile")).toBeTruthy()
     })
     
     it("renders 'Cancel' button when syncState is scanning", () => {
         render(<RecordButton {...defaultProps} syncState="scanning"/>)
-        expect(screen.getByText("Cancel")).toBeTruthy
+        expect(screen.getByText("Cancel")).toBeTruthy()
     })
 
     it("renders 'Start' button when synced and not recording", () => {
         render(<RecordButton {...defaultProps} syncState="active" isRecording={false}/>)
-        expect(screen.getByText("Start")).toBeTruthy
+        expect(screen.getByText("Start")).toBeTruthy()
     })
 
     it("renders 'Stop' button when synced and recording", () => {
         render(<RecordButton {...defaultProps} syncState="active" isRecording={true}/>)
-        expect(screen.getByText("Stop")).toBeTruthy
+        expect(screen.getByText("Stop")).toBeTruthy()
     })
 })
 
