@@ -130,6 +130,7 @@ func (s *FaceDetectionServer) RegisterProfileFace(
 		return struct{}{}, s.pool.UpsertSession(*profileID, sessionToken)
 	})
 	if err != nil {
+		observability.ErrorsTotal.WithLabelValues("upsert_session").Inc()
 		s.logger.Error("failed to store session in db", "err", err)
 		return nil, err
 	}

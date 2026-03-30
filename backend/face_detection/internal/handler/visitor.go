@@ -43,6 +43,7 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 			return s.pool.FetchProfileIDWithSession(req.SessionToken)
 		})
 		if dbErr != nil {
+			observability.ErrorsTotal.WithLabelValues("fetch_profile_id_with_session").Inc()
 			s.logger.Error("session token not found", "session_token", req.SessionToken)
 			return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, fmt.Errorf("invalid session token")
 		}
@@ -132,6 +133,7 @@ func (s *FaceDetectionServer) RegisterVisitorFace(
 			return s.pool.FetchProfileIDWithSession(req.SessionToken)
 		})
 		if dbErr != nil {
+			observability.ErrorsTotal.WithLabelValues("fetch_profile_id_with_session").Inc()
 			s.logger.Error("session token not found", "session_token", req.SessionToken)
 			return &fd.RegisterVisitorFaceResponse{Success: false}, fmt.Errorf("invalid session token")
 		}
