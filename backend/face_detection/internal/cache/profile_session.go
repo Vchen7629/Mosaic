@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/valkey-io/valkey-go"
+	"mosaic-face-detection.com/internal/observability"
 )
 
 // adds a new profile session to the valkey cache
@@ -24,6 +25,7 @@ func CreateNewProfileSession(
 
 	err := cacheClient.Do(ctx, cacheClient.B().Set().Key(key).Value(value).ExSeconds(43200).Build()).Error()
 	if err != nil {
+		observability.ErrorsTotal.WithLabelValues("create_new_profile_session").Inc()
 		return fmt.Errorf("error storing session in cache: %w", err)
 	}
 	return nil
@@ -33,15 +35,21 @@ func FetchProfileIDFromCache(
 	ctx context.Context,
 	cacheClient valkey.Client,
 	sessionToken string,
-) (int32, error) {
+) (*int32, error) {
+	if cacheClient == nil {
+		return nil, errors.New("no cache client provided")
+	}
 	key := fmt.Sprintf("session:%s", sessionToken)
 
-	result := cacheClient.Do(ctx, cacheClient.B().Get().Key(key).Build())
-	
-	val, err := result.AsInt64()
+	r := cacheClient.Do(ctx, cacheClient.B().Get().Key(key).Build())
+
+	val, err := r.AsInt64()
 	if err != nil {
-		return 0, err
+		observability.ErrorsTotal.WithLabelValues("fetch_profile_id_from_cache").Inc()
+		return nil, err
 	}
 
-	return int32(val), nil
+	result := int32(val)
+
+	return &result, nil
 }
