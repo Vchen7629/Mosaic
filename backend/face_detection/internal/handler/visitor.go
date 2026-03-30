@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/Kagami/go-face"
@@ -19,7 +20,7 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 	rec := s.recPool.Acquire() // acquiring one instance of the rec model from pool
 	defer s.recPool.Release(rec)
 
-	s.logger.Debug("Processing visitor faces while recording", "profile_id", req.ProfileId, "face_byte_size", len(req.FaceBytes))
+	s.logger.Debug("Processing visitor faces while recording", "session_token", req.SessionToken, "face_byte_size", len(req.FaceBytes))
 
 	embGenStart := time.Now()
 	embeddings, err := service.GenerateFaceEmbeddings(rec, req.FaceBytes)
@@ -35,11 +36,19 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 		return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, nil
 	}
 
+	profileID, exists := service.FetchProfileIDWithSession(req.SessionToken)
+	if !exists {
+		// todo: maybe implement logic in the frontend to ask the user to resync if this error is raised
+		// end the recording and go back to not logged in state
+		s.logger.Error("session token not found while processing visitor face", "session_token", req.SessionToken)
+		return &fd.ProcessVisitorFacesResponse{FaceDetected: false}, fmt.Errorf("invalid session token")
+	}
+
 	currentProfileEmbs, err := service.FetchProfileFaceEmbForIDWithCache(
-		ctx, req.ProfileId, s.cache, s.logger,
+		ctx, profileID, s.cache, s.logger,
 		func() ([]service.ProfileFaces, error) {
 			return db.RetryDB(s.logger, ctx, func() ([]service.ProfileFaces, error) {
-				return s.pool.FetchProfileFaceEmbForID(req.ProfileId)
+				return s.pool.FetchProfileFaceEmbForID(profileID)
 			})
 		},
 	)
@@ -57,13 +66,13 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 	}
 
 	var knownVisitors []service.VisitorFaces
-	if req.ProfileId > 0 {
+	if profileID > 0 {
 		visitorFetchStart := time.Now()
 		knownVisitors, err = service.FetchAllVisitorDataWithCache(
-			ctx, req.ProfileId, s.cache, s.logger,
+			ctx, profileID, s.cache, s.logger,
 			func() ([]service.VisitorFaces, error) {
 				return db.RetryDB(s.logger, ctx, func() ([]service.VisitorFaces, error) {
-					return s.pool.FetchAllVisitorData(req.ProfileId)
+					return s.pool.FetchAllVisitorData(profileID)
 				})
 			},
 		)
@@ -81,7 +90,7 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 
 	faceResults := make([]*fd.FaceResult, len(embeddings))
 	for i, match := range matchingFaceRes {
-		faceResults[i] = s.buildFaceResult(ctx, req.ProfileId, match, embeddings[i])
+		faceResults[i] = s.buildFaceResult(ctx, profileID, match, embeddings[i])
 	}
 
 	return &fd.ProcessVisitorFacesResponse{
@@ -105,26 +114,34 @@ func (s *FaceDetectionServer) RegisterVisitorFace(
 	s.logger.Debug(
 		"Recieved one face embedding of size",
 		"name", req.VisitorName,
-		"profile_id", req.ProfileId,
+		"session_token", req.SessionToken,
 		"embedding_len", len(req.FaceEmbedding),
 	)
 	// converting []float32 to face.Descriptor [128]float32
 	var embedding face.Descriptor
 	copy(embedding[:], req.FaceEmbedding)
 
+	profileID, exists := service.FetchProfileIDWithSession(req.SessionToken)
+	if !exists {
+		// todo: maybe implement logic in the frontend to ask the user to resync if this error is raised
+		// end the recording and go back to not logged in state
+		s.logger.Error("session token not found while registering new visitor face", "session_token", req.SessionToken)
+		return &fd.RegisterVisitorFaceResponse{Success: false}, fmt.Errorf("invalid session token")
+	}
+
 	visitorRegisterStart := time.Now()
 	visitorID, err := db.RetryDB(s.logger, ctx, func() (*int32, error) {
-		return s.pool.AddNewFaceForVisitor(req.ProfileId, req.VisitorName, embedding)
+		return s.pool.AddNewFaceForVisitor(profileID, req.VisitorName, embedding)
 	})
 	observability.VisitorRegisterDuration.Observe(float64(time.Since(visitorRegisterStart).Milliseconds()))
 	if err != nil {
 		observability.ErrorsTotal.WithLabelValues("register_visitor").Inc()
-		s.logger.Error("error adding new face for visitor", "profile_id", req.ProfileId, "err", err)
+		s.logger.Error("error adding new face for visitor", "profile_id", profileID, "err", err)
 		return &fd.RegisterVisitorFaceResponse{Success: false}, nil
 	}
 
 	newEntry := service.VisitorFaces{ID: *visitorID, Name: req.VisitorName, Embedding: embedding}
-	service.AppendToVisitorDataCache(ctx, req.ProfileId, s.cache, newEntry)
+	service.AppendToVisitorDataCache(ctx, profileID, s.cache, newEntry)
 
 	return &fd.RegisterVisitorFaceResponse{Success: true, VisitorId: *visitorID}, nil
 }

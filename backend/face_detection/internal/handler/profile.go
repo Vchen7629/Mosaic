@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"time"
 
@@ -70,9 +71,17 @@ func (s *FaceDetectionServer) SyncProfile(
 		}, nil
 	}
 
+	sessionToken := service.FetchSessionToken(matchingProfileID)
+	// Todo: add a test to check that this is reached when service crashes
+	if sessionToken == "" {
+		s.logger.Debug("sessionToken not found for profileID", "profile_id", matchingProfileID)
+		sessionToken = rand.Text()
+		service.AddNewProfileSession(sessionToken, matchingProfileID)
+	}
+
 	return &fd.SyncProfileResponse{
 		FaceDetected: true,
-		ProfileId:    matchingProfileID,
+		SessionToken: sessionToken,
 		Success:      true,
 	}, nil
 }
@@ -107,5 +116,10 @@ func (s *FaceDetectionServer) RegisterProfileFace(
 		return &fd.RegisterProfileFaceResponse{Success: false}, nil
 	}
 
-	return &fd.RegisterProfileFaceResponse{ProfileId: *profileID, Success: true}, nil
+	sessionToken := rand.Text()
+
+	service.AddNewProfileSession(sessionToken, *profileID)
+	s.logger.Debug("created new profile session", "profile_id", profileID, "session_token", sessionToken)
+
+	return &fd.RegisterProfileFaceResponse{SessionToken: sessionToken, Success: true}, nil
 }
