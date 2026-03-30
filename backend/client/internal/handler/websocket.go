@@ -18,7 +18,7 @@ type Message struct {
 	FaceBytes     string   `json:"face_bytes,omitempty"` // base64 encoded
 	AudioData     string   `json:"audio_data,omitempty"`
 	FaceEmbedding string   `json:"face_embedding,omitempty"`
-	SessionToken  string   `json:"profile_id,omitempty"`
+	SessionToken  string   `json:"session_token,omitempty"`
 	VisitorID     string   `json:"visitor_id,omitempty"`
 	VisitorIDList []string `json:"visitor_id_list,omitempty"`
 	VisitorName   string   `json:"visitor_name,omitempty"`
