@@ -9,8 +9,8 @@ import (
 )
 
 type ProfileSyncRes struct {
-	Type      string `json:"type"`
-	ProfileId int32  `json:"profile_id"`
+	Type         string `json:"type"`
+	SessionToken string `json:"profile_id"`
 }
 
 // Process an array of face frames for profile sync
@@ -43,7 +43,7 @@ func SyncProfile(
 	}
 
 	if !resp.NewFace {
-		err = conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", ProfileId: resp.ProfileId})
+		err = conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", SessionToken: resp.SessionToken})
 		if err != nil {
 			return fmt.Errorf("error sending face same as profile face res to frontend: %w", err)
 		}
@@ -57,7 +57,7 @@ func SyncProfile(
 		return fmt.Errorf("RegisterProfileFace gRPC error: %w", err)
 	}
 
-	err = conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", ProfileId: regResp.ProfileId})
+	err = conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", SessionToken: regResp.SessionToken})
 	if err != nil {
 		return fmt.Errorf("syncProfile error writing to frontend: %w", err)
 	}
