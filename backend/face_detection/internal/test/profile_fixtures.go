@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"crypto/rand"
 	"testing"
 
 	"github.com/Kagami/go-face"
@@ -56,6 +57,14 @@ func SeedProfile(t *testing.T, pool *pgxpool.Pool, faceEmbedding []float32) int3
 	}
 
 	return profileID
+}
+
+// SeedSession creates a session token for the given profileID in the in-memory session map
+func SeedSession(t *testing.T, profileID int32) string {
+	t.Helper()
+	sessionToken := rand.Text()
+	service.AddNewProfileSession(sessionToken, profileID)
+	return sessionToken
 }
 
 func CheckProfileEmbeddings(

@@ -77,14 +77,15 @@ func TestSyncProfile(t *testing.T) {
 		assert.Len(t, res.FaceEmbedding[0].FaceEmbedding, 128, "should be a 128 dim emb")
 	})
 
-	t.Run("Face matching a profile in db should return the profileID", func(t *testing.T) {
+	t.Run("Face matching a profile in db should return a session token", func(t *testing.T) {
 		test.CleanupTables(t, pool)
 		test.FlushCache(t, cacheClient)
+		service.ClearSessions()
 
 		imgBytes, err := os.ReadFile(filepath.Join(testImagesDir, "bona.jpg"))
 		assert.NoError(t, err)
 
-		expectedID := test.AddNewProfile(t, recPool, imgBytes, testDB)
+		_ = test.AddNewProfile(t, recPool, imgBytes, testDB)
 
 		res, err := server.SyncProfile(context.Background(), &fd.SyncProfileRequest{
 			FaceBytes: [][]byte{imgBytes},
@@ -93,7 +94,7 @@ func TestSyncProfile(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, res.FaceDetected)
 		assert.False(t, res.NewFace)
-		assert.Equal(t, expectedID, res.ProfileId)
+		assert.NotEmpty(t, res.SessionToken)
 	})
 
 	t.Run("Face detected but no matches with existing profile should return emb", func(t *testing.T) {
@@ -127,7 +128,8 @@ func TestSyncProfile(t *testing.T) {
 		assert.NoError(t, err1)
 		assert.NoError(t, err2)
 
-		expectedID := test.AddNewProfile(t, recPool, imgBytes1, testDB)
+		_ = test.AddNewProfile(t, recPool, imgBytes1, testDB)
+		service.ClearSessions()
 
 		// Pass two different images of the same person as separate frames to verify aggregation
 		res, err := server.SyncProfile(context.Background(), &fd.SyncProfileRequest{
@@ -137,7 +139,7 @@ func TestSyncProfile(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, res.FaceDetected)
 		assert.False(t, res.NewFace, "should match existing profile, not be a new face")
-		assert.Equal(t, expectedID, res.ProfileId, "should return the matching profile ID")
+		assert.NotEmpty(t, res.SessionToken, "should return a session token for the matching profile")
 	})
 }
 
@@ -166,12 +168,12 @@ func TestRegisterProfileFace(t *testing.T) {
 			},
 		})
 
-		dbEmb := test.CheckProfileEmbeddings(t, pool, res.ProfileId)
+		dbEmb := test.CheckProfileEmbeddings(t, pool, int32(1))
 
 		assert.NoError(t, err)
 		assert.True(t, res.Success)
 		assert.EqualValues(t, dbEmb, embedding)
-		assert.Equal(t, int32(1), res.ProfileId, "should also return the profile id")
+		assert.NotEmpty(t, res.SessionToken, "should return a session token")
 	})
 
 	t.Run("Multiple valid embedding should be saved to db properly", func(t *testing.T) {
@@ -195,9 +197,10 @@ func TestRegisterProfileFace(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, res.Success)
 
-		dbEmbs := test.CheckAllProfileEmbeddings(t, pool, res.ProfileId)
+		dbEmbs := test.CheckAllProfileEmbeddings(t, pool, int32(1))
 		assert.Len(t, dbEmbs, len(embeddings), "all embeddings should be saved")
 		assert.EqualValues(t, embeddings, dbEmbs)
+		assert.NotEmpty(t, res.SessionToken, "should return a session token")
 	})
 
 	t.Run("Return error on invalid embedding length", func(t *testing.T) {
