@@ -3,7 +3,7 @@ test_all: integration unit
 
 PKGS := ../internal/db/... ../internal/handler/... ../internal/service/...
 
-lint: 
+format: 
 	go fmt . 
 	go fmt ${PKGS} .
 	go fmt ../internal/observability/... .
