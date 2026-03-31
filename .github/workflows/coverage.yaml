@@ -38,6 +38,9 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.path-filter.outputs.audio_transcription == 'true'
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Trigger docker build for audio_transcription
         run: |
           gh workflow run cd.yaml \
@@ -52,6 +55,9 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.path-filter.outputs.conversation_briefing == 'true'
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Trigger docker build for conversation-briefing-build
         run: |
           gh workflow run cd.yaml \
@@ -66,6 +72,9 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.path-filter.outputs.face_detection == 'true'
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
       - name: Trigger docker build for face-detection build
         run: |
           gh workflow run cd.yaml \
