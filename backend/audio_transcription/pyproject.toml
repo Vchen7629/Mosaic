@@ -18,6 +18,7 @@ dependencies = [
     "psutil>=7.0.0",
     "faster-whisper>=1.2.1",
     "ctranslate2>=4.5.0",
+    "valkey>=6.1.1",
 ]
 
 [[tool.uv.index]]
