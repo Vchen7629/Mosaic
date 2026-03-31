@@ -1,12 +1,6 @@
 from unittest.mock import MagicMock
-from src.db.queries import save_conversation
+from src.db.conversation_queries import save_conversation
 import pytest
-import psycopg
-
-
-@pytest.fixture
-def mock_conn() -> MagicMock:
-    return MagicMock(spec=psycopg.Connection)
 
 
 @pytest.mark.parametrize(

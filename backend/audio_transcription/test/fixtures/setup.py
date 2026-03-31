@@ -29,6 +29,11 @@ def postgres_container() -> Generator[PostgresContainer, None, None]:
                         face_embedding vector(128) NOT NULL
                     );
 
+                    CREATE TABLE IF NOT EXISTS sessions (
+                        profile_id    INT PRIMARY KEY REFERENCES profiles(id),
+                        session_token TEXT NOT NULL UNIQUE
+                    );
+
                     CREATE TABLE IF NOT EXISTS conversation_records (
                         id SERIAL PRIMARY KEY,
                         profile_id INTEGER REFERENCES profiles(id),
@@ -56,7 +61,7 @@ def db_connection(
     # Cleanup BEFORE test to ensure clean state
     with conn.cursor() as cursor:
         cursor.execute(
-            "TRUNCATE TABLE profiles, visitor_face_embeddings, conversation_records RESTART IDENTITY CASCADE;"
+            "TRUNCATE TABLE profiles, visitor_face_embeddings, sessions, conversation_records RESTART IDENTITY CASCADE;"
         )
     conn.commit()
 
