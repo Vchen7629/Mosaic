@@ -44,8 +44,8 @@ jobs:
       - name: Trigger docker build for audio_transcription
         run: |
           gh workflow run cd.yaml \
-            -f service=audio-transcription \
-            -f folder=audio_transcription \
+            -f service=audio_transcription \
+            -f folder=backend/audio_transcription \
             -f sha=${{ github.sha }}
         env:
           GH_TOKEN: ${{ secrets.CI_CD_PAT }}
@@ -61,8 +61,8 @@ jobs:
       - name: Trigger docker build for conversation-briefing-build
         run: |
           gh workflow run cd.yaml \
-            -f service=conversation-briefing \
-            -f folder=conversation_briefing \
+            -f service=conversation_briefing \
+            -f folder=backend/conversation_briefing \
             -f sha=${{ github.sha }}
         env:
           GH_TOKEN: ${{ secrets.CI_CD_PAT }}
@@ -74,12 +74,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Trigger docker build for face-detection build
         run: |
           gh workflow run cd.yaml \
-            -f service=face-detection \
-            -f folder=face_detection \
+            -f service=face_detection \
+            -f folder=backend/face_detection \
             -f sha=${{ github.sha }}
         env:
           GH_TOKEN: ${{ secrets.CI_CD_PAT }}
