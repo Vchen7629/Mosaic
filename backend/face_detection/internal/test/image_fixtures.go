@@ -11,6 +11,7 @@ import (
 	"mosaic-face-detection.com/internal/service"
 )
 
+//
 func imagesDir() string {
 	_, currentFile, _, _ := runtime.Caller(0)
 	return filepath.Join(filepath.Dir(currentFile), "images")

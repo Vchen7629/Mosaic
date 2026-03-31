@@ -9,7 +9,7 @@ import (
 	"mosaic-conversation-briefing.com/internal/observability"
 )
 
-// adds a new profile session to the valkey cache
+// adds a new profile session to the valkey cache.
 func CreateNewProfileSession(
 	ctx context.Context,
 	profileID int32,
