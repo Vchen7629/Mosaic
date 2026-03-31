@@ -42,5 +42,9 @@ class Settings(BaseSettings):
     KEEP_ALIVES_RETRY_INTERVAL_S: int = 10
     KEEP_ALIVES_RETRY_COUNT: int = 5
 
+    # --- cache connect cfg ---
+    VALKEY_HOST: str = "localhost"
+    VALKEY_PORT: int = 6379
+
 
 settings = Settings()

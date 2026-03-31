@@ -21,10 +21,11 @@ def _start_server(mock_model, queue_size: int, tmp_path):
 
         handler = TranscriptionHandler()
         db_pool = MagicMock(spec=ConnectionPool)
+        mock_cache = MagicMock()
 
         server = grpc.server(ThreadPoolExecutor(max_workers=10))
         audio_transcription_pb2_grpc.add_AudioTranscriptionServiceServicer_to_server(
-            AudioTranscriptionServicer(db_pool, handler), server
+            AudioTranscriptionServicer(db_pool, handler, mock_cache), server
         )
         port = server.add_insecure_port("[::]:0")
         server.start()

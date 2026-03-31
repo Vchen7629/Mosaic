@@ -1,5 +1,5 @@
 import pytest
-from src.db.queries import save_conversation
+from src.db.conversation_queries import save_conversation
 import psycopg
 
 

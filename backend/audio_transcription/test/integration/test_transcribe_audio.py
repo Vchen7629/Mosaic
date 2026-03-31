@@ -9,9 +9,9 @@ from src.gen import audio_transcription_pb2_grpc
 from test.fixtures.transcription import make_segment, make_chunk
 
 
-def _request(profile_id: int = 1) -> TranscribeAudioRequest:
+def _request(session_token: str = "test-session-1") -> TranscribeAudioRequest:
     return TranscribeAudioRequest(
-        audio_bytes=make_chunk().tolist(), profile_id=profile_id
+        audio_bytes=make_chunk().tolist(), session_token=session_token
     )
 
 
@@ -19,7 +19,9 @@ def test_concurrent_requests_all_succeed(grpc_client):
     results = [None] * 10
 
     def call(i):
-        results[i] = grpc_client.TranscribeAudio(_request(profile_id=i + 1))
+        results[i] = grpc_client.TranscribeAudio(
+            _request(session_token=f"session-{i + 1}")
+        )
 
     threads = [threading.Thread(target=call, args=(i,)) for i in range(10)]
     for t in threads:
@@ -34,19 +36,19 @@ def test_concurrent_requests_from_different_profiles(grpc_client):
     results = {}
     lock = threading.Lock()
 
-    def call(profile_id):
-        resp = grpc_client.TranscribeAudio(_request(profile_id=profile_id))
+    def call(session_token):
+        resp = grpc_client.TranscribeAudio(_request(session_token=session_token))
         with lock:
-            results[profile_id] = resp
+            results[session_token] = resp
 
-    profile_ids = list(range(1, 6))
-    threads = [threading.Thread(target=call, args=(pid,)) for pid in profile_ids]
+    session_tokens = [f"session-{i}" for i in range(1, 6)]
+    threads = [threading.Thread(target=call, args=(tok,)) for tok in session_tokens]
     for t in threads:
         t.start()
     for t in threads:
         t.join(timeout=15)
 
-    assert set(results.keys()) == set(profile_ids)
+    assert set(results.keys()) == set(session_tokens)
     assert all(r.success for r in results.values())
 
 

@@ -5,6 +5,7 @@ from wsgiref.simple_server import make_server
 from concurrent.futures import ThreadPoolExecutor
 from grpc_health.v1 import health as grpc_health
 from grpc_health.v1 import health_pb2_grpc
+from valkey import Valkey
 from .grpc.servicer import AudioTranscriptionServicer
 from .core.logging import logger
 from .core.settings import settings
@@ -65,9 +66,10 @@ def serve() -> None:
     )
     db_pool = create_connection_pool()
     transcription_handler = TranscriptionHandler()
+    cache = Valkey(host=settings.VALKEY_HOST, port=settings.VALKEY_PORT)
 
     audio_transcription_pb2_grpc.add_AudioTranscriptionServiceServicer_to_server(
-        AudioTranscriptionServicer(db_pool, transcription_handler), server
+        AudioTranscriptionServicer(db_pool, transcription_handler, cache), server
     )
     health_servicer = grpc_health.HealthServicer()
     health_pb2_grpc.add_HealthServicer_to_server(health_servicer, server)
@@ -87,6 +89,7 @@ def serve() -> None:
         server.wait_for_termination()
     finally:
         db_pool.close()
+        cache.close()
         logger.info("server stopped")
 
 
