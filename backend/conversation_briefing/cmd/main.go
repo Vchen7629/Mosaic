@@ -132,14 +132,11 @@ func main() {
 
 // method to load config values
 func loadConfig() (*Config, error) {
-	err := godotenv.Load("../.env")
-	if err != nil {
-		return nil, err
-	}
+	godotenv.Load("../.env")
 
 	var cfg Config
 
-	err = envconfig.Process("", &cfg)
+	err := envconfig.Process("", &cfg)
 	if err != nil {
 		return nil, err
 	}
