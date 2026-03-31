@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     KEEP_ALIVES_RETRY_COUNT: int = 5
 
     # --- cache connect cfg ---
-    VALKEY_HOST: str = "localhost"
+    VALKEY_HOST: str = "127.0.0.1"
     VALKEY_PORT: int = 6379
 
 

@@ -10,7 +10,7 @@ import (
 
 type ProfileSyncRes struct {
 	Type         string `json:"type"`
-	SessionToken string `json:"profile_id"`
+	SessionToken string `json:"session_token"`
 }
 
 // Process an array of face frames for profile sync
