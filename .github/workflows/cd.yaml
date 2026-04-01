@@ -46,5 +46,5 @@ jobs:
           file: ./${{ inputs.folder }}/Dockerfile
           push: true
           tags: |
-            ghcr.io/vchen7629/cyphria-${{ inputs.service }}:${{ inputs.sha }}
-            ghcr.io/vchen7629/cyphria-${{ inputs.service }}:latest
+            ghcr.io/vchen7629/mosaic-${{ inputs.service }}:${{ inputs.sha }}
+            ghcr.io/vchen7629/mosaic-${{ inputs.service }}:latest
