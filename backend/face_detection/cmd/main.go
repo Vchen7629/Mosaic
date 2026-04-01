@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/keepalive"
 	fd "mosaic-face-detection.com/gen"
 	"mosaic-face-detection.com/internal/db"
 	"mosaic-face-detection.com/internal/handler"
@@ -33,7 +35,7 @@ type Config struct {
 	CacheURL    string `envconfig:"CACHE_URL" default:""`
 	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
 	ModelsDir   string `envconfig:"MODELS_DIR" default:"models"`
-	RecPoolSize int    `envconfig:"REC_POOL_SIZE" default:"5"`
+	RecPoolSize int    `envconfig:"REC_POOL_SIZE" default:"2"`
 	ProdMode    bool   `envconfig:"PROD_MODE" default:"false"`
 }
 
@@ -52,7 +54,17 @@ func gRPCServer(
 
 	dbPool := db.NewDBPool(pool, logger)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionIdle: 30 * time.Second,
+			Time:              15 * time.Second,
+			Timeout:           5 * time.Second,
+		}),
+		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			MinTime:             10 * time.Second,
+			PermitWithoutStream: true,
+		}),
+	)
 	fd.RegisterFaceDetectionServiceServer(
 		grpcServer, handler.NewFaceDetectionServer(logger, recPool, client, dbPool),
 	)
@@ -87,6 +99,9 @@ func observabilityServer(logger *slog.Logger, cfg *Config, pool *pgxpool.Pool) {
 		w.WriteHeader(http.StatusOK)
 	})
 	mux.Handle("/metrics", promhttp.Handler())
+	if !cfg.ProdMode {
+		mux.Handle("/debug/pprof/", http.DefaultServeMux)
+	}
 	logger.Info("metrics server listening", "port", cfg.MetricsPort)
 	err := http.ListenAndServe(":"+cfg.MetricsPort, mux)
 	if err != nil {
