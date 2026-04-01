@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/stats"
 	fd "mosaic-face-detection.com/gen"
 )
@@ -39,18 +38,9 @@ func TestStaleConnectionsClosed(t *testing.T) {
 
 	tracker := &connTracker{}
 
-	srv := grpc.NewServer(
-		grpc.StatsHandler(tracker),
-		grpc.KeepaliveParams(keepalive.ServerParameters{
-			MaxConnectionIdle: idleTimeout,
-			Time:              100 * time.Millisecond,
-			Timeout:           50 * time.Millisecond,
-		}),
-		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
-			MinTime:             10 * time.Millisecond,
-			PermitWithoutStream: true,
-		}),
-	)
+	cfg := &Config{MaxConnectionIdle: idleTimeout}
+	opts := append(cfg.serverOptions(), grpc.StatsHandler(tracker))
+	srv := grpc.NewServer(opts...)
 	fd.RegisterFaceDetectionServiceServer(srv, &fd.UnimplementedFaceDetectionServiceServer{})
 
 	lis, err := net.Listen("tcp", ":0")
@@ -66,11 +56,10 @@ func TestStaleConnectionsClosed(t *testing.T) {
 	assert.NoError(t, err)
 	defer conn.Close()
 
-	// trigger connection establishment (RPC will fail as unimplemented, that's fine)
 	client := fd.NewFaceDetectionServiceClient(conn)
 	client.SyncProfile(context.Background(), &fd.SyncProfileRequest{}) //nolint:errcheck
 
-	// wait for idle timeout + buffer, then verify stale connection was closed
+
 	time.Sleep(idleTimeout + 200*time.Millisecond)
 
 	assert.Eventually(t, func() bool {
