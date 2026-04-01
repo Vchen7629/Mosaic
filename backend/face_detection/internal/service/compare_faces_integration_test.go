@@ -3,6 +3,7 @@
 package service_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Kagami/go-face"
@@ -16,7 +17,7 @@ func TestCompareVisitorFaces(t *testing.T) {
 	assert.NoError(t, err)
 	defer recPool.Close()
 
-	rec := recPool.Acquire()
+	rec, _ := recPool.Acquire(context.Background())
 	defer recPool.Release(rec)
 
 	// Generate the embeddings for all photos upfront so i can pass them into my tests
@@ -109,7 +110,7 @@ func TestCompareProfileFaces(t *testing.T) {
 	assert.NoError(t, err)
 	defer recPool.Close()
 
-	rec := recPool.Acquire()
+	rec, _ := recPool.Acquire(context.Background())
 	defer recPool.Release(rec)
 
 	bonaEmb := test.GetEmbedding(t, rec, "bona.jpg")

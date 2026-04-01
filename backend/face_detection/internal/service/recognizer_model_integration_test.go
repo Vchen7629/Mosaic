@@ -3,6 +3,7 @@
 package service_test
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -19,9 +20,12 @@ func TestNewRecognizerPool(t *testing.T) {
 		defer pool.Close()
 
 		// drain all instances to verify there are exactly 3
-		rec1 := pool.Acquire()
-		rec2 := pool.Acquire()
-		rec3 := pool.Acquire()
+		rec1, err := pool.Acquire(context.Background())
+		assert.NoError(t, err)
+		rec2, err := pool.Acquire(context.Background())
+		assert.NoError(t, err)
+		rec3, err := pool.Acquire(context.Background())
+		assert.NoError(t, err)
 
 		assert.NotNil(t, rec1)
 		assert.NotNil(t, rec2)
@@ -46,27 +50,50 @@ func TestRecognizerPoolAcquireRelease(t *testing.T) {
 		assert.NoError(t, err)
 		defer pool.Close()
 
-		rec1 := pool.Acquire()
+		rec1, err := pool.Acquire(context.Background())
+		assert.NoError(t, err)
 		pool.Release(rec1)
 
-		rec2 := pool.Acquire()
+		rec2, err := pool.Acquire(context.Background())
+		assert.NoError(t, err)
 		defer pool.Release(rec2)
 
 		assert.NotNil(t, rec1)
 		assert.Same(t, rec1, rec2, "should get back same pointer after release")
 	})
 
-	t.Run("blocks when exhausted, unblocks on release", func(t *testing.T) {
+	t.Run("returns error when context is cancelled while waiting for pool", func(t *testing.T) {
 		pool, err := service.NewRecognizerPool(testModelsDir, 1)
 		assert.NoError(t, err)
 		defer pool.Close()
 
-		rec := pool.Acquire()
+		// hold the only recognizer
+		rec, err := pool.Acquire(context.Background())
+		assert.NoError(t, err)
+		defer pool.Release(rec)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+		defer cancel()
+
+		_, err = pool.Acquire(ctx)
+		assert.ErrorIs(t, err, context.DeadlineExceeded, "should return error when context expires waiting for pool")
+	})
+
+	t.Run("unblocks when recognizer is released", func(t *testing.T) {
+		pool, err := service.NewRecognizerPool(testModelsDir, 1)
+		assert.NoError(t, err)
+		defer pool.Close()
+
+		rec, err := pool.Acquire(context.Background())
+		assert.NoError(t, err)
+
 		acquired := make(chan struct{})
 		go func() {
-			r := pool.Acquire()
-			close(acquired)
-			pool.Release(r)
+			r, err := pool.Acquire(context.Background())
+			if err == nil {
+				close(acquired)
+				pool.Release(r)
+			}
 		}()
 
 		select {
@@ -98,7 +125,10 @@ func TestRecognizerPoolAcquireRelease(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				rec := pool.Acquire()
+				rec, err := pool.Acquire(context.Background())
+				if err != nil {
+					return
+				}
 				ptr := fmt.Sprintf("%p", rec)
 
 				mu.Lock()

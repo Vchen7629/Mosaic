@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Kagami/go-face"
@@ -25,7 +26,14 @@ func NewRecognizerPool(modelsDir string, size int) (*RecognizerPool, error) {
 	return &RecognizerPool{recPool: ch}, nil
 }
 
-func (p *RecognizerPool) Acquire() *face.Recognizer    { return <-p.recPool }
+func (p *RecognizerPool) Acquire(ctx context.Context) (*face.Recognizer, error) {
+	select {
+	case rec := <-p.recPool:
+		return rec, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
 func (p *RecognizerPool) Release(rec *face.Recognizer) { p.recPool <- rec }
 func (p *RecognizerPool) Close() {
 	close(p.recPool)

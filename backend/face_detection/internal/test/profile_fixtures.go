@@ -18,7 +18,7 @@ func AddNewProfile(
 	imgBytes []byte,
 	testDB *TestDBContainer,
 ) int32 {
-	rec := recPool.Acquire()
+	rec, _ := recPool.Acquire(context.Background())
 	defer recPool.Release(rec)
 
 	embeddings, err := service.GenerateFaceEmbeddings(rec, imgBytes)

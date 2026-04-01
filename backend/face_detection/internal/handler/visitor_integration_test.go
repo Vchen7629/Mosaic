@@ -24,7 +24,7 @@ func TestProcessVisitorFaces(t *testing.T) {
 	assert.NoError(t, err)
 	defer recPool.Close()
 
-	rec := recPool.Acquire()
+	rec, _ := recPool.Acquire(context.Background())
 	defer recPool.Release(rec)
 
 	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
