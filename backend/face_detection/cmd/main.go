@@ -30,13 +30,28 @@ import (
 )
 
 type Config struct {
-	ServerPort  string `envconfig:"SERVER_PORT" default:"40040"`
-	MetricsPort string `envconfig:"METRICS_PORT" default:"9092"`
-	CacheURL    string `envconfig:"CACHE_URL" default:""`
-	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
-	ModelsDir   string `envconfig:"MODELS_DIR" default:"models"`
-	RecPoolSize int    `envconfig:"REC_POOL_SIZE" default:"2"`
-	ProdMode    bool   `envconfig:"PROD_MODE" default:"false"`
+	ServerPort        string        `envconfig:"SERVER_PORT" default:"40040"`
+	MetricsPort       string        `envconfig:"METRICS_PORT" default:"9092"`
+	CacheURL          string        `envconfig:"CACHE_URL" default:""`
+	DatabaseURL       string        `envconfig:"DATABASE_URL" default:""`
+	ModelsDir         string        `envconfig:"MODELS_DIR" default:"models"`
+	RecPoolSize       int           `envconfig:"REC_POOL_SIZE" default:"2"`
+	ProdMode          bool          `envconfig:"PROD_MODE" default:"false"`
+	MaxConnectionIdle time.Duration `envconfig:"GRPC_MAX_CONN_IDLE" default:"30s"`
+}
+
+func (cfg *Config) serverOptions() []grpc.ServerOption {
+	return []grpc.ServerOption{
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionIdle: cfg.MaxConnectionIdle,
+			Time:              15 * time.Second,
+			Timeout:           5 * time.Second,
+		}),
+		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			MinTime:             10 * time.Second,
+			PermitWithoutStream: true,
+		}),
+	}
 }
 
 // handles starting the gRPC server
@@ -54,17 +69,7 @@ func gRPCServer(
 
 	dbPool := db.NewDBPool(pool, logger)
 
-	grpcServer := grpc.NewServer(
-		grpc.KeepaliveParams(keepalive.ServerParameters{
-			MaxConnectionIdle: 30 * time.Second,
-			Time:              15 * time.Second,
-			Timeout:           5 * time.Second,
-		}),
-		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
-			MinTime:             10 * time.Second,
-			PermitWithoutStream: true,
-		}),
-	)
+	grpcServer := grpc.NewServer(cfg.serverOptions()...)
 	fd.RegisterFaceDetectionServiceServer(
 		grpcServer, handler.NewFaceDetectionServer(logger, recPool, client, dbPool),
 	)
