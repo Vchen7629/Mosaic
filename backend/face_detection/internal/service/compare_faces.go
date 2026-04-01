@@ -37,6 +37,7 @@ func CompareVisitorFaces(
 	}
 
 	rec.SetSamples(knownEmbeddings, knownIDs)
+	defer rec.SetSamples([]face.Descriptor{}, []int32{})
 
 	for i, embedding := range embeddings {
 		matchedID := int32(rec.ClassifyThreshold(embedding, 0.6))
@@ -69,6 +70,7 @@ func CompareProfileFaces(
 	}
 
 	rec.SetSamples(knownEmbeddings, knownIDs)
+	defer rec.SetSamples([]face.Descriptor{}, []int32{})
 	for _, emb := range embedding {
 		matchedID := int32(rec.ClassifyThreshold(emb, 0.6))
 		if matchedID != -1 {
