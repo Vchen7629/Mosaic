@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//
 func TestCreateNewProfileSession_NilClient(t *testing.T) {
 	err := CreateNewProfileSession(context.Background(), 1, nil, "some-token")
 	require.Error(t, err)

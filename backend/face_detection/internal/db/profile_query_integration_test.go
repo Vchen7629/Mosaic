@@ -3,6 +3,7 @@
 package db_test
 
 import (
+	"context"
 	"log/slog"
 	"os"
 	"testing"
@@ -49,6 +50,62 @@ func TestFetchAllProfileFaceEmb(t *testing.T) {
 			}
 			assert.EqualValues(t, expectedEmb, profileEmbList[i].Embedding)
 		}
+	})
+}
+
+func TestFetchProfileFaceEmbForID(t *testing.T) {
+	pool := testDB.Pool
+	handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	logger := slog.New(handler).With("service", "face_detection")
+	dbPool := db.NewDBPool(pool, logger)
+
+	t.Run("returns empty list when profile has no embeddings", func(t *testing.T) {
+		test.CleanupTables(t, pool)
+
+		// seed a profile without embeddings via direct insert
+		var profileID int32
+		err := pool.QueryRow(
+			context.Background(),
+			`INSERT INTO profiles DEFAULT VALUES RETURNING id`,
+		).Scan(&profileID)
+		assert.Nil(t, err)
+
+		result, err := dbPool.FetchProfileFaceEmbForID(profileID)
+
+		assert.Nil(t, err)
+		assert.Empty(t, result)
+	})
+
+	t.Run("returns embeddings for a seeded profile", func(t *testing.T) {
+		test.CleanupTables(t, pool)
+
+		embedding := test.MakeEmbedding(0.5, 128)
+		profileID := test.SeedProfile(t, pool, embedding)
+
+		result, err := dbPool.FetchProfileFaceEmbForID(profileID)
+
+		assert.Nil(t, err)
+		assert.Len(t, result, 1)
+		assert.Equal(t, profileID, result[0].ID)
+
+		expectedEmb := [128]float32{}
+		for i := range expectedEmb {
+			expectedEmb[i] = 0.5
+		}
+		assert.EqualValues(t, expectedEmb, result[0].Embedding)
+	})
+
+	t.Run("returns only embeddings for the requested profile", func(t *testing.T) {
+		test.CleanupTables(t, pool)
+
+		profileID1 := test.SeedProfile(t, pool, test.MakeEmbedding(0.1, 128))
+		_ = test.SeedProfile(t, pool, test.MakeEmbedding(0.9, 128))
+
+		result, err := dbPool.FetchProfileFaceEmbForID(profileID1)
+
+		assert.Nil(t, err)
+		assert.Len(t, result, 1)
+		assert.Equal(t, profileID1, result[0].ID)
 	})
 }
 
