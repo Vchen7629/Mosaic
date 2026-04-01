@@ -3,6 +3,7 @@
 package service_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,7 +18,7 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("returns one embedding for single face image", func(t *testing.T) {
-		rec := recPool.Acquire()
+		rec, _ := recPool.Acquire(context.Background())
 		defer recPool.Release(rec)
 
 		embeddings, err := service.GenerateFaceEmbeddings(rec, test.LoadImage(t, "bona.jpg"))
@@ -27,7 +28,7 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 	})
 
 	t.Run("returns multiple embeddings for group photo", func(t *testing.T) {
-		rec := recPool.Acquire()
+		rec, _ := recPool.Acquire(context.Background())
 		defer recPool.Release(rec)
 
 		embeddings, err := service.GenerateFaceEmbeddings(rec, test.LoadImage(t, "group.jpeg"))
@@ -37,7 +38,7 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 	})
 
 	t.Run("returns empty slice for image with no faces", func(t *testing.T) {
-		rec := recPool.Acquire()
+		rec, _ := recPool.Acquire(context.Background())
 		defer recPool.Release(rec)
 
 		embeddings, err := service.GenerateFaceEmbeddings(rec, test.LoadImage(t, "halfdome.jpg"))
@@ -47,7 +48,7 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 	})
 
 	t.Run("returns error for invalid image bytes", func(t *testing.T) {
-		rec := recPool.Acquire()
+		rec, _ := recPool.Acquire(context.Background())
 		defer recPool.Release(rec)
 
 		invalidBytes := []byte("not an image")
@@ -59,7 +60,7 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 	})
 
 	t.Run("returns error for empty bytes", func(t *testing.T) {
-		rec := recPool.Acquire()
+		rec, _ := recPool.Acquire(context.Background())
 		defer recPool.Release(rec)
 
 		embeddings, err := service.GenerateFaceEmbeddings(rec, []byte{})
@@ -69,7 +70,7 @@ func TestGenerateFaceEmbeddings(t *testing.T) {
 	})
 
 	t.Run("returns same embeddings for same image called twice", func(t *testing.T) {
-		rec := recPool.Acquire()
+		rec, _ := recPool.Acquire(context.Background())
 		defer recPool.Release(rec)
 
 		imgBytes := test.LoadImage(t, "bona.jpg")
