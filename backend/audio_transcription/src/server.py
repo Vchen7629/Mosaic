@@ -64,7 +64,7 @@ def serve() -> None:
     server = grpc.server(  # pyrefly: ignore
         ThreadPoolExecutor(max_workers=settings.max_workers)
     )
-    db_pool = create_connection_pool()
+    db_pool = create_connection_pool() #
     transcription_handler = TranscriptionHandler()
     cache = Valkey(host=settings.VALKEY_HOST, port=settings.VALKEY_PORT)
 
