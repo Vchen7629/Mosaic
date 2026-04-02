@@ -31,7 +31,7 @@ def _collect_process_metrics() -> None:
 
 def handle_shutdown(
     server: grpc.Server,  # pyrefly: ignore
-    _sig: int,
+    _sig: int, 
     _frame: types.FrameType | None,
 ) -> None:
     server.stop(grace=5)

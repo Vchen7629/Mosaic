@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/keepalive"
 	cb "mosaic-conversation-briefing.com/gen"
 	"mosaic-conversation-briefing.com/internal/db"
 	"mosaic-conversation-briefing.com/internal/handler"
@@ -27,12 +28,27 @@ import (
 )
 
 type Config struct {
-	ServerPort  string `envconfig:"SERVER_PORT" default:"30030"`
-	MetricsPort string `envconfig:"METRICS_PORT" default:"9090"`
-	CacheURL    string `envconfig:"CACHE_URL" default:""`
-	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
-	LLMBaseURL  string `envconfig:"OLLAMA_BASE_URL" default:""`
-	ProdMode    bool   `envconfig:"PROD_MODE" default:"false"`
+	ServerPort        string        `envconfig:"SERVER_PORT" default:"30030"`
+	MetricsPort       string        `envconfig:"METRICS_PORT" default:"9090"`
+	CacheURL          string        `envconfig:"CACHE_URL" default:""`
+	DatabaseURL       string        `envconfig:"DATABASE_URL" default:""`
+	LLMBaseURL        string        `envconfig:"OLLAMA_BASE_URL" default:""`
+	ProdMode          bool          `envconfig:"PROD_MODE" default:"false"`
+	MaxConnectionIdle time.Duration `envconfig:"GRPC_MAX_CONN_IDLE" default:"30s"`
+}
+
+func (cfg *Config) serverOptions() []grpc.ServerOption {
+	return []grpc.ServerOption{
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionIdle: cfg.MaxConnectionIdle,
+			Time:              15 * time.Second,
+			Timeout:           5 * time.Second,
+		}),
+		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			MinTime:             10 * time.Second,
+			PermitWithoutStream: true,
+		}),
+	}
 }
 
 func gRPCServer(logger *slog.Logger, cfg *Config, client valkey.Client, pool *pgxpool.Pool) (*grpc.Server, error) {
@@ -43,7 +59,7 @@ func gRPCServer(logger *slog.Logger, cfg *Config, client valkey.Client, pool *pg
 
 	dbPool := db.NewDBPool(pool, logger)
 
-	gRPCServer := grpc.NewServer()
+	gRPCServer := grpc.NewServer(cfg.serverOptions()...)
 	cb.RegisterConversationBriefingServiceServer(
 		gRPCServer, handler.NewConvoBriefingServer(logger, client, dbPool, cfg.LLMBaseURL),
 	)
@@ -134,7 +150,7 @@ func main() {
 func loadConfig() (*Config, error) {
 	err := godotenv.Load("../.env")
 	if err != nil {
-		return nil, err
+		log.Println("missing .env file")
 	}
 
 	var cfg Config

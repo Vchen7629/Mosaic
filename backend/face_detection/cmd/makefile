@@ -1,10 +1,9 @@
 all: 
 test_all: integration unit
 
-PKGS := ../internal/db/... ../internal/cache/... ../internal/handler/... ../internal/service/... ../internal/observability/...
+PKGS := . ../internal/db/... ../internal/cache/... ../internal/handler/... ../internal/service/... ../internal/observability/...
 
 format: 
-	go fmt . 
 	go fmt ${PKGS} .
 	go fmt ../internal/test/... .
 	

@@ -1,0 +1,132 @@
+name: code coverage
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  path-filter:
+    runs-on: ubuntu-latest
+    outputs:
+        frontend: ${{ steps.changes.outputs.frontend }}
+        audio_transcription: ${{ steps.changes.outputs.audio_transcription }}
+        client: ${{ steps.changes.outputs.client }}
+        conversation_briefing: ${{ steps.changes.outputs.conversation_briefing }}
+        face_detection: ${{ steps.changes.outputs.face_detection }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+            audio_transcription:
+              - 'backend/audio_transcription/src/**'
+            client:
+            - 'backend/client/**'
+            conversation_briefing:
+              - 'backend/conversation_briefing/**'
+            face_detection:
+              - 'backend/face_detection/**'
+  audio-transcription-build:
+    needs: path-filter
+    runs-on: ubuntu-latest
+    if: needs.path-filter.outputs.audio_transcription == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Trigger docker build for audio_transcription
+        run: |
+          gh workflow run cd.yaml \
+            -f service=audio_transcription \
+            -f folder=backend/audio_transcription \
+            -f sha=${{ github.sha }}
+        env:
+          GH_TOKEN: ${{ secrets.CI_CD_PAT }}
+  
+  conversation-briefing-build:
+    needs: path-filter
+    runs-on: ubuntu-latest
+    if: needs.path-filter.outputs.conversation_briefing == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Trigger docker build for conversation-briefing-build
+        run: |
+          gh workflow run cd.yaml \
+            -f service=conversation_briefing \
+            -f folder=backend/conversation_briefing \
+            -f sha=${{ github.sha }}
+        env:
+          GH_TOKEN: ${{ secrets.CI_CD_PAT }}
+  
+  face-detection-build:
+    needs: path-filter
+    runs-on: ubuntu-latest
+    if: needs.path-filter.outputs.face_detection == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Trigger docker build for face-detection build
+        run: |
+          gh workflow run cd.yaml \
+            -f service=face_detection \
+            -f folder=backend/face_detection \
+            -f sha=${{ github.sha }}
+        env:
+          GH_TOKEN: ${{ secrets.CI_CD_PAT }}
+
+  coverage:
+    needs: path-filter
+    runs-on: ubuntu-latest
+    if: |
+      needs.path-filter.outputs.audio_transcription == 'true' ||
+      needs.path-filter.outputs.client == 'true' ||
+      needs.path-filter.outputs.conversation_briefing == 'true' ||
+      needs.path-filter.outputs.face_detection == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Run audio_transcription coverage
+        working-directory: ./backend/audio_transcription
+        run: make coverage
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'backend/client/go.mod'
+
+      - name: Install dlib dependencies for face_detection
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libdlib-dev libblas-dev libatlas-base-dev liblapack-dev libjpeg-turbo8-dev pkg-config gcc g++
+
+      - name: Run backend client coverage
+        working-directory: ./backend/client/cmd
+        run: make coverage
+
+      - name: Run conversation_briefing coverage
+        working-directory: ./backend/conversation_briefing/cmd
+        run: make coverage
+      
+      - name: Run face_detection coverage
+        working-directory: ./backend/face_detection/cmd
+        run: make coverage
+
+      - name: Upload coverage to Codecov                                                                       
+        uses: codecov/codecov-action@v4                                                                        
+        with:                                                                                                  
+          files: ./backend/client/cmd/coverage.out,./backend/face_detection/cmd/coverage.out,./backend/conversation_briefing/cmd/coverage.out,./backend/audio_transcription/coverage.xml                                                                       
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  

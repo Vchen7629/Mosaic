@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/keepalive"
 	fd "mosaic-face-detection.com/gen"
 	"mosaic-face-detection.com/internal/db"
 	"mosaic-face-detection.com/internal/handler"
@@ -28,13 +30,28 @@ import (
 )
 
 type Config struct {
-	ServerPort  string `envconfig:"SERVER_PORT" default:"40040"`
-	MetricsPort string `envconfig:"METRICS_PORT" default:"9092"`
-	CacheURL    string `envconfig:"CACHE_URL" default:""`
-	DatabaseURL string `envconfig:"DATABASE_URL" default:""`
-	ModelsDir   string `envconfig:"MODELS_DIR" default:"models"`
-	RecPoolSize int    `envconfig:"REC_POOL_SIZE" default:"5"`
-	ProdMode    bool   `envconfig:"PROD_MODE" default:"false"`
+	ServerPort        string        `envconfig:"SERVER_PORT" default:"40040"`
+	MetricsPort       string        `envconfig:"METRICS_PORT" default:"9092"`
+	CacheURL          string        `envconfig:"CACHE_URL" default:""`
+	DatabaseURL       string        `envconfig:"DATABASE_URL" default:""`
+	ModelsDir         string        `envconfig:"MODELS_DIR" default:"models"`
+	RecPoolSize       int           `envconfig:"REC_POOL_SIZE" default:"2"`
+	ProdMode          bool          `envconfig:"PROD_MODE" default:"false"`
+	MaxConnectionIdle time.Duration `envconfig:"GRPC_MAX_CONN_IDLE" default:"30s"`
+}
+
+func (cfg *Config) serverOptions() []grpc.ServerOption {
+	return []grpc.ServerOption{
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionIdle: cfg.MaxConnectionIdle,
+			Time:              15 * time.Second,
+			Timeout:           5 * time.Second,
+		}),
+		grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+			MinTime:             10 * time.Second,
+			PermitWithoutStream: true,
+		}),
+	}
 }
 
 // handles starting the gRPC server
@@ -52,7 +69,7 @@ func gRPCServer(
 
 	dbPool := db.NewDBPool(pool, logger)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(cfg.serverOptions()...)
 	fd.RegisterFaceDetectionServiceServer(
 		grpcServer, handler.NewFaceDetectionServer(logger, recPool, client, dbPool),
 	)
@@ -87,6 +104,9 @@ func observabilityServer(logger *slog.Logger, cfg *Config, pool *pgxpool.Pool) {
 		w.WriteHeader(http.StatusOK)
 	})
 	mux.Handle("/metrics", promhttp.Handler())
+	if !cfg.ProdMode {
+		mux.Handle("/debug/pprof/", http.DefaultServeMux)
+	}
 	logger.Info("metrics server listening", "port", cfg.MetricsPort)
 	err := http.ListenAndServe(":"+cfg.MetricsPort, mux)
 	if err != nil {
@@ -152,7 +172,7 @@ func main() {
 func loadConfig() (*Config, error) {
 	err := godotenv.Load("../.env")
 	if err != nil {
-		return nil, err
+		log.Println("missing .env file")
 	}
 	var cfg Config
 

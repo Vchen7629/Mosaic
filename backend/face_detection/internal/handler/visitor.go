@@ -18,7 +18,10 @@ func (s *FaceDetectionServer) ProcessVisitorFaces(
 	ctx context.Context,
 	req *fd.ProcessVisitorFacesRequest,
 ) (*fd.ProcessVisitorFacesResponse, error) {
-	rec := s.recPool.Acquire() // acquiring one instance of the rec model from pool
+	rec, err := s.recPool.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
 	defer s.recPool.Release(rec)
 
 	s.logger.Debug("Processing visitor faces while recording", "session_token", req.SessionToken, "face_byte_size", len(req.FaceBytes))

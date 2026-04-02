@@ -19,7 +19,10 @@ func (s *FaceDetectionServer) SyncProfile(
 	ctx context.Context,
 	req *fd.SyncProfileRequest,
 ) (*fd.SyncProfileResponse, error) {
-	rec := s.recPool.Acquire() // acquiring one instance of the rec model from pool
+	rec, err := s.recPool.Acquire(ctx)
+	if err != nil {
+		return nil, err
+	}
 	defer s.recPool.Release(rec)
 
 	s.logger.Debug("Syncing Profile using face bytes", "face_byte_size", len(req.FaceBytes))
