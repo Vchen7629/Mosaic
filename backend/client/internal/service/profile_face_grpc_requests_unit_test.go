@@ -4,6 +4,7 @@ package service
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,21 +42,14 @@ func TestSyncProfile(t *testing.T) {
 				errMsg: "sync gRPC error",
 			},
 			{
-				name:   "RegisterProfileFace gRPC error on new face",
-				frames: []string{validFrame},
+				name:   "empty frames slice still calls SyncProfile",
+				frames: []string{},
 				client: &test.MockFaceClient{
 					SyncProfileFunc: func(_ *fd.SyncProfileRequest) (*fd.SyncProfileResponse, error) {
-						return &fd.SyncProfileResponse{
-							FaceDetected:  true,
-							NewFace:       true,
-							FaceEmbedding: []*fd.FaceEmbedding{{FaceEmbedding: []float32{0.1}}},
-						}, nil
-					},
-					RegisterProfileFaceFunc: func(_ *fd.RegisterProfileFaceRequest) (*fd.RegisterProfileFaceResponse, error) {
-						return nil, status.Error(codes.Internal, "register failed")
+						return nil, status.Error(codes.Internal, "internal error")
 					},
 				},
-				errMsg: "RegisterProfileFace gRPC error",
+				errMsg: "sync gRPC error",
 			},
 		}
 
@@ -76,13 +70,20 @@ func TestSyncProfile(t *testing.T) {
 			wantMsgType  string
 		}{
 			{
-				name:         "no face detected writes nothing to frontend",
+				name:         "no face detected writes sync_profile_retry to frontend",
 				syncResp:     &fd.SyncProfileResponse{FaceDetected: false},
-				wantMsgCount: 0,
+				wantMsgCount: 1,
+				wantMsgType:  "sync_profile_retry",
 			},
 			{
-				name:         "known existing face writes profile_face_response",
-				syncResp:     &fd.SyncProfileResponse{FaceDetected: true, NewFace: false, SessionToken: "tok_existing"},
+				name:         "existing face writes profile_face_response",
+				syncResp:     &fd.SyncProfileResponse{FaceDetected: true, SessionToken: "tok_existing"},
+				wantMsgCount: 1,
+				wantMsgType:  "profile_face_response",
+			},
+			{
+				name:         "new face registered internally writes profile_face_response",
+				syncResp:     &fd.SyncProfileResponse{FaceDetected: true, Success: true, SessionToken: "tok_new"},
 				wantMsgCount: 1,
 				wantMsgType:  "profile_face_response",
 			},
@@ -110,18 +111,11 @@ func TestSyncProfile(t *testing.T) {
 		}
 	})
 
-	t.Run("New face registers and writes profile_face_response", func(t *testing.T) {
+	t.Run("Session token is forwarded to frontend", func(t *testing.T) {
 		conn, capture := newSafeConn(t)
 		client := &test.MockFaceClient{
 			SyncProfileFunc: func(_ *fd.SyncProfileRequest) (*fd.SyncProfileResponse, error) {
-				return &fd.SyncProfileResponse{
-					FaceDetected:  true,
-					NewFace:       true,
-					FaceEmbedding: []*fd.FaceEmbedding{{FaceEmbedding: []float32{0.1, 0.2}}},
-				}, nil
-			},
-			RegisterProfileFaceFunc: func(_ *fd.RegisterProfileFaceRequest) (*fd.RegisterProfileFaceResponse, error) {
-				return &fd.RegisterProfileFaceResponse{Success: true, SessionToken: "tok_new"}, nil
+				return &fd.SyncProfileResponse{FaceDetected: true, SessionToken: "tok_abc123"}, nil
 			},
 		}
 
@@ -131,6 +125,33 @@ func TestSyncProfile(t *testing.T) {
 		assert.NoError(t, err)
 		msgs := capture.Messages()
 		assert.Len(t, msgs, 1)
-		assert.Equal(t, "profile_face_response", jsonType(t, msgs[0]))
+
+		var res ProfileSyncRes
+		assert.NoError(t, json.Unmarshal(msgs[0], &res))
+		assert.Equal(t, "profile_face_response", res.Type)
+		assert.Equal(t, "tok_abc123", res.SessionToken)
+	})
+
+	t.Run("Multiple frames are all decoded and sent", func(t *testing.T) {
+		frame1 := base64.StdEncoding.EncodeToString([]byte("frame1"))
+		frame2 := base64.StdEncoding.EncodeToString([]byte("frame2"))
+
+		var capturedReq *fd.SyncProfileRequest
+		conn, _ := newSafeConn(t)
+		client := &test.MockFaceClient{
+			SyncProfileFunc: func(req *fd.SyncProfileRequest) (*fd.SyncProfileResponse, error) {
+				capturedReq = req
+				return &fd.SyncProfileResponse{FaceDetected: true, SessionToken: "tok"}, nil
+			},
+		}
+
+		err := SyncProfile([]string{frame1, frame2}, conn, client)
+		drainMessages()
+
+		assert.NoError(t, err)
+		assert.NotNil(t, capturedReq)
+		assert.Len(t, capturedReq.FaceBytes, 2)
+		assert.Equal(t, []byte("frame1"), capturedReq.FaceBytes[0])
+		assert.Equal(t, []byte("frame2"), capturedReq.FaceBytes[1])
 	})
 }

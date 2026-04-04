@@ -43,22 +43,7 @@ func SyncProfile(
 		return conn.WriteJSON(map[string]string{"type": "sync_profile_retry"})
 	}
 
-	if !resp.NewFace {
-		err = conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", SessionToken: resp.SessionToken})
-		if err != nil {
-			return fmt.Errorf("error sending face same as profile face res to frontend: %w", err)
-		}
-		return nil
-	}
-
-	regResp, err := client.RegisterProfileFace(ctx, &fd.RegisterProfileFaceRequest{
-		FaceEmbedding: resp.FaceEmbedding,
-	})
-	if err != nil {
-		return fmt.Errorf("RegisterProfileFace gRPC error: %w", err)
-	}
-
-	err = conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", SessionToken: regResp.SessionToken})
+	err = conn.WriteJSON(ProfileSyncRes{Type: "profile_face_response", SessionToken: resp.SessionToken})
 	if err != nil {
 		return fmt.Errorf("syncProfile error writing to frontend: %w", err)
 	}

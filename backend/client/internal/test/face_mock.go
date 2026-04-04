@@ -14,10 +14,9 @@ import (
 type MockFaceClient struct {
 	Mu sync.Mutex
 
-	ProcessVisitorFacesFunc  func(*fd.ProcessVisitorFacesRequest) (*fd.ProcessVisitorFacesResponse, error)
-	RegisterVisitorFaceFunc  func(*fd.RegisterVisitorFaceRequest) (*fd.RegisterVisitorFaceResponse, error)
-	SyncProfileFunc          func(*fd.SyncProfileRequest) (*fd.SyncProfileResponse, error)
-	RegisterProfileFaceFunc  func(*fd.RegisterProfileFaceRequest) (*fd.RegisterProfileFaceResponse, error)
+	ProcessVisitorFacesFunc func(*fd.ProcessVisitorFacesRequest) (*fd.ProcessVisitorFacesResponse, error)
+	RegisterVisitorFaceFunc func(*fd.RegisterVisitorFaceRequest) (*fd.RegisterVisitorFaceResponse, error)
+	SyncProfileFunc         func(*fd.SyncProfileRequest) (*fd.SyncProfileResponse, error)
 }
 
 func (m *MockFaceClient) ProcessVisitorFaces(
@@ -65,17 +64,3 @@ func (m *MockFaceClient) SyncProfile(
 	return &fd.SyncProfileResponse{FaceDetected: true, Success: true}, nil
 }
 
-func (m *MockFaceClient) RegisterProfileFace(
-	_ context.Context,
-	req *fd.RegisterProfileFaceRequest,
-	_ ...grpc.CallOption,
-) (*fd.RegisterProfileFaceResponse, error) {
-	m.Mu.Lock()
-	fn := m.RegisterProfileFaceFunc
-	m.Mu.Unlock()
-
-	if fn != nil {
-		return fn(req)
-	}
-	return &fd.RegisterProfileFaceResponse{Success: true}, nil
-}
