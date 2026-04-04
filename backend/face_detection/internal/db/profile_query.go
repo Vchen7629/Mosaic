@@ -75,7 +75,7 @@ func (db *DBPool) FetchAllProfileFaceEmb() ([]service.ProfileFaces, error) {
 	return result, nil
 }
 
-// Add a new visitor for a user with their name and face_embedding
+// Add a new profile using the face embeddings and returns the profile_id
 func (db *DBPool) AddNewFaceForProfile(embeddings []face.Descriptor) (*int32, error) {
 	observability.DBReadsTotal.WithLabelValues("register_profile").Inc()
 
