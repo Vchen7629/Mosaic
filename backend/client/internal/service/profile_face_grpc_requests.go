@@ -38,8 +38,9 @@ func SyncProfile(
 		return fmt.Errorf("sync gRPC error: %w", err)
 	}
 
+	// Todo add a test for this, maybe unit
 	if !resp.FaceDetected {
-		return nil
+		return conn.WriteJSON(map[string]string{"type": "sync_profile_retry"})
 	}
 
 	if !resp.NewFace {
