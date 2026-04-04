@@ -1,15 +1,12 @@
 test_all: unit integration
 
-PKGS := ../internal/handler/... ../internal/middleware/... ../internal/service/...
+PKGS := ../internal/handler/... ../internal/observability/... ../internal/service/...
 
 coverage:
 	go test -tags=unit,integration ${PKGS} -v -coverprofile=coverage.out -covermode=atomic
 
 format: 
-	go fmt . 
-	go fmt ../internal/middleware/... .
-	go fmt ../internal/handler/... .
-	go fmt ../internal/service/... .
+	go fmt ${PKGS}
 
 integration:
 	go test -tags integration ${PKGS}

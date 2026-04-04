@@ -11,13 +11,11 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	at "mosaic-client.com/gen/audio_transcription"
 	cb "mosaic-client.com/gen/conversation_briefing"
 	fd "mosaic-client.com/gen/face_detection"
 	"mosaic-client.com/internal/handler"
-	"mosaic-client.com/internal/middleware"
+	"mosaic-client.com/internal/observability"
 )
 
 type Config struct {
@@ -31,37 +29,15 @@ func main() {
 		log.Fatalf("failed to load config values: %v", err)
 	}
 
-	var handler slog.Handler
-	if cfg.ProdMode {
-		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
-	} else {
-		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
-	}
-	logger := slog.New(handler).With("service", "client")
+	logger := observability.StructuredLogger(cfg.ProdMode)
 
 	logger.Info("Starting Mosaic backend server...")
 
-	audioConn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		logger.Error("Unable to start audio gRPC client")
-		os.Exit(1)
-	}
+	gwClient := handler.NewClient("https://api.verturus.com", handler.DefaultRetryConfig)
 
-	faceConn, err := grpc.NewClient("localhost:40040", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		logger.Error("Unable to start audio gRPC client")
-		os.Exit(1)
-	}
-
-	briefingConn, err := grpc.NewClient("localhost:30030", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		logger.Error("Unable to start briefing generation gRPC client")
-		os.Exit(1)
-	}
-
-	atClient := at.NewAudioTranscriptionServiceClient(audioConn)
-	fdClient := fd.NewFaceDetectionServiceClient(faceConn)
-	cbClient := cb.NewConversationBriefingServiceClient(briefingConn)
+	atClient := at.NewAudioTranscriptionServiceClient(gwClient)
+	fdClient := fd.NewFaceDetectionServiceClient(gwClient)
+	cbClient := cb.NewConversationBriefingServiceClient(gwClient)
 
 	go websocketServer(cfg, logger, atClient, fdClient, cbClient)
 
@@ -74,14 +50,9 @@ func main() {
 	<-sigChan
 	logger.Info("Shutting down gracefully...")
 
-	err = audioConn.Close()
+	err = gwClient.Close()
 	if err != nil {
-		logger.Warn("audio grpc connection not closed properly", "err", err)
-	}
-
-	err = faceConn.Close()
-	if err != nil {
-		logger.Warn("face detection grpc connection not closed properly", "err", err)
+		logger.Warn("grpc-web connection not closed properly", "err", err)
 	}
 	logger.Debug("Closed gRPC connection")
 }
@@ -107,7 +78,7 @@ func websocketServer(
 
 	server := http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.ServerPort),
-		Handler: middleware.Logging(router),
+		Handler: observability.HTTPLogger(router),
 	}
 
 	logger.Debug("[client] Server running on", "port", cfg.ServerPort)
