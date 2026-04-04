@@ -431,8 +431,7 @@ type SyncProfileResponse struct {
 	FaceDetected  bool                   `protobuf:"varint,1,opt,name=face_detected,json=faceDetected,proto3" json:"face_detected,omitempty"` // used so can prompt the frontend to maybe get a clearer view?
 	Success       bool                   `protobuf:"varint,2,opt,name=success,proto3" json:"success,omitempty"`                               // used for retry logic
 	SessionToken  string                 `protobuf:"bytes,3,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"`
-	NewFace       bool                   `protobuf:"varint,4,opt,name=new_face,json=newFace,proto3" json:"new_face,omitempty"`
-	FaceEmbedding []*FaceEmbedding       `protobuf:"bytes,5,rep,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"`
+	FaceEmbedding []*FaceEmbedding       `protobuf:"bytes,4,rep,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -488,13 +487,6 @@ func (x *SyncProfileResponse) GetSessionToken() string {
 	return ""
 }
 
-func (x *SyncProfileResponse) GetNewFace() bool {
-	if x != nil {
-		return x.NewFace
-	}
-	return false
-}
-
 func (x *SyncProfileResponse) GetFaceEmbedding() []*FaceEmbedding {
 	if x != nil {
 		return x.FaceEmbedding
@@ -536,13 +528,12 @@ const file_face_detection_proto_rawDesc = "" +
 	"\n" +
 	"face_bytes\x18\x01 \x03(\fR\tfaceBytes\"6\n" +
 	"\rFaceEmbedding\x12%\n" +
-	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\"\xe0\x01\n" +
+	"\x0eface_embedding\x18\x01 \x03(\x02R\rfaceEmbedding\"\xc5\x01\n" +
 	"\x13SyncProfileResponse\x12#\n" +
 	"\rface_detected\x18\x01 \x01(\bR\ffaceDetected\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12#\n" +
-	"\rsession_token\x18\x03 \x01(\tR\fsessionToken\x12\x19\n" +
-	"\bnew_face\x18\x04 \x01(\bR\anewFace\x12J\n" +
-	"\x0eface_embedding\x18\x05 \x03(\v2#.proto.face_detection.FaceEmbeddingR\rfaceEmbedding2\xf8\x02\n" +
+	"\rsession_token\x18\x03 \x01(\tR\fsessionToken\x12J\n" +
+	"\x0eface_embedding\x18\x04 \x03(\v2#.proto.face_detection.FaceEmbeddingR\rfaceEmbedding2\xf8\x02\n" +
 	"\x14FaceDetectionService\x12|\n" +
 	"\x13ProcessVisitorFaces\x120.proto.face_detection.ProcessVisitorFacesRequest\x1a1.proto.face_detection.ProcessVisitorFacesResponse\"\x00\x12|\n" +
 	"\x13RegisterVisitorFace\x120.proto.face_detection.RegisterVisitorFaceRequest\x1a1.proto.face_detection.RegisterVisitorFaceResponse\"\x00\x12d\n" +

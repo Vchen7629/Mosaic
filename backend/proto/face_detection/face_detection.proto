@@ -68,6 +68,5 @@ message SyncProfileResponse {
     bool face_detected = 1; // used so can prompt the frontend to maybe get a clearer view?
     bool success = 2; // used for retry logic
     string session_token = 3;
-    bool new_face = 4;
-    repeated FaceEmbedding face_embedding = 5;
+    repeated FaceEmbedding face_embedding = 4;
 }
