@@ -502,104 +502,6 @@ func (x *SyncProfileResponse) GetFaceEmbedding() []*FaceEmbedding {
 	return nil
 }
 
-// Request containing face image in bytes
-type RegisterProfileFaceRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	FaceEmbedding []*FaceEmbedding       `protobuf:"bytes,1,rep,name=face_embedding,json=faceEmbedding,proto3" json:"face_embedding,omitempty"` // contains multiple face embeddings
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RegisterProfileFaceRequest) Reset() {
-	*x = RegisterProfileFaceRequest{}
-	mi := &file_face_detection_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RegisterProfileFaceRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RegisterProfileFaceRequest) ProtoMessage() {}
-
-func (x *RegisterProfileFaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_face_detection_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RegisterProfileFaceRequest.ProtoReflect.Descriptor instead.
-func (*RegisterProfileFaceRequest) Descriptor() ([]byte, []int) {
-	return file_face_detection_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *RegisterProfileFaceRequest) GetFaceEmbedding() []*FaceEmbedding {
-	if x != nil {
-		return x.FaceEmbedding
-	}
-	return nil
-}
-
-// Response with register profile response
-type RegisterProfileFaceResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`                              // used for retry logic
-	SessionToken  string                 `protobuf:"bytes,2,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"` // sent back to frontend to save
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RegisterProfileFaceResponse) Reset() {
-	*x = RegisterProfileFaceResponse{}
-	mi := &file_face_detection_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RegisterProfileFaceResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RegisterProfileFaceResponse) ProtoMessage() {}
-
-func (x *RegisterProfileFaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_face_detection_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RegisterProfileFaceResponse.ProtoReflect.Descriptor instead.
-func (*RegisterProfileFaceResponse) Descriptor() ([]byte, []int) {
-	return file_face_detection_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *RegisterProfileFaceResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *RegisterProfileFaceResponse) GetSessionToken() string {
-	if x != nil {
-		return x.SessionToken
-	}
-	return ""
-}
-
 var File_face_detection_proto protoreflect.FileDescriptor
 
 const file_face_detection_proto_rawDesc = "" +
@@ -640,17 +542,11 @@ const file_face_detection_proto_rawDesc = "" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12#\n" +
 	"\rsession_token\x18\x03 \x01(\tR\fsessionToken\x12\x19\n" +
 	"\bnew_face\x18\x04 \x01(\bR\anewFace\x12J\n" +
-	"\x0eface_embedding\x18\x05 \x03(\v2#.proto.face_detection.FaceEmbeddingR\rfaceEmbedding\"h\n" +
-	"\x1aRegisterProfileFaceRequest\x12J\n" +
-	"\x0eface_embedding\x18\x01 \x03(\v2#.proto.face_detection.FaceEmbeddingR\rfaceEmbedding\"\\\n" +
-	"\x1bRegisterProfileFaceResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12#\n" +
-	"\rsession_token\x18\x02 \x01(\tR\fsessionToken2\xf6\x03\n" +
+	"\x0eface_embedding\x18\x05 \x03(\v2#.proto.face_detection.FaceEmbeddingR\rfaceEmbedding2\xf8\x02\n" +
 	"\x14FaceDetectionService\x12|\n" +
 	"\x13ProcessVisitorFaces\x120.proto.face_detection.ProcessVisitorFacesRequest\x1a1.proto.face_detection.ProcessVisitorFacesResponse\"\x00\x12|\n" +
 	"\x13RegisterVisitorFace\x120.proto.face_detection.RegisterVisitorFaceRequest\x1a1.proto.face_detection.RegisterVisitorFaceResponse\"\x00\x12d\n" +
-	"\vSyncProfile\x12(.proto.face_detection.SyncProfileRequest\x1a).proto.face_detection.SyncProfileResponse\"\x00\x12|\n" +
-	"\x13RegisterProfileFace\x120.proto.face_detection.RegisterProfileFaceRequest\x1a1.proto.face_detection.RegisterProfileFaceResponse\"\x00B&Z$mosaic-client.com/gen/face_detectionb\x06proto3"
+	"\vSyncProfile\x12(.proto.face_detection.SyncProfileRequest\x1a).proto.face_detection.SyncProfileResponse\"\x00B&Z$mosaic-client.com/gen/face_detectionb\x06proto3"
 
 var (
 	file_face_detection_proto_rawDescOnce sync.Once
@@ -664,7 +560,7 @@ func file_face_detection_proto_rawDescGZIP() []byte {
 	return file_face_detection_proto_rawDescData
 }
 
-var file_face_detection_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_face_detection_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_face_detection_proto_goTypes = []any{
 	(*ProcessVisitorFacesRequest)(nil),  // 0: proto.face_detection.ProcessVisitorFacesRequest
 	(*FaceResult)(nil),                  // 1: proto.face_detection.FaceResult
@@ -674,26 +570,21 @@ var file_face_detection_proto_goTypes = []any{
 	(*SyncProfileRequest)(nil),          // 5: proto.face_detection.SyncProfileRequest
 	(*FaceEmbedding)(nil),               // 6: proto.face_detection.FaceEmbedding
 	(*SyncProfileResponse)(nil),         // 7: proto.face_detection.SyncProfileResponse
-	(*RegisterProfileFaceRequest)(nil),  // 8: proto.face_detection.RegisterProfileFaceRequest
-	(*RegisterProfileFaceResponse)(nil), // 9: proto.face_detection.RegisterProfileFaceResponse
 }
 var file_face_detection_proto_depIdxs = []int32{
 	1, // 0: proto.face_detection.ProcessVisitorFacesResponse.faces:type_name -> proto.face_detection.FaceResult
 	6, // 1: proto.face_detection.SyncProfileResponse.face_embedding:type_name -> proto.face_detection.FaceEmbedding
-	6, // 2: proto.face_detection.RegisterProfileFaceRequest.face_embedding:type_name -> proto.face_detection.FaceEmbedding
-	0, // 3: proto.face_detection.FaceDetectionService.ProcessVisitorFaces:input_type -> proto.face_detection.ProcessVisitorFacesRequest
-	3, // 4: proto.face_detection.FaceDetectionService.RegisterVisitorFace:input_type -> proto.face_detection.RegisterVisitorFaceRequest
-	5, // 5: proto.face_detection.FaceDetectionService.SyncProfile:input_type -> proto.face_detection.SyncProfileRequest
-	8, // 6: proto.face_detection.FaceDetectionService.RegisterProfileFace:input_type -> proto.face_detection.RegisterProfileFaceRequest
-	2, // 7: proto.face_detection.FaceDetectionService.ProcessVisitorFaces:output_type -> proto.face_detection.ProcessVisitorFacesResponse
-	4, // 8: proto.face_detection.FaceDetectionService.RegisterVisitorFace:output_type -> proto.face_detection.RegisterVisitorFaceResponse
-	7, // 9: proto.face_detection.FaceDetectionService.SyncProfile:output_type -> proto.face_detection.SyncProfileResponse
-	9, // 10: proto.face_detection.FaceDetectionService.RegisterProfileFace:output_type -> proto.face_detection.RegisterProfileFaceResponse
-	7, // [7:11] is the sub-list for method output_type
-	3, // [3:7] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	0, // 2: proto.face_detection.FaceDetectionService.ProcessVisitorFaces:input_type -> proto.face_detection.ProcessVisitorFacesRequest
+	3, // 3: proto.face_detection.FaceDetectionService.RegisterVisitorFace:input_type -> proto.face_detection.RegisterVisitorFaceRequest
+	5, // 4: proto.face_detection.FaceDetectionService.SyncProfile:input_type -> proto.face_detection.SyncProfileRequest
+	2, // 5: proto.face_detection.FaceDetectionService.ProcessVisitorFaces:output_type -> proto.face_detection.ProcessVisitorFacesResponse
+	4, // 6: proto.face_detection.FaceDetectionService.RegisterVisitorFace:output_type -> proto.face_detection.RegisterVisitorFaceResponse
+	7, // 7: proto.face_detection.FaceDetectionService.SyncProfile:output_type -> proto.face_detection.SyncProfileResponse
+	5, // [5:8] is the sub-list for method output_type
+	2, // [2:5] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_face_detection_proto_init() }
@@ -707,7 +598,7 @@ func file_face_detection_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_face_detection_proto_rawDesc), len(file_face_detection_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -22,7 +22,6 @@ const (
 	FaceDetectionService_ProcessVisitorFaces_FullMethodName = "/proto.face_detection.FaceDetectionService/ProcessVisitorFaces"
 	FaceDetectionService_RegisterVisitorFace_FullMethodName = "/proto.face_detection.FaceDetectionService/RegisterVisitorFace"
 	FaceDetectionService_SyncProfile_FullMethodName         = "/proto.face_detection.FaceDetectionService/SyncProfile"
-	FaceDetectionService_RegisterProfileFace_FullMethodName = "/proto.face_detection.FaceDetectionService/RegisterProfileFace"
 )
 
 // FaceDetectionServiceClient is the client API for FaceDetectionService service.
@@ -37,8 +36,6 @@ type FaceDetectionServiceClient interface {
 	RegisterVisitorFace(ctx context.Context, in *RegisterVisitorFaceRequest, opts ...grpc.CallOption) (*RegisterVisitorFaceResponse, error)
 	// Send face bytes for loading user profile, get back profile_id if known or request to create new profile
 	SyncProfile(ctx context.Context, in *SyncProfileRequest, opts ...grpc.CallOption) (*SyncProfileResponse, error)
-	// Used to register a new face when a new face is detected while syncing profile
-	RegisterProfileFace(ctx context.Context, in *RegisterProfileFaceRequest, opts ...grpc.CallOption) (*RegisterProfileFaceResponse, error)
 }
 
 type faceDetectionServiceClient struct {
@@ -79,16 +76,6 @@ func (c *faceDetectionServiceClient) SyncProfile(ctx context.Context, in *SyncPr
 	return out, nil
 }
 
-func (c *faceDetectionServiceClient) RegisterProfileFace(ctx context.Context, in *RegisterProfileFaceRequest, opts ...grpc.CallOption) (*RegisterProfileFaceResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RegisterProfileFaceResponse)
-	err := c.cc.Invoke(ctx, FaceDetectionService_RegisterProfileFace_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // FaceDetectionServiceServer is the server API for FaceDetectionService service.
 // All implementations must embed UnimplementedFaceDetectionServiceServer
 // for forward compatibility.
@@ -101,8 +88,6 @@ type FaceDetectionServiceServer interface {
 	RegisterVisitorFace(context.Context, *RegisterVisitorFaceRequest) (*RegisterVisitorFaceResponse, error)
 	// Send face bytes for loading user profile, get back profile_id if known or request to create new profile
 	SyncProfile(context.Context, *SyncProfileRequest) (*SyncProfileResponse, error)
-	// Used to register a new face when a new face is detected while syncing profile
-	RegisterProfileFace(context.Context, *RegisterProfileFaceRequest) (*RegisterProfileFaceResponse, error)
 	mustEmbedUnimplementedFaceDetectionServiceServer()
 }
 
@@ -121,9 +106,6 @@ func (UnimplementedFaceDetectionServiceServer) RegisterVisitorFace(context.Conte
 }
 func (UnimplementedFaceDetectionServiceServer) SyncProfile(context.Context, *SyncProfileRequest) (*SyncProfileResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SyncProfile not implemented")
-}
-func (UnimplementedFaceDetectionServiceServer) RegisterProfileFace(context.Context, *RegisterProfileFaceRequest) (*RegisterProfileFaceResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RegisterProfileFace not implemented")
 }
 func (UnimplementedFaceDetectionServiceServer) mustEmbedUnimplementedFaceDetectionServiceServer() {}
 func (UnimplementedFaceDetectionServiceServer) testEmbeddedByValue()                              {}
@@ -200,24 +182,6 @@ func _FaceDetectionService_SyncProfile_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _FaceDetectionService_RegisterProfileFace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterProfileFaceRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(FaceDetectionServiceServer).RegisterProfileFace(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: FaceDetectionService_RegisterProfileFace_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FaceDetectionServiceServer).RegisterProfileFace(ctx, req.(*RegisterProfileFaceRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // FaceDetectionService_ServiceDesc is the grpc.ServiceDesc for FaceDetectionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -236,10 +200,6 @@ var FaceDetectionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SyncProfile",
 			Handler:    _FaceDetectionService_SyncProfile_Handler,
-		},
-		{
-			MethodName: "RegisterProfileFace",
-			Handler:    _FaceDetectionService_RegisterProfileFace_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
