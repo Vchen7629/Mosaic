@@ -4,12 +4,20 @@ package handler_test
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	fd "mosaic-face-detection.com/gen"
+	"mosaic-face-detection.com/internal/handler"
 	"mosaic-face-detection.com/internal/test"
 )
+
+func newUnitServer() *handler.FaceDetectionServer {
+	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
+	return handler.NewFaceDetectionServer(logger, nil, nil, nil)
+}
 
 func TestRegisterVisitorFace_InvalidInput(t *testing.T) {
 	server := newUnitServer()

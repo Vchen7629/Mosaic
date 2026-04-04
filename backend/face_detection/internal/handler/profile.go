@@ -90,9 +90,9 @@ func (s *FaceDetectionServer) SyncProfile(
 		}
 
 		return &fd.SyncProfileResponse{
-			FaceDetected:  true,
-			Success:       true,
-			SessionToken: 	sessionToken,
+			FaceDetected: true,
+			Success:      true,
+			SessionToken: sessionToken,
 		}, nil
 	}
 
