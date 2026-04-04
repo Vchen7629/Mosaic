@@ -142,6 +142,14 @@ export function useSyncProfileProcess(
         // saves the session_token to localstorage for later use
         const handleMessage = (event: MessageEvent) => {
             const data = JSON.parse(event.data)
+
+            // todo add unit test for this
+            if (data.type === "sync_profile_retry") {                                                                                                                                              
+                framesRef.current = []
+                hasSentRef.current = false
+                return
+            }
+
             if (data.type !== "profile_face_response") return
             localStorage.setItem("session_token", String(data.session_token))
             onProfileSyncedRef.current(data.session_token)

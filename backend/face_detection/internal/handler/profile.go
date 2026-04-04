@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"crypto/rand"
-	"fmt"
 	"time"
 
 	"github.com/Kagami/go-face"
@@ -62,16 +61,38 @@ func (s *FaceDetectionServer) SyncProfile(
 	observability.ProfileComparisonDuration.Observe(float64(time.Since(profileCmpStart).Milliseconds()))
 
 	if !matched {
-		s.logger.Debug("GRPC profile no faces matched!, returning embeddings for registration")
-		faceEmbeddings := make([]*fd.FaceEmbedding, len(allEmbeddings))
-		for i, emb := range allEmbeddings {
-			faceEmbeddings[i] = &fd.FaceEmbedding{FaceEmbedding: emb[:]}
+		s.logger.Debug("GRPC profile no faces matched!, registering new face embeddings in database")
+
+		profileRegisterStart := time.Now()
+		profileID, err := db.RetryDB(s.logger, ctx, func() (*int32, error) {
+			return s.pool.AddNewFaceForProfile(allEmbeddings)
+		})
+		observability.ProfileRegisterDuration.Observe(float64(time.Since(profileRegisterStart).Milliseconds()))
+		if err != nil {
+			observability.ErrorsTotal.WithLabelValues("register_profile").Inc()
+			s.logger.Error("failed to register new profile with face", "err", err)
+			return &fd.SyncProfileResponse{Success: false}, err
 		}
+
+		sessionToken := rand.Text()
+
+		err = cache.CreateNewProfileSession(ctx, *profileID, s.cache, sessionToken)
+		if err != nil {
+			s.logger.Warn("failed to store new session in cache", "err", err)
+		}
+
+		_, err = db.RetryDB(s.logger, ctx, func() (struct{}, error) {
+			return struct{}{}, s.pool.UpsertSession(*profileID, sessionToken)
+		})
+		if err != nil {
+			s.logger.Error("failed to store session in db", "err", err)
+			return nil, err
+		}
+
 		return &fd.SyncProfileResponse{
-			FaceDetected:  true,
-			Success:       true,
-			NewFace:       true,
-			FaceEmbedding: faceEmbeddings,
+			FaceDetected: true,
+			Success:      true,
+			SessionToken: sessionToken,
 		}, nil
 	}
 
@@ -95,50 +116,4 @@ func (s *FaceDetectionServer) SyncProfile(
 		SessionToken: sessionToken,
 		Success:      true,
 	}, nil
-}
-
-// Handler for when the face embedding doesnt
-// match with an existing embedding for users
-func (s *FaceDetectionServer) RegisterProfileFace(
-	ctx context.Context,
-	req *fd.RegisterProfileFaceRequest,
-) (*fd.RegisterProfileFaceResponse, error) {
-	if len(req.FaceEmbedding) == 0 {
-		return nil, fmt.Errorf("no face embeddings provided")
-	}
-
-	embeddings := make([]face.Descriptor, len(req.FaceEmbedding))
-	for i, e := range req.FaceEmbedding {
-		err := service.ValidateEmbeddingSlice(e.FaceEmbedding)
-		if err != nil {
-			return nil, err
-		}
-		copy(embeddings[i][:], e.FaceEmbedding)
-	}
-
-	profileRegisterStart := time.Now()
-	profileID, err := db.RetryDB(s.logger, ctx, func() (*int32, error) {
-		return s.pool.AddNewFaceForProfile(embeddings)
-	})
-	observability.ProfileRegisterDuration.Observe(float64(time.Since(profileRegisterStart).Milliseconds()))
-	if err != nil {
-		observability.ErrorsTotal.WithLabelValues("register_profile").Inc()
-		s.logger.Error("failed to add register new profile with face", "err", err)
-		return &fd.RegisterProfileFaceResponse{Success: false}, nil
-	}
-
-	sessionToken := rand.Text()
-
-	_, err = db.RetryDB(s.logger, ctx, func() (struct{}, error) {
-		return struct{}{}, s.pool.UpsertSession(*profileID, sessionToken)
-	})
-	if err != nil {
-		observability.ErrorsTotal.WithLabelValues("upsert_session").Inc()
-		s.logger.Error("failed to store session in db", "err", err)
-		return nil, err
-	}
-
-	s.logger.Debug("created new profile session", "profile_id", profileID, "session_token", sessionToken)
-
-	return &fd.RegisterProfileFaceResponse{SessionToken: sessionToken, Success: true}, nil
 }

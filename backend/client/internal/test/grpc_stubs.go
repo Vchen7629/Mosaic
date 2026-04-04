@@ -53,14 +53,6 @@ func (s *StubFaceClient) RegisterVisitorFace(
 	return &fd.RegisterVisitorFaceResponse{Success: true}, nil
 }
 
-func (s *StubFaceClient) RegisterProfileFace(
-	_ context.Context,
-	_ *fd.RegisterProfileFaceRequest,
-	_ ...grpc.CallOption,
-) (*fd.RegisterProfileFaceResponse, error) {
-	return &fd.RegisterProfileFaceResponse{Success: true}, nil
-}
-
 type StubAudioClient struct {
 	Mu                   sync.Mutex
 	SaveTranscriptCalled int

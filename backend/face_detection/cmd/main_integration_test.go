@@ -59,7 +59,6 @@ func TestStaleConnectionsClosed(t *testing.T) {
 	client := fd.NewFaceDetectionServiceClient(conn)
 	client.SyncProfile(context.Background(), &fd.SyncProfileRequest{}) //nolint:errcheck
 
-
 	time.Sleep(idleTimeout + 200*time.Millisecond)
 
 	assert.Eventually(t, func() bool {
