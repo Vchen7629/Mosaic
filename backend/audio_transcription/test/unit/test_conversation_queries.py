@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 from src.db.conversation_queries import save_conversation
 import pytest
+import psycopg
 
 
 @pytest.mark.parametrize(
@@ -16,8 +17,9 @@ import pytest
     ],
 )
 def test_save_conversation_invalid_inputs(
-    mock_conn: MagicMock, profile_id: int, convo_text: str, visitor_id: int
+    profile_id: int, convo_text: str, visitor_id: int
 ) -> None:
     """Tests that it handles invalid input params properly"""
     with pytest.raises(ValueError):
+        mock_conn = MagicMock(spec=psycopg.Connection)
         save_conversation(mock_conn, profile_id, convo_text, visitor_id)
