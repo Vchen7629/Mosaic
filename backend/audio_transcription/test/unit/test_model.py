@@ -9,24 +9,34 @@ def whisper():
     return WhisperModel()
 
 
-@pytest.mark.parametrize("cuda_available,expected_device", [
-    (False, "cpu"),
-    (True, "cuda"),
-])
+@pytest.mark.parametrize(
+    "cuda_available,expected_device",
+    [
+        (False, "cpu"),
+        (True, "cuda"),
+    ],
+)
 def test_get_loads_model_with_correct_device(whisper, cuda_available, expected_device):
     mock_model = MagicMock()
 
     with (
-        patch("src.transcription.model.torch.cuda.is_available", return_value=cuda_available),
+        patch(
+            "src.transcription.model.torch.cuda.is_available",
+            return_value=cuda_available,
+        ),
         patch("src.transcription.model.settings") as mock_settings,
-        patch("src.transcription.model.FasterWhisperModel", return_value=mock_model) as mock_cls,
+        patch(
+            "src.transcription.model.FasterWhisperModel", return_value=mock_model
+        ) as mock_cls,
         patch("src.transcription.model.logger"),
     ):
         mock_settings.whisper_model = "medium"
         mock_settings.whisper_compute_type = "float16"
         result = whisper.get()
 
-    mock_cls.assert_called_once_with("medium", device=expected_device, compute_type="float16")
+    mock_cls.assert_called_once_with(
+        "medium", device=expected_device, compute_type="float16"
+    )
     assert result is mock_model
 
 
@@ -36,7 +46,9 @@ def test_get_returns_cached_model_and_logs_once(whisper):
     with (
         patch("src.transcription.model.torch.cuda.is_available", return_value=False),
         patch("src.transcription.model.settings") as mock_settings,
-        patch("src.transcription.model.FasterWhisperModel", return_value=mock_model) as mock_cls,
+        patch(
+            "src.transcription.model.FasterWhisperModel", return_value=mock_model
+        ) as mock_cls,
         patch("src.transcription.model.logger") as mock_logger,
     ):
         mock_settings.whisper_model = "medium"
