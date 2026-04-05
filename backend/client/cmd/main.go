@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -120,14 +119,9 @@ func websocketServer(
 
 // method to load config values
 func loadConfig() (*Config, error) {
-	err := godotenv.Load(".env")
-	if err != nil {
-		return nil, err
-	}
-
 	var cfg Config
 
-	err = envconfig.Process("", &cfg)
+	err := envconfig.Process("", &cfg)
 	if err != nil {
 		return nil, err
 	}
