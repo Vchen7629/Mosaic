@@ -1,4 +1,5 @@
 use std::sync::{Arc, Mutex};
+use tauri::Manager;
 use tauri_plugin_shell::process::CommandChild;
 mod backend_utils;
 mod port_utils;
@@ -25,6 +26,21 @@ pub fn run() {
         .setup(|_app| {
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            if let tauri::RunEvent::ExitRequested { .. } = event {
+                let state = app.state::<BackendProcesses>();
+                let mut children = state.process_children.lock().unwrap();
+                for child in children.drain(..) {
+                    let pid = child.pid();
+                    if let Err(e) = child.kill() {
+                        eprintln!("[Rust] Failed to kill backend PID {} on exit: {}", pid, e);
+                    } else {
+                        println!("[Rust] Killed backend PID {} on app exit", pid);
+                    }
+                }
+                port_utils::kill_processes_on_ports();
+            }
+        });
 }
