@@ -1,7 +1,6 @@
 # references to fixture files
 pytest_plugins = [
-    "test.fixtures.setup",
-    "test.fixtures.queries",
+    "test.fixtures.db",
     "test.fixtures.transcription",
-    "test.fixtures.grpc_server",
+    "test.fixtures.grpc",
 ]

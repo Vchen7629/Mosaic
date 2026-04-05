@@ -50,3 +50,12 @@ def grpc_client(grpc_server):
     channel = grpc.insecure_channel(grpc_server)
     yield audio_transcription_pb2_grpc.AudioTranscriptionServiceStub(channel)
     channel.close()
+
+
+@pytest.fixture
+def servicer(tmp_path) -> AudioTranscriptionServicer:
+    db_pool = MagicMock()
+    handler = MagicMock()
+    cache = MagicMock()
+    with patch("src.grpc.servicer._LOGS_DIR", tmp_path):
+        return AudioTranscriptionServicer(db_pool, handler, cache)
