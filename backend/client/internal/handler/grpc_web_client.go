@@ -116,7 +116,12 @@ func (c *Client) invoke(ctx context.Context, method string, args, reply interfac
 	if err != nil {
 		return status.Errorf(codes.Unavailable, "http request: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			fmt.Printf("error closing resp body: %v", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return status.Errorf(codes.Internal, "http status: %d", resp.StatusCode)
@@ -165,7 +170,10 @@ func (c *Client) invoke(ctx context.Context, method string, args, reply interfac
 				switch strings.TrimSpace(k) {
 				case "grpc-status":
 					var code int
-					fmt.Sscanf(strings.TrimSpace(v), "%d", &code)
+					_, err := fmt.Sscanf(strings.TrimSpace(v), "%d", &code)
+					if err != nil {
+						return status.Error(codes.Internal, "error scanning")
+					}
 					grpcStatus = codes.Code(code)
 				case "grpc-message":
 					grpcMessage, _ = url.PathUnescape(strings.TrimSpace(v))
