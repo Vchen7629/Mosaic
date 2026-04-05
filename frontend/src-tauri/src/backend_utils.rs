@@ -1,3 +1,5 @@
+#[cfg(not(target_os = "windows"))]
+use std::process::Command;
 use tauri::State;
 use tauri_plugin_shell::ShellExt;
 use tauri_plugin_shell::process::CommandEvent;
