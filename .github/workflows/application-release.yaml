@@ -1,0 +1,102 @@
+name: application-release step
+
+on:
+    workflow_run:
+        workflows: ["code coverage"]
+        types:
+        - completed 
+
+permissions:
+  contents: write
+
+jobs:
+    # Auto tagging for release version
+    tag:
+        runs-on: ubuntu-latest
+        outputs:
+          new_tag: ${{ steps.tag_version.outputs.new_tag }}
+        steps:
+        -   uses: actions/checkout@v4
+            with:
+                fetch-depth: 0 # gives it full history of commits to find the last tag
+
+        -   name: Auto-increment Tag
+            id: tag_version
+            uses: anothrNick/github-tag-action@v1
+            env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    build-and-release:
+        needs: tag
+        runs-on: ${{ matrix.platform }}
+        strategy: # This is for building the tauri app to work on mac, linux, and windows
+          fail-fast: false
+          matrix:
+            include:
+              - platform: 'macos-latest' # for Arm based macs (M1 and above).
+                args: '--target aarch64-apple-darwin'
+                rust_target: 'aarch64-apple-darwin'
+                go_binary_ext: ''
+              - platform: 'macos-latest' # for Intel based macs.
+                args: '--target x86_64-apple-darwin'
+                rust_target: 'x86_64-apple-darwin'
+                go_binary_ext: ''
+              - platform: 'ubuntu-24.04' # for linux ubuntu
+                args: ''
+                rust_target: 'x86_64-unknown-linux-gnu'
+                go_binary_ext: ''
+              - platform: 'windows-latest'
+                args: ''
+                rust_target: 'x86_64-pc-windows-msvc'
+                go_binary_ext: '.exe'
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
+
+          - name: setup node
+            uses: actions/setup-node@v5
+            with:
+              node-version: '>=23.6.1'
+
+          - name: install Rust stable
+            uses: dtolnay/rust-toolchain@stable
+            with:
+              targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+          - name: install frontend dependencies
+            run: npm install
+            working-directory: frontend
+
+          - name: Build Frontend
+            run: npm run build
+            working-directory: frontend
+          
+          - name: Setup Go
+            uses: actions/setup-go@v5
+            with:
+                go-version: "1.24.0"
+         
+          - name: Build Go backend client
+            run: go build -o ../frontend/src-tauri/binaries/backend-client-${{ matrix.rust_target }}${{ matrix.go_binary_ext }} ./cmd/main.go
+            working-directory: backend/client
+
+          - uses: tauri-apps/tauri-action@v0
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            with:
+              args: ${{ matrix.args }}
+              projectPath: frontend
+
+          - name: Create GitHub Release
+            uses: softprops/action-gh-release@v2
+            with:
+              body_path: ${{ github.workspace }}/CHANGELOG.txt
+              tag_name: ${{ needs.tag.outputs.new_tag }}
+              name: Release ${{ needs.tag.outputs.new_tag }}
+              files: |
+                frontend/src-tauri/target/**/release/bundle/nsis/*.exe
+                frontend/src-tauri/target/**/release/bundle/dmg/*.dmg
+                frontend/src-tauri/target/**/release/bundle/macos/*.app
+                frontend/src-tauri/target/**/release/bundle/deb/*.deb
+                frontend/src-tauri/target/**/release/bundle/appimage/*.AppImage
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

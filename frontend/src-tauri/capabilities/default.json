@@ -10,6 +10,8 @@
     "core:window:allow-current-monitor",
     "core:window:allow-destroy",
     "core:window:allow-set-size",
-    "opener:default"
+    "opener:default",
+    "shell:allow-execute",
+    "shell:allow-kill"
   ]
 }

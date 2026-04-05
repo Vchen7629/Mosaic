@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	at "mosaic-client.com/gen/audio_transcription"
 	cb "mosaic-client.com/gen/conversation_briefing"
@@ -91,14 +90,9 @@ func websocketServer(
 
 // method to load config values
 func loadConfig() (*Config, error) {
-	err := godotenv.Load(".env")
-	if err != nil {
-		return nil, err
-	}
-
 	var cfg Config
 
-	err = envconfig.Process("", &cfg)
+	err := envconfig.Process("", &cfg)
 	if err != nil {
 		return nil, err
 	}
