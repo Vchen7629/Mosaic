@@ -1,6 +1,7 @@
-from unittest.mock import MagicMock, patch, call
-import pytest
+from unittest.mock import patch
+from unittest.mock import MagicMock
 from src.db.connection_pool import create_connection_pool
+import pytest
 
 
 def _mock_settings(**overrides):
