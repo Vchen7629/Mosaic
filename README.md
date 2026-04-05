@@ -12,6 +12,9 @@
 
 Mosaic is a desktop application designed to assist people with memory loss. It identifies visitors via webcam and displays an AI-generated briefing about who they are and what you last talked about — so users always have context before a conversation begins. Originally built for HackMerced XI ([Devpost](https://devpost.com/software/mosaic-ulzfj9)).
 
+## Installation
+- To install, check the releases section and install the version for your os from the latest release
+
 ## How It Works
 
 When a known face appears on webcam, Mosaic shows a personalized card with the visitor's name and a summary of past conversations. Audio is transcribed in real time during the session. When recording stops, the transcript is summarized and stored, updating the briefing for the next visit.
