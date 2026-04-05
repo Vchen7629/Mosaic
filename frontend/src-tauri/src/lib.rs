@@ -1,11 +1,11 @@
 use std::sync::{Arc, Mutex};
+use tauri_plugin_shell::process::CommandChild;
 mod backend_utils;
 mod port_utils;
-mod path_utils;
 
 #[derive(Clone)]
 struct BackendProcesses {
-    process_children: Arc<Mutex<Vec<std::process::Child>>>,
+    process_children: Arc<Mutex<Vec<CommandChild>>>,
     is_starting: Arc<Mutex<bool>>,
 }
 
@@ -21,6 +21,7 @@ pub fn run() {
             backend_utils::stop_backend_api,
         ])
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_shell::init())
         .setup(|_app| {
             Ok(())
         })
