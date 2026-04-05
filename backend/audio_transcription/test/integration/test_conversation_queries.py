@@ -1,5 +1,5 @@
-import pytest
 from src.db.conversation_queries import save_conversation
+import pytest
 import psycopg
 
 
@@ -62,3 +62,28 @@ def test_insert_nonexistant_patient_or_visitor_id(
     """non existant profile id or visitor id should raise error"""
     with pytest.raises(Exception):
         save_conversation(db_connection, 23, "placeholdText", 23)
+
+
+def test_save_conversation_rolls_back_on_failed_insert(
+    db_connection: psycopg.Connection,
+    seed_profile_table,
+    seed_visitor_face_embeddings_table,
+) -> None:
+    """A FK violation mid-loop should roll back all inserts leaving no records."""
+    profileID = seed_profile_table(db_connection)
+    visitorID = seed_visitor_face_embeddings_table(db_connection, profileID, "visitor")
+    bad_visitor_id = 99999
+
+    with pytest.raises(Exception):
+        save_conversation(
+            db_connection, profileID, "hello", [visitorID, bad_visitor_id]
+        )
+
+    with db_connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT COUNT(*) FROM conversation_records WHERE profile_id = %s",
+            (profileID,),
+        )
+        count = cursor.fetchone()[0]
+
+    assert count == 0

@@ -1,10 +1,12 @@
 from unittest.mock import MagicMock, patch
 from src.db.session_queries import fetch_profile_id_from_session
 from src.cache.session import fetch_profile_id_from_cache
+import psycopg
 import pytest
 
 
-def test_fetch_profile_id_from_session_returns_profile_id(mock_conn: MagicMock) -> None:
+def test_fetch_profile_id_from_session_returns_profile_id() -> None:
+    mock_conn = MagicMock(spec=psycopg.Connection)
     mock_cursor = mock_conn.cursor.return_value.__enter__.return_value
     mock_cursor.fetchone.return_value = (42,)
 
@@ -13,9 +15,8 @@ def test_fetch_profile_id_from_session_returns_profile_id(mock_conn: MagicMock) 
     assert result == 42
 
 
-def test_fetch_profile_id_from_session_returns_none_when_not_found(
-    mock_conn: MagicMock,
-) -> None:
+def test_fetch_profile_id_from_session_returns_none_when_not_found() -> None:
+    mock_conn = MagicMock(spec=psycopg.Connection)
     mock_cursor = mock_conn.cursor.return_value.__enter__.return_value
     mock_cursor.fetchone.return_value = None
 
@@ -24,9 +25,10 @@ def test_fetch_profile_id_from_session_returns_none_when_not_found(
     assert result is None
 
 
-def test_fetch_profile_id_from_session_increments_error_and_raises_on_db_error(
-    mock_conn: MagicMock,
-) -> None:
+def test_fetch_profile_id_from_session_increments_error_and_raises_on_db_error() -> (
+    None
+):
+    mock_conn = MagicMock(spec=psycopg.Connection)
     mock_cursor = mock_conn.cursor.return_value.__enter__.return_value
     mock_cursor.execute.side_effect = Exception("db error")
 
@@ -42,7 +44,8 @@ def test_fetch_profile_id_from_session_increments_error_and_raises_on_db_error(
         mock_conn.rollback.assert_called_once()
 
 
-def test_fetch_profile_id_from_cache_returns_profile_id(mock_cache: MagicMock) -> None:
+def test_fetch_profile_id_from_cache_returns_profile_id() -> None:
+    mock_cache = MagicMock()
     mock_cache.get.return_value = b"7"
 
     result = fetch_profile_id_from_cache(mock_cache, "some-token")
@@ -51,9 +54,8 @@ def test_fetch_profile_id_from_cache_returns_profile_id(mock_cache: MagicMock) -
     mock_cache.get.assert_called_once_with("session:some-token")
 
 
-def test_fetch_profile_id_from_cache_returns_none_on_cache_miss(
-    mock_cache: MagicMock,
-) -> None:
+def test_fetch_profile_id_from_cache_returns_none_on_cache_miss() -> None:
+    mock_cache = MagicMock()
     mock_cache.get.return_value = None
 
     result = fetch_profile_id_from_cache(mock_cache, "missing-token")
@@ -61,9 +63,10 @@ def test_fetch_profile_id_from_cache_returns_none_on_cache_miss(
     assert result is None
 
 
-def test_fetch_profile_id_from_cache_returns_none_and_increments_error_on_bad_value(
-    mock_cache: MagicMock,
-) -> None:
+def test_fetch_profile_id_from_cache_returns_none_and_increments_error_on_bad_value() -> (
+    None
+):
+    mock_cache = MagicMock()
     mock_cache.get.return_value = b"not-an-int"
 
     with patch("src.cache.session.ErrorsTotal") as mock_errors:

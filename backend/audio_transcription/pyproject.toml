@@ -74,3 +74,8 @@ unannotated-parameter = "error"
 unannotated-return = "error"
 unannotated-attribute = "error"
 implicit-any = "error"
+
+[tool.coverage.run]
+omit = [                                                                                                                                                                                   
+    "src/gen/*",
+]

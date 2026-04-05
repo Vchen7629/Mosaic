@@ -1,24 +1,26 @@
 //go:build unit
 
-package middleware_test
+package observability_test
 
 import (
 	"bytes"
+	"context"
 	"log"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"mosaic-client.com/internal/middleware"
+	"mosaic-client.com/internal/observability"
 )
 
 // unit tests for writeHeader function
 func TestWriteHeader(t *testing.T) {
 	t.Run("Captures status code properly", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
-		wrapped := &middleware.WrappedWriter{
+		wrapped := &observability.WrappedWriter{
 			ResponseWriter: recorder,
 			StatusCode:     http.StatusOK,
 		}
@@ -30,7 +32,7 @@ func TestWriteHeader(t *testing.T) {
 
 	t.Run("Forwards to responsewriter", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
-		wrapped := &middleware.WrappedWriter{
+		wrapped := &observability.WrappedWriter{
 			ResponseWriter: recorder,
 			StatusCode:     http.StatusOK,
 		}
@@ -42,7 +44,7 @@ func TestWriteHeader(t *testing.T) {
 
 	t.Run("Starts at 200 status code", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
-		wrapped := &middleware.WrappedWriter{
+		wrapped := &observability.WrappedWriter{
 			ResponseWriter: recorder,
 			StatusCode:     http.StatusOK,
 		}
@@ -60,7 +62,7 @@ func TestLogging(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		})
 
-		logging := middleware.Logging(mockHandler)
+		logging := observability.HTTPLogger(mockHandler)
 		req := httptest.NewRequest(http.MethodGet, "/test", nil)
 		recorder := httptest.NewRecorder()
 
@@ -79,7 +81,7 @@ func TestLogging(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		})
 
-		logging := middleware.Logging(mockHandler)
+		logging := observability.HTTPLogger(mockHandler)
 		req := httptest.NewRequest(http.MethodPost, "/api/products", nil)
 		recorder := httptest.NewRecorder()
 
@@ -99,7 +101,7 @@ func TestLogging(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 		})
 
-		logging := middleware.Logging(mockHandler)
+		logging := observability.HTTPLogger(mockHandler)
 		req := httptest.NewRequest(http.MethodGet, "/test-path", nil)
 		recorder := httptest.NewRecorder()
 
@@ -113,5 +115,20 @@ func TestLogging(t *testing.T) {
 		assert.Contains(t, logOutput, "/test-path", "Log should contain request path")
 		assert.True(t, strings.Contains(logOutput, "ns") || strings.Contains(logOutput, "µs") || strings.Contains(logOutput, "ms") || strings.Contains(logOutput, "s"), "Log should contain timing information")
 	})
+}
 
+func TestStructuredLogger(t *testing.T) {
+
+	t.Run("prod mode set to false should enable debug level", func(t *testing.T) {
+		logger := observability.StructuredLogger(false)
+
+		assert.True(t, logger.Enabled(context.Background(), slog.LevelDebug))
+	})
+
+	t.Run("prod mode set to true should disable debug level", func(t *testing.T) {
+		logger := observability.StructuredLogger(true)
+
+		assert.False(t, logger.Enabled(context.Background(), slog.LevelDebug))
+		assert.True(t, logger.Enabled(context.Background(), slog.LevelInfo))
+	})
 }

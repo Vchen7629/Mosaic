@@ -1,5 +1,8 @@
 test_all: integration unit
 
+format:
+	uv run ruff format
+
 unit:
 	uv run pytest test/unit/
 
