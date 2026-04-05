@@ -35,18 +35,26 @@ jobs:
               - platform: 'macos-latest' # for Arm based macs (M1 and above).
                 args: '--target aarch64-apple-darwin'
                 rust_target: 'aarch64-apple-darwin'
+                go_os: 'darwin'
+                go_arch: 'arm64'
                 go_binary_ext: ''
               - platform: 'macos-latest' # for Intel based macs.
                 args: '--target x86_64-apple-darwin'
                 rust_target: 'x86_64-apple-darwin'
+                go_os: 'darwin'
+                go_arch: 'amd64'
                 go_binary_ext: ''
               - platform: 'ubuntu-24.04' # for linux ubuntu
                 args: ''
                 rust_target: 'x86_64-unknown-linux-gnu'
+                go_os: 'linux'
+                go_arch: 'amd64'
                 go_binary_ext: ''
               - platform: 'windows-latest'
                 args: ''
                 rust_target: 'x86_64-pc-windows-msvc'
+                go_os: 'windows'
+                go_arch: 'amd64'
                 go_binary_ext: '.exe'
         steps:
           - name: Checkout repository
@@ -62,6 +70,16 @@ jobs:
             with:
               targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
+          - name: Install Linux system dependencies
+            if: matrix.platform == 'ubuntu-24.04'
+            run: |
+              sudo apt-get update
+              sudo apt-get install -y \
+                libwebkit2gtk-4.1-dev \
+                libappindicator3-dev \
+                librsvg2-dev \
+                patchelf
+
           - name: install frontend dependencies
             run: npm install
             working-directory: frontend
@@ -76,7 +94,13 @@ jobs:
                 go-version: "1.24.0"
          
           - name: Build Go backend client
-            run: go build -o ../frontend/src-tauri/binaries/backend-client-${{ matrix.rust_target }}${{ matrix.go_binary_ext }} ./cmd/main.go
+            env:
+              GOOS: ${{ matrix.go_os }}
+              GOARCH: ${{ matrix.go_arch }}
+              CGO_ENABLED: 0
+            run: |
+              mkdir -p ../../frontend/src-tauri/binaries
+              go build -o ../../frontend/src-tauri/binaries/backend-client-${{ matrix.rust_target }}${{ matrix.go_binary_ext }} ./cmd/main.go
             working-directory: backend/client
 
           - uses: tauri-apps/tauri-action@v0
